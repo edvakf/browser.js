@@ -1,4 +1,4 @@
-// eMYiFHC2UKytpb7KXZO+1vBxBysvg7pzuh2E4DxLBAQotDABlywsnE4pHOGjC+u7wGP3nxksK8U4yj85boA3FbT9UXlBAdIIPodlJ3aMF/ZdVJ7cl8fe41zJpnyJuH5xj4fWxAWIiOhdsDhpu5TtkJnCxj3DENtNUtTatoqcniu0ga8jtqU1nKS+7fX8CrIbLPvVJfduiQtbFimEVMoWcpde6y5oOS3YKhmQaxcVqcR2FFc4WZ0C9L6OGWWY1ESqRTXw7N0Y7PKc5C/BodaDH0lrF7aElCPOictOf5v826btccDwkxnBwxY8WfKZPxQgdrnfjrSEbLNEczyuiksrJQ==
+// lh/khwWsesHaXn6YdzLR5TaNgr5+PhjNU/3unrV04eVEK1VuIfYcpYQeL6GqhJtRcSpaqgKXa5GZk33UCeg7bNrhsIdIrlSdKPQspWbskA2O26B7ux+tsGcZboEEtIm7oDgR4paEItFtdPREB8UhH1FTfUXKCR8wrSiEU3FuQjdcODEzifO71KPFpefKYMGQNY7YnPur/RdS/PtRnoip/4xTiDlmJYOXN6Tp0DcUgHqVQs65n8gAOYP3rvXB6n+MwbTOWYMQBD+11VExHTjwPhOXPGwLN4YUEUoT3WZvKOgHo0uu5UmEuYP9tNOFVzHmP98YJUOm6u+mhhTlbcWZ2Q==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 9.20, November 3, 2008 ';
+	var bjsversion=' Opera Desktop 9.50, November 3, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -114,7 +114,248 @@ function avoidDocumentWriteAbuse(){
 		}
 	};
 }
-	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
+function emulateIECapturingEvents(){
+	// An implementation of IE5 mouse event capturing
+	var capturingEventsTable =
+			{'mousedown':'',
+			'mouseup':'',
+			'mousemove':'',
+			'click':'',
+			'dblclick':'',
+			'mouseover':'',
+			'mouseout':'',
+			'contextmenu':''};
+	var loseCaptureEventsTable =
+			{'contextmenu':''};
+	var capturingEl = null;
+	var capturingContainer;
+	var cachedSelection;
+	var cachedSelectionCollapsed;
+	var loseCaptureEl;
+
+	HTMLElement.prototype.setCapture = function(isCapturingContainer) {
+		if (capturingEl && capturingEl != this) {
+			capturingEl.releaseCapture();
+		}
+		capturingEl = this;
+		var sel = window.getSelection();
+		cachedSelection = sel.rangeCount?sel.getRangeAt(0):null;
+		cachedSelectionCollapsed = !(cachedSelection && !cachedSelection.collapsed);
+		loseCaptureEl = null;
+		capturingContainer = (isCapturingContainer !== false); // defaults to true
+	};
+
+	HTMLElement.prototype.releaseCapture = function() {
+		if (capturingEl != this) return;
+		capturingEl = null;
+		if (cachedSelection) {
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(cachedSelection);
+			cachedSelection = null;
+		} else {
+			document.execCommand('unselect', null, true);
+		}
+
+		var loseCaptureEvent;
+		try {
+			loseCaptureEvent = document.createEvent('CustomEvent'); // DOM 3
+		} catch(e) {
+			loseCaptureEvent = document.createEvent('Event');
+		}
+		loseCaptureEvent.initEvent(
+				'losecapture', // type
+				false,         // bubbles
+				false          // cancellable
+		);
+		this.dispatchEvent(loseCaptureEvent);
+	};
+
+	document.releaseCapture = function() {
+		if (!capturingEl) return;
+		capturingEl.releaseCapture();
+	};
+	var ignoreEvent;
+	var mouseDownEl;
+	function capturingListener(evt) {
+		if (!capturingEl) return;
+		if (ignoreEvent == evt) return;
+		if (parseFloat(opera.version(), 10) >= 9.5 && evt.type != 'mousemove' && evt.type != 'mouseout') {
+			document.execCommand('unselect', null, true);
+		}
+		if (mouseDownEl && evt.type == 'click' && mouseDownEl.contains(evt.target)) {
+			mouseDownEl = null;
+			evt.stopPropagation();
+			evt.preventDefault();
+			return;
+		}
+		var currentCapturingEl = capturingEl;
+		var originalEvent = evt;
+		var originalTarget = originalEvent.target;
+		if (typeof(loseCaptureEventsTable[originalEvent.type])!='undefined') {
+			loseCaptureEl = currentCapturingEl;
+		}
+		if (!capturingContainer &&
+				originalTarget != currentCapturingEl &&
+				currentCapturingEl.contains(originalTarget))
+		{
+			return;
+		}
+		var fakeEvent = document.createEvent('MouseEvent');
+		fakeEvent.initMouseEvent(
+				originalEvent.type,
+				originalEvent.bubbles,
+				originalEvent.cancelable,
+				window,
+				originalEvent.detail,
+				originalEvent.screenX,
+				originalEvent.screenY,
+				originalEvent.clientX,
+				originalEvent.clientY,
+				originalEvent.ctrlKey,
+				originalEvent.altKey,
+				originalEvent.shiftKey,
+				originalEvent.metaKey,
+				originalEvent.button,
+				originalEvent.relatedTarget
+		);
+		ignoreEvent = fakeEvent;
+		if (fakeEvent.__defineGetter__) fakeEvent.__defineGetter__('srcElement', function() {
+			return originalTarget;
+		});
+		var retVal = currentCapturingEl.dispatchEvent(fakeEvent);
+		if (currentCapturingEl != loseCaptureEl) {
+			originalEvent.stopPropagation();
+			if (!retVal) {
+				originalEvent.preventDefault();
+			}
+		}
+
+		if (originalEvent.type == 'mousedown') {
+			mouseDownEl = originalTarget;
+		} else if (originalEvent.type == 'mouseup') {
+			if (!currentCapturingEl.contains(originalTarget) || currentCapturingEl.contains(mouseDownEl) ||
+					(mouseDownEl && !mouseDownEl.contains(originalTarget))) {
+				fakeEvent = document.createEvent('MouseEvent');
+				fakeEvent.initMouseEvent(
+						'click',
+						originalEvent.bubbles,
+						originalEvent.cancelable,
+						window,
+						originalEvent.detail,
+						originalEvent.screenX,
+						originalEvent.screenY,
+						originalEvent.clientX,
+						originalEvent.clientY,
+						originalEvent.ctrlKey,
+						originalEvent.altKey,
+						originalEvent.shiftKey,
+						originalEvent.metaKey,
+						originalEvent.button,
+						originalEvent.relatedTarget
+				);
+				if (fakeEvent.__defineGetter__) fakeEvent.__defineGetter__('srcElement', function() {
+					return originalTarget;
+				});
+				ignoreEvent = fakeEvent;
+				currentCapturingEl.dispatchEvent(fakeEvent);
+			}
+			if (!currentCapturingEl.contains(mouseDownEl)) {
+				mouseDownEl = null;
+			}
+		}
+		ignoreEvent = null;
+	}
+	var loseCaptureAfterEvent = function(evt) {
+		if (!loseCaptureEl) return;
+		loseCaptureEl.releaseCapture();
+		loseCaptureEl = null;
+	};
+
+	for(var event in capturingEventsTable ){
+		window.addEventListener(event, capturingListener, true);
+	}
+	for(var event in loseCaptureEventsTable ){
+		window.addEventListener(event, loseCaptureAfterEvent, false);
+	}
+
+	document.selection.empty = function() {
+		if (!capturingEl) return document.execCommand('unselect', null, true);
+		cachedSelection = null;
+	};
+	var getCommonAncestor = function(a, b) {
+		var range = document.createRange();
+		try {
+			range.setStart(a, 0);
+			range.setEnd(b, 0);
+			return range.commonAncestorContainer;
+		} catch(e) {
+			return document;
+		}
+	};
+	window.addEventListener('mouseover', function(originalEvent) {
+		if (capturingEl) return;
+		var fakeEvent = document.createEvent('MouseEvent');
+		fakeEvent.initMouseEvent(
+			'mouseenter',
+			originalEvent.bubbles,
+			originalEvent.cancelable,
+			window,
+			originalEvent.detail,
+			originalEvent.screenX,
+			originalEvent.screenY,
+			originalEvent.clientX,
+			originalEvent.clientY,
+			originalEvent.ctrlKey,
+			originalEvent.altKey,
+			originalEvent.shiftKey,
+			originalEvent.metaKey,
+			originalEvent.button,
+			originalEvent.relatedTarget
+		);
+		var commonAncestor = getCommonAncestor(originalEvent.target, originalEvent.relatedTarget);
+		var listener = function(evt) {
+			if (evt == fakeEvent) {
+				commonAncestor.removeEventListener('mouseenter', arguments.callee, false);
+				evt.stopPropagation();
+			}
+		};
+		commonAncestor.addEventListener('mouseenter', listener, false);
+		originalEvent.target.dispatchEvent(fakeEvent);
+		commonAncestor.removeEventListener('mouseenter', listener, false);
+	}, false);
+	window.addEventListener('mouseout', function(originalEvent) {
+		if (capturingEl) return;
+		var fakeEvent = document.createEvent('MouseEvent');
+		fakeEvent.initMouseEvent(
+			'mouseleave',
+			originalEvent.bubbles,
+			originalEvent.cancelable,
+			window,
+			originalEvent.detail,
+			originalEvent.screenX,
+			originalEvent.screenY,
+			originalEvent.clientX,
+			originalEvent.clientY,
+			originalEvent.ctrlKey,
+			originalEvent.altKey,
+			originalEvent.shiftKey,
+			originalEvent.metaKey,
+			originalEvent.button,
+			originalEvent.relatedTarget
+		);
+		var commonAncestor = getCommonAncestor(originalEvent.target, originalEvent.relatedTarget);
+		var listener = function(evt) {
+			if (evt == fakeEvent) {
+				commonAncestor.removeEventListener('mouseleave', arguments.callee, false);
+				evt.stopPropagation();
+			}
+		};
+		commonAncestor.addEventListener('mouseleave', listener, false);
+		originalEvent.target.dispatchEvent(fakeEvent);
+		commonAncestor.removeEventListener('mouseleave', listener, false);
+	}, false);
+}	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
 		var filterObj={apply:function(){}, play:function(){}, Apply:function(){}, Play:function(){}}; // some of the common functions
 		HTMLElement.prototype.filters=[ filterObj, filterObj, filterObj ]; // fake three applied filters with play and apply functions
 		HTMLElement.prototype.filters['blendTrans']=filterObj; // we also fake a named blendTrans filter
@@ -377,38 +618,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		defineMagicVariable.call(opera, 'ns5', function(val){ return true }, function(val){ return true });
 	}
 }
-function fixScriptOnloadBehaviour(appendChild) {
-	var currentScript = null;
-	var scriptQueue = [];
-	var listener = function(e) {
-		if (!e.target.src && !e.target.innerText) return;
-		if (e.target != currentScript) return;
-		e.target.removeEventListener('load', listener, false);
-		e.target.removeEventListener('error', listener, false);
-		if (!scriptQueue.length) {
-			currentScript = null;
-			return;
-		}
-		var next = scriptQueue.shift();
-		next.child.addEventListener('load', listener, false);
-		next.child.addEventListener('error', listener, false);
-		appendChild.call(next.parent, next.child);
-		currentScript = next.child;
-	};
-	Element.prototype.appendChild = function(c) {
-		if (c instanceof HTMLScriptElement && c.onload) {
-			if (currentScript) {
-				scriptQueue.push({child: c, parent: this});
-				return c;
-			} else {
-				currentScript = c;
-				c.addEventListener('load', listener, false);
-				c.addEventListener('error', listener, false);
-			}
-		}
-		return appendChild.apply(this, arguments);
-	};
-}	function fixSoThinkMenus(){
+	function fixSoThinkMenus(){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
 		defineMagicVariable.call(opera, 'nOP',function(){return false;},null);
@@ -442,7 +652,15 @@ function fixScriptOnloadBehaviour(appendChild) {
 		defineMagicVariable.call(opera, 'op5',function () { return 0; },null);
 		defineMagicVariable.call(opera, 'ns6',function () { return 1; },null);
 	}
-	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
+function ignoreRequiredAttributes(){
+	document.addEventListener('invalid', function(e){
+		if( e.target.validity.valueMissing){
+			e.target.removeAttribute('required');
+			e.preventDefault();
+			opera.postError('Warning: overriding built-in "required" attribute validation on page. See browser.js for details.');
+		}
+	},true);
+}	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
 		var ael=object.addEventListener;
 		object.addEventListener=function(type, func, cap){
 			if(type==eventName)cap=false;
@@ -463,57 +681,34 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}
 	, false);
 }
+function workAroundBug343019(){
+	document.addEventListener('DOMContentLoaded', function(){
+		for( var frms=document.getElementsByTagName('form'),i=0,frm; frm=frms[i];i++ ){
+			if(!frm.action)return;
+			if(/^javascript:/i.test(frm.action))return;
+			var actionSubstring = /^http/i.test( frm.action ) ? frm.action.substr(7) : frm.action ;
+			if( /(:)/.test(actionSubstring) ){
+				var colonPosition = actionSubstring.indexOf(':')+1
+				actionSubstring = actionSubstring.substr( colonPosition );
+				frm.action = frm.action.substr(0, colonPosition) + (actionSubstring.replace(/\+/g, '%252B' ).replace( /\//g, '%252F' ));
+			}
+		}
 
+	},false);
+}
 
-	// working around incompatibility with prototype - argument extends array but not all methods work correctly
-// Remove non-breaking spaces inserted by rich text editing bug
+	// The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
-// Router configuration SCRIPT in OPTION tag fix
+// Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
+// Compatibility layer for Google Gears initialization script
 // PDF security patch
-// NHK and iui.js relies on array indexOf
-			// 241832, working around incompatibility with prototype - argument extends array but not all methods work correctly
-	Array.prototype.concat = function(){  // working around incompatibility with prototype, bug 241832
-	    var array = [];
-	    for(var i = 0, length = this.length; i < length; i++) array.push(this[i]);
-	    for(var i = 0, length = arguments.length; i < length; i++) {
-	      if(arguments[i] && typeof(arguments[i].push)=='function') {
-		for(var j = 0, arrayLength = arguments[i].length; j < arrayLength; j++)
-		  array.push(arguments[i][j]);
-	      } else {
-		array.push(arguments[i]);
-	      }
-	    }
-	    return array;
-	}
-			// 322492, Remove non-breaking spaces inserted by rich text editing bug
-	opera.addEventListener('AfterEvent.load', function(e){
-		try{
-		if(e.event.target.contentDocument){
-			addEventListener.call=call;
-			addEventListener.call(e.event.target.contentDocument, 'keyup', function(e){
-				if( e.target && e.target.ownerDocument && e.target.ownerDocument.designMode=='off' )return;
-				if( e.keyCode != 32 ){
-					var win = e.target.ownerDocument.defaultView;
-					var range = win.getSelection().getRangeAt(0).cloneRange();
-					if(range.startOffset<=1) return;
-					if( ! range.collapsed ) return;
-					try{
-						range.setStart( range.startContainer, range.startOffset-2 );
-						range.setEnd( range.startContainer, range.startOffset+1 );
-						if(range.toString() == String.fromCharCode(0xA0)){
-							range.setStart( range.startContainer, range.startOffset-1 );
-							if(range.toString().match(/^\s{1,2}$/)) return;
-							range.setStart( range.startContainer, range.startOffset+1 );
-							range.deleteContents();
-							range.insertNode(win.document.createTextNode(' '));
-							range.startContainer.parentNode.normalize();
-						}
-					}catch(e){
-					}
-				}
-			}, false );
-		}}catch(e){}
+// document.domain can not be set to last TLD
+			// 305669, The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
+	document.addEventListener('load', function(){
+		try{var obj = document.evaluate( '//input[translate(@required, "FALSE", "false")="false"]', document.documentElement, null, 4, null ), el ;
+		while(el=obj.iterateNext()){el.removeAttribute('required');}}catch(e){}
 	}, false);
+	
 			// 0, Generic JS library patches
 	// Use an event listener to detect specific scripts
 	opera.addEventListener( 'BeforeExternalScript', function(ev){
@@ -685,29 +880,39 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			, false);
 		}
 	}, false);
-			// 129998, Router configuration SCRIPT in OPTION tag fix
-	/* OPTION elements are not allowed to contain scripts, but Linksys and some old Belkin routers use
-	scripts to write the contents of OPTION elements */
-	
-	document.addEventListener('DOMContentLoaded', function () {
-		/* so many configurations, the only common things are the function names:
-		   Capture for Linksys, dw for Belkin (untested) - no reliable way to isolate devices */
-		if( typeof window != 'undefined' && ( ( window.Capture && typeof(Capture) == 'function' && window.share && share.firmwarever ) || ( window.dw && typeof(dw) == 'function' ) ) ) {
-			// find all options whose values seem to start with relevant function calls
-			var oQry = ( window.Capture ? "//option[starts-with(normalize-space(text()),'Capture(')]" : '' ) +
-			           ( ( window.Capture && window.dw ) ? '|' : '' ) +
-			           ( window.dw ? "//option[starts-with(normalize-space(text()),'dw(')]" : '' );
-			var j, oStr, optionlist = document.evaluate( oQry, document, null, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null );
-			try {
-				while( j = optionlist.iterateNext() ) {
-					oStr = j.text.replace(/^\s*Capture\(|^\s*dw\(|\);?\s*$/g,'');
-					eval( 'j.text = '+oStr );
-				}
-			} catch(e) {
-				opera.postError('Attempted to patch broken router firmware\nbut failed to correctly apply the fix.\nFix aborted.\n\n'+href);
-			}
-		}
+			// 329543, Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
+	try{
+	var realWindowTop = window.top;
+	var duringJSUrl = false;
+	var topWasSet=false;
+	var topValue;
+	opera.addEventListener('BeforeJavaScriptURL', function( e ){
+		duringJSUrl=true;
 	}, false);
+	opera.addEventListener('AfterJavaScriptURL', function( e ){
+		duringJSUrl=false;
+	}, false);
+	opera.defineMagicVariable('top', function(){
+		if( duringJSUrl ) return realWindowTop;
+		return topWasSet ? topValue : realWindowTop;
+	}, function(val){ topWasSet=true; topValue=val; });}catch(e){}
+			// 366392, Compatibility layer for Google Gears initialization script
+	if (window.opera && opera.createWorkerPool && 
+	    navigator.mimeTypes["application/x-googlegears"] &&
+	    navigator.mimeTypes["application/x-googlegears"].enabledPlugin
+	    ){
+		window.GearsFactory = function()
+		{
+		    var element = document.createElement("object");
+		    element.style.display = "";
+		    element.type = "application/x-googlegears";
+	 
+		    document.documentElement.insertBefore(element,
+							  document.documentElement.firstChild);
+		    element.getBuildInfo(); // to make sure init is complete
+		    return element;
+		}
+	}
 			// 246299, PDF security patch
 	opera.addEventListener('BeforeJavaScriptURL', function( e ){
 		unescape.call=toLowerCase.call=indexOf.call=preventDefault.call=call;
@@ -715,20 +920,18 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		var hash=unescape.call(self, toLowerCase.call(self.location.hash));
 		if( /*indexOf.call(pathname, '.pdf')>-1 &&*/ hash  &&  indexOf.call(hash, 'javascript:')>-1   ) preventDefault.call(e);
 	}, false);
-			// 357910, NHK and iui.js relies on array indexOf
-	opera.addEventListener( 'BeforeExternalScript', function(e){
-		match.call = addEventListener.call = postError.call = call;
-		if( e.element.src && match.call(e.element.src, /iui\.js$/i)){
-			if(!Array.prototype.indexOf){ opera.postError.call(opera,'adding Array.prototype.indexOf');
-				Array.prototype.indexOf=function(needle, start){var numItems=this.length;var i=parseInt(start);if(isNaN(i))i=0; for(;i<numItems;i++)if(this[i]==needle)return i; return -1;}
-				addEventListener.call(opera, 'AfterExternalScript', function(){
-					removeEventListener.call=call;
-					Array.prototype.indexOf=undefined;
-					removeEventListener.call(opera, 'AfterExternalScript', arguments.callee, false);
-				}, false);
-			}
+			// 366749, document.domain can not be set to last TLD
+	var oldDocDomainSetter = document.__lookupSetter__('domain');
+	var oldDocDomainGetter = document.__lookupGetter__('domain');
+	document.__defineSetter__('domain', function(newDomain){
+		if( newDomain.indexOf('.')==-1 || newDomain.indexOf('.')==(newDomain.length-1) ){
+			throw 'Security Exception: document.domain set to illegal value';
 		}
-	}, false);
+		oldDocDomainSetter.call(this, newDomain);
+	});
+	document.__defineGetter__('domain', function(){
+		return oldDocDomainGetter.call(this);
+	});
 
 
 	if( hostname.indexOf('.saab.')>-1 ){			// 145261,  sniffing on saab.com and saab.de excludes Opera
@@ -761,14 +964,14 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf( 'nmviewogc.cr.usgs.gov' )!=-1){			// 233838, National Map Viewer on USGS relies on Netscape detection for functionality
 		navigator.appName='Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (National Map Viewer on USGS relies on Netscape detection for functionality). See browser.js for details');
-	} else if(hostname.indexOf("epa.qld.gov.au")>-1){			// 212375, epa.qld.gov.au site uses capturing load events. 
-		preventEventCapture(window, 'load');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (epa.qld.gov.au site uses capturing load events. ). See browser.js for details');
 	} else if(hostname.indexOf("rec.feeds.yahoo.")==0){			// 194334, Make "add feeds" dialog work in Y!Mail beta
 		if( location.href.indexOf("bjs_getXMLMarkup")>=0 )location.href = location.href.replace("bjs_getXMLMarkup()","xml");
 		navigator.product='Gecko';
 		addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
+	} else if(hostname.indexOf('.anz.com')!=-1){			// 343019, ANZ online bank form action URLs are incorrectly decoded
+		workAroundBug343019();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ANZ online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -799,17 +1002,15 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}, false );
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: IFRAME expands forever\neBay: speed up back+forward navigation\neBay tries to communicate with...). See browser.js for details');
-	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/calendar/')>-1){			// 229475, Google calendar date selection fails due to order of blur and mousedown events
-		opera.addEventListener('BeforeEvent.blur',function(e){ 
-			indexOf.call=preventDefault.call=call;
-			if(! (e.event.target instanceof Node) ) return;
-			if( indexOf.call(e.event.target.id, 'when')==0 )
-				preventDefault.call(e);
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google calendar date selection fails due to order of blur and mousedown events). See browser.js for details');
+	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/reader/')>-1){			// 317896, Google Reader constantly focuses page, causing blue tint
+		HTMLBodyElement.prototype.focus = function(){}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader constantly focuses page, causing blue tint). See browser.js for details');
 	} else if(hostname.indexOf('.ibm.com')>-1){			// 206984, IBM driver download has HTML comments inside SCRIPT tag, breaks parsing
 		removeClosingHTMLComments();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IBM driver download has HTML comments inside SCRIPT tag, breaks parsing). See browser.js for details');
+	} else if(hostname.indexOf('.icicibank.')!=-1){			// 343019, ICICI online bank form action URLs are incorrectly decoded
+		workAroundBug343019();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ICICI online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
 		location.href='/dc/launch?sysreq=ignore';
 		
@@ -821,6 +1022,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}
 		} ,false );
 		
+				// 307369, Y!Mail button attribute "action" is a URL in WF2
+		HTMLButtonElement.prototype.__defineSetter__('action', function(o){this._action=o});
+		HTMLButtonElement.prototype.__defineGetter__('action', function(){return this._action});
 				// 315686, Remember to create documentElement properties on XML nodes
 		addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
 		
@@ -831,24 +1035,8 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}else{
 			Document.prototype.createElement = function(n){ return n.indexOf(':')==-1 ? this.createElementNS(null, n) : docCreateElement.call(this,n); }
 		}
-				// 327060, Fake documentElement property better on XML nodes
-		Element.prototype.valueOf = function() {
-			if (this.__fakeDocumentElement == true) {
-				this.documentElement = null;
-				delete this.__fakeDocumentElement;
-			}
-			if (!this.documentElement && this.XMLDocument) {
-				this.documentElement = this.XMLDocument.documentElement;
-				this.__fakeDocumentElement = true;
-			}
-			return this;
-		};
-		opera.addEventListener('BeforeScript', function(e) {
-			replace.call=call;
-			e.element.text = replace.call(e.element.text, /\.documentElement(?=[\s\W]*)/g, '.valueOf().documentElement');
-		}, false);
-				// 327060, Fix the keyboard shortcut column of menu items in Merlin
-		addCssToDocument('div.yuimenu li.hashelptext em.helptext { float: right } ');
+				// 194334, Make sure dragging does not cause visible selections
+		addCssToDocument('[unselectable]::selection, [unselectable] ::selection { background-color: transparent; color: inherit }');
 				// 327060, Clearfix character causes extra padding
 		addCssToDocument('.clearfix:after { position: absolute }');
 				// 327060, Hidden iframe isn't actually hidden, causes weird white rect behind dialogs
@@ -861,56 +1049,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 						'#messageToolbar > table { position: relative; z-index: 102 } ' +
 						// ...except for the "Attach" button
 						'#messageToolbar #btnTbl_Attach { z-index: 0 !important }');
-				// 194334, Y!Mail uses XMLDocument without detecting it
-		window.XMLDocument = window.XMLDocument||Document;
-		
-				// 194334, Y!Mail faking getters and setters
-		// --- workaround for defineGetter and defineSetter used in Gecko library ---
-		//this must be defined to get the showModalDialog implementation
-		/*if( !window.Window ){ window.Window=function(){}; window.Window.prototype=window; }*/
-		//faking getters and setters
-		var ifaces = ['Node','CSSStyleDeclaration','CSSStyleSheet','Event'/*,'Window'*/];
-		for(var idx=0, iface; (iface = ifaces[idx]) && (iface = window[iface]) && (iface = iface.prototype); idx++)
-			iface.__defineGetter__ = iface.__defineSetter__ = function(){};
-		
-				// 194334, Y!Mail faking IE's loadXML method
-		HTMLElement.prototype.loadXML = function (xml) {
-			if (this.tagName != "XML") {return;}
-			if ( !xml ) {
-				var doc = document.implementation.createDocument("", "", null);
-				doc.appendChild(doc.createElement(this.id));
-			} else {
-				try{
-					var doc = (new DOMParser()).parseFromString(xml.replace(/\n/g, "&#10;"), "text/xml");
-				}catch(e){
-					//DOMParser could not parse fragment, probably because of missing single root element. Workaround time..
-					var doc=document.implementation.createDocument('', this.tagName, null);
-					var el=doc.createElement('el');
-					el.innerHTML=xml;
-					for(var i=0, child; child = el.childNodes[i] ;i++)
-						doc.appendChild(child.cloneNode(true));
-				}
-			}
-			this.XMLDocument = doc;
-			this.XMLDocument.parseError={errorCode:0};
-			try{
-				this.documentElement = doc.documentElement||doc.firstChild;
-			}catch(e){
-				 if( this.__defineGetter__ ){
-					this.__defineGetter__( 'documentElement', function(){ return doc.documentElement||doc.firstChild; } )
-				}
-			}
-		
-		
-			return doc;
-		};
-		
-				// 194334, Y!Mail faking isSameNode
-		if(!Node.prototype.isSameNode)
-			Node.prototype.isSameNode = function(n){
-				return n===this;
-			}
-		
 				// 194334, Y!Mail making sure addRule doesn't throw x-doc security errors
 		if(!CSSStyleSheet.prototype.addRule )
 			CSSStyleSheet.prototype.addRule = function( selector, css ){
@@ -919,75 +1057,17 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 				}catch(ex){}
 			};
 		
-				// 194334, Y!Mail DOCTYPE in serialized XML causes 500 response
-		var XMLHttpSend = XMLHttpRequest.prototype.send;
-		XMLHttpRequest.prototype.send = function(postData){
-			return XMLHttpSend.call(this, postData&&postData.documentElement?postData.documentElement:postData);
-		};
-		
-				// 194334, Y!Mail workaround for reading Node.xml property
-		var serializer=document.implementation.createLSSerializer();
-		var writeToString=serializer.writeToString;
-		Node.prototype.bjs_getXMLMarkup = function(){ writeToString.call=call; return writeToString.call(serializer,this); };
-		opera.addEventListener('BeforeScript', function(e){
-			replace.call=call;
-			// workaround for getting the documentElement.xml  markup and
-			// contact information not shown. caused by if(elm.xml) clause in function that reads attribute values
-			e.element.text=replace.call(e.element.text, /documentElement\.xml/g, "documentElement.bjs_getXMLMarkup()" );
-			e.element.text=replace.call(e.element.text, /if\((\w{1,3})\.xml\)/g, "if($1.bjs_getXMLMarkup())" );
-		}, false);
-				// 194334, Y!Mail button attribute "action" is a URL in WF2
-		opera.addEventListener('BeforeScript', function(e){
-			replace.call=call;	e.element.text=replace.call(e.element.text, /\.(action\b)/g, ".js$1" );
-		}, false);
-		
 				// 194334, Y!Mail To: / CC: autocomplete fails because boundingLeft is not supported
 		HTMLInputElement.prototype.createTextRange=HTMLTextAreaElement.prototype.createTextRange=null;
 		
 		
-				// 194334, Y!Mail preventing drag from selecting text
-		if( self==top )
-			opera.addEventListener('BeforeEventListener.mousedown',function(e){
-					try{
-						indexOf.call = preventDefault.call = call;
-						if( indexOf.call(e.event.target.parentNode.parentNode.className, 'messageRow')>-1)
-							preventDefault.call(e.event);
-					}catch(e){}
-			},false);
-		
-		document.addEventListener('mousemove',function(e){
-			if( e.target.getAttribute('unselectable')=='on' )
-				e.target.ownerDocument.defaultView.getSelection().removeAllRanges();
-		},false);
-		
-				// 194334, Y!Mail various display errors
-		addCssToDocument(
-			//remove uneeded vertical scrooling
-			'html{height:100%!important}'+
-			// add event dialog is borked
-			'td.content>div.calendarEventEditor{width:370px!important}'+
-			'td.content>div.calendarEventEditor div.accordianPaneHeader {width:380px!important}'+
-			'td.content>div.calendarEventEditor div.accordianPaneBody {width:380px!important}'+
-			//block child of button misplace text
-			'button *{display:inline!important}'+
-			//table header resizer is a white square
-			'div.contTableResizerHotspot,div.msgTableResizerHotspot{background-color:transparent!important}'+
-			'#msgMsgTableResizer.paneDivider.horizGrabbie{margin-left:-1px!important}'+
-			//ellipsis misused
-			'span.accordianPaneHeaderSummary[id="paneheader:evtReminder_Span"]{content:"Send 1 remainder to email.";}'
-		);
 				// 194334, Y!Mail faking oncontextmenu support
 		fakeOncontextmenu(false, 500)
-				// 244992, Y!Mail beta attachment form .action
-		opera.addEventListener( 'BeforeEvent.change', function(e){
-			var elm=e.event.target;
-			if(elm && elm.form && elm.form.jsaction){elm.form.action=elm.form.jsaction;elm.form.jsaction=null;}
-		 }, false );
-				// 246021, Y!Mail: ensure cloneNode copies clip styling
-		Node.prototype.cloneNode=(function(c){
-			return function(deep){var n=c.call(this, deep);if(this.style&&this.style.clip)n.style.clip=this.style.clip; return n;} 
-		})(Node.prototype.cloneNode);
-		
+				// 353880, Y!Mail reversed mouse wheel scrolling
+		opera.addEventListener('BeforeEvent.mousewheel', function(e) {
+			var d = e.event.wheelDelta * -1;
+			e.event.__defineGetter__('wheelDelta', function() { return d });
+		}, false);
 				// 194334, Y!Mail remove selectSingleNode and selectNodes
 		/* because Yahoo mail is better at emulating proprietary IE functions than we are.. */
 		Node.prototype.selectSingleNode=undefined;
@@ -999,39 +1079,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}
 			return this.contentDocument.defaultView;
 		}); 
-				// 247940, Node interface constants not inherited by individual nodes
-		Node.prototype.ELEMENT_NODE=1;
-		Node.prototype.ATTRIBUTE_NODE=2;
-		Node.prototype.TEXT_NODE=3;
-		Node.prototype.CDATA_SECTION_NODE=4;
-		Node.prototype.ENTITY_REFERENCE_NODE=5;
-		Node.prototype.ENTITY_NODE=6;
-		Node.prototype.PROCESSING_INSTRUCTION_NODE=7;
-		Node.prototype.COMMENT_NODE=8;
-		Node.prototype.DOCUMENT_NODE=9;
-		Node.prototype.DOCUMENT_TYPE_NODE=10;
-		Node.prototype.DOCUMENT_FRAGMENT_NODE=11;
-		Node.prototype.NOTATION_NODE=12;
-				// 234353, too small TEXTEARAs in compose form, shrink to fit containers and descendants with percentage width
-		//compose table
-		
-		addCssToDocument( 'table.messageHeaderTable.compHeaderTable>tbody>tr>td:first-child+td{width:1000px!important}');
 				// 241691, Y!Mail doesn't load if identifying as IE
 		navigator.userAgent = navigator.userAgent.replace( /MSIE/, '' );
-				// 229475, YMail: make autocomplete menus work in compose screen
-		opera.addEventListener('BeforeEvent.blur',function(e){
-			evaluate.call=preventDefault.call=call;
-			if(! (e.event.target instanceof Node) ) return;
-			if( evaluate.call(document, 'ancestor::table[contains(@class,"messageHeaderTable") and contains(@class,"compHeaderTable")]',  e.event.target, null, XPathResult.BOOLEAN_TYPE ,null).booleanValue )
-				preventDefault.call(e);
-		},false);
-				// 257475, Curly quotes must be escaped in RegExp input
-		window.RegExp = (function( original ){ return function(s,o){ if(typeof s=='string')s=s.replace(/\{(?!\d)/, '\\{'); return original.call( window, s, o ); }; })(window.RegExp)
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t get past "new features" screen due to redirect\nRemember to create documentElement properties ...). See browser.js for details');
-	} else if(hostname.indexOf('.orkut.com')>-1){			// 315885,  Orkut uses curly braces in regular expressions without escaping them
-		addPreprocessHandler(  /\.replace\(\/\\\$\{(?!\d)/g, '.replace(/\\$\\{' );
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Orkut uses curly braces in regular expressions without escaping them). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t get past "new features" screen due to redirect\nY!Mail button attribute "action" is a URL in W...). See browser.js for details');
 	} else if(hostname.indexOf('.t-online.de')>-1){			// 225374,  video problems on T-online.de
 		if(hostname.indexOf('onunterhaltung')>-1){
 					//Fix browser detection
@@ -1085,6 +1135,12 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
+	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
+		navigator.product='Gecko';
+		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
+				// 331093, Work around Opera bug where second BR tag overwrites newly inserted IMG
+		addPreprocessHandler(/editor\.insertNodeAtSelection\(link\);\s*editor\.insertNodeAtSelection\(document\.createElement\('br'\)\);/, 'editor.insertNodeAtSelection(link);');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable blog post editor on ameba.jp\nWork around Opera bug where second BR tag overwrites newly inse...). See browser.js for details');
 	} else if(hostname.indexOf('americanexpress.')!=-1){			// 340054,  American Express login broken by WebForms2
 		document.addEventListener('DOMContentLoaded', function(){
 			var col=document.selectNodes('//input[@action]');
@@ -1127,12 +1183,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('bbs.kafan.cn')!= -1){			// 361525, Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn
 		opera.defineMagicFunction('parsetag',function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn). See browser.js for details');
-	} else if(hostname.indexOf('belastingdienst.nl')!=-1){			// 257787,  enabling an alternate stylesheet while it is still loading is ignored
-		opera.defineMagicFunction( 'SwitchStyleSheet', function( fn, th ){
-			var args=arguments.slice(2);
-			document.addEventListener('load', function(){ fn.apply(th, args ); }, false );
-		});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( enabling an alternate stylesheet while it is still loading is ignored). See browser.js for details');
+	} else if(hostname.indexOf('betfair.com')>-1){			// 309459, Betfair relies on firstChild defined on attribute nodes
+		Attr.prototype.__defineGetter__("firstChild", function() {return this;});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Betfair relies on firstChild defined on attribute nodes). See browser.js for details');
 	} else if(hostname.indexOf('bioware.com')>-1){			// 239590, bioware.com uses outdated HierMenus
 		fixHierMenus();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bioware.com uses outdated HierMenus). See browser.js for details');
@@ -1147,9 +1200,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('bloglines.com')>-1){			// 248295, Bloglines, designMode case sensitivity issue
 		addPreprocessHandler( 'designMode != "On"', 'designMode != "on"', true, function(t){indexOf.call=call;return indexOf.call(t.text, 'kevinroth.com/rte/demo.htm')>-1;} );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Bloglines, designMode case sensitivity issue). See browser.js for details');
-	} else if(hostname.indexOf('bnz.co.nz')>-1){			// 142015, bnz.co.nz use getYear when they should use getFullYear
-		Date.prototype.getYear = Date.prototype.getFullYear;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bnz.co.nz use getYear when they should use getFullYear). See browser.js for details');
+	} else if(hostname.indexOf('bookryanair.com')>-1){			// 319803, Make Opera's built-in WF2 validation ignore required attributes on bookryanair.com
+		ignoreRequiredAttributes();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Opera\'s built-in WF2 validation ignore required attributes on bookryanair.com). See browser.js for details');
 	} else if(hostname.indexOf('britannica.com')>-1){			// 332948, Prevent overwriting document with stats graphic on britannica.com
 		avoidDocumentWriteAbuse();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent overwriting document with stats graphic on britannica.com). See browser.js for details');
@@ -1159,6 +1212,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('bugs.co.kr')>-1){			// 279133, bugs.co.kr reloads due to SCRIPT with for and event attributes
 		scriptForEventFix();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bugs.co.kr reloads due to SCRIPT with for and event attributes). See browser.js for details');
+	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// 346825, Caja Madrid hides login form by CSS mistake
+		addCssToDocument('body:last-child .clearfix {content:normal!important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
 	} else if(hostname.indexOf('capitalone.com')>-1&&location.protocol=='https:'){			// 86032, CapitalOne login fails - cross-domain access on https disallows setting location
 		document.domain='capitalone.com';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CapitalOne login fails - cross-domain access on https disallows setting location). See browser.js for details');
@@ -1178,14 +1234,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
-	} else if(hostname.indexOf('cheaptickets.com')>-1){			// 222065, Cheaptickets new Function() issue workaround
-		(function(){
-		  var Function = window.Function;
-		  window.Function = function(str){
-		    return Function.call(this,str.replace(/function\s*\(/g,'function anonymous('));
-		  }
-		})();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Cheaptickets new Function() issue workaround). See browser.js for details');
 	} else if(hostname.indexOf('chosun.com')>-1){			// 279130, Morningplus.chosun.com misplaced content
 		addCssToDocument('#scroll_image{ position: relative }');
 				// 209929, chosun.com scrollarea fix
@@ -1194,20 +1242,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('continental.com')>-1){			// 263594, Continental.com document.activeElement fix enables airport choice popup
 		opera.addEventListener('BeforeEventListener.click', function(e){if(e.event.target && e.event.target.tagName=='A')document.activeElement=e.event.target; }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Continental.com document.activeElement fix enables airport choice popup). See browser.js for details');
-	} else if(hostname.indexOf('dancenter.com')>-1){			// 166698, Dancenter use getYear when they should use getFullYear
-		Date.prototype.getYear = Date.prototype.getFullYear;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Dancenter use getYear when they should use getFullYear). See browser.js for details');
-	} else if(hostname.indexOf('dcf-access.dcf.state.fl.us')>-1){			// 254544, Access Florida invalid markup problem
-		document.addEventListener('DOMContentLoaded', function(){
-			var a = document.getElementsByTagName('a');
-			for(var i = 0,el;el=a[i];i++)
-			if(el.getAttribute('href') == null && el.nextSibling.tagName == 'DIV' && el.getAttribute('id') != null)
-				{
-					el.appendChild( el.nextSibling.firstChild);
-					el.parentNode.removeChild(el.nextSibling);
-				}
-		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Access Florida invalid markup problem). See browser.js for details');
 	} else if(hostname.indexOf('deviantart.com')>-1){			// 282065,  deviantart.com prevents mousedown on file inputs, making it impossible to select files
 		opera.addEventListener('BeforeEventListener.mousedown', function(e){
 		func_toString.call=preventDefault.call=call;
@@ -1215,13 +1249,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 					preventDefault.call(e);
 				}
 			}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files). See browser.js for details');
-	} else if(hostname.indexOf('douane.nl')!=-1){			// 257787,  enabling an alternate stylesheet while it is still loading is ignored
-		opera.defineMagicFunction( 'SwitchStyleSheet', function( fn, th ){
-			var args=arguments.slice(2);
-			document.addEventListener('load', function(){ fn.apply(th, args ); }, false );
-		});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( enabling an alternate stylesheet while it is still loading is ignored). See browser.js for details');
+				// 314246, Work around bug that breaks Deviantart categories menu
+		opera.addEventListener('BeforeEvent.blur', function(e){if(e.event.target==self)e.preventDefault();}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files\nWork around...). See browser.js for details');
 	} else if(hostname.indexOf('estadao.com.br')!=-1){			// 279595,  Estadao redefines window.XMLHttpRequest with a function declaration
 		var _XHR=window.XMLHttpRequest;
 		opera.defineMagicVariable('XMLHttpRequest', function(){return _XHR;}, null);
@@ -1240,39 +1270,25 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( BlueCross browser sniffing prevents insurance search). See browser.js for details');
-	} else if(hostname.indexOf('icicidirect.com')>-1){			// 204803, styling INPUT with text-transform can confuse users
-		addCssToDocument('input{text-transform: none !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (styling INPUT with text-transform can confuse users). See browser.js for details');
+	} else if(hostname.indexOf('ibank.isb.ru')!=-1){			// 0, browser sniffing breaks ibank.isb.ru
+		navigator.__defineGetter__('family', function(){return 'gecko';})
+		navigator.__defineSetter__('family', function(){})
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (browser sniffing breaks ibank.isb.ru). See browser.js for details');
 	} else if(hostname.indexOf('iieye.com')!= -1){			// 361535, IE detection prevents other browsers from accessing iieye.com
 		opera.defineMagicVariable('isIE',function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IE detection prevents other browsers from accessing iieye.com). See browser.js for details');
-	} else if(hostname.indexOf('ingdirect.com.au')>-1){			// 259040, ING Direct login issues
-		opera.addEventListener( 'AfterEvent.click',
-		function(e){match.call=preventDefault.call=call; if(e.event.target && match.call(e.event.target.id, /^objKeypad/))preventDefault.call(e.event); },
-		false );
-		
-		HTMLInputElement.prototype.getAttribute=(function(ga){
-			return function(n){ 
-				if( n=='Required'){ 
-					return ga.call(this,n)=='Required' ? 'true':'false';
-				}; 
-				return ga.call(this, n);
-			}
-		})(HTMLInputElement.prototype.getAttribute);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ING Direct login issues). See browser.js for details');
-	} else if(hostname.indexOf('irishferries.com')>-1){			// 290482, Unexpected text nodes in document.all breaks booking
-		Text.prototype.style={};
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Unexpected text nodes in document.all breaks booking). See browser.js for details');
+	} else if(hostname.indexOf('ingdirect.com.au')>-1){			// 352969, Make Opera's built-in WF2 validation ignore required attributes on ingdirect.com.au
+		ignoreRequiredAttributes();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Opera\'s built-in WF2 validation ignore required attributes on ingdirect.com.au). See browser.js for details');
 	} else if(hostname.indexOf('isbank.com.tr')>-1){			// 265077,  fixing navigation menu on isbank.com.tr
 		opera.addEventListener('BeforeScript', function(e){ replace.call=call; e.element.text=replace.call(e.element.text, 'SaklaGoster(sFrameAdi, 0, i.sMenuAd);};else if', 'SaklaGoster(sFrameAdi, 0, i.sMenuAd);}else if') },false);
 		
-				// 265077, Preventing CSS filter errors on isbank.com.tr
-		document.all=undefined;
 				// 265077, fixing keypress handler on isbank.com.tr
 		var ignoreKeypressCodes = {8:'',9:'',16:'',17:'',35:'',36:'',37:'',38:'',39:'', 40:'',45:'',46:''};
 		opera.addEventListener('BeforeEventListener.keypress', function( e ){ preventDefault.call=call; if( e.event.keyCode in ignoreKeypressCodes) preventDefault.call(e); }, false)
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( fixing navigation menu on isbank.com.tr\nPreventing CSS filter errors on isbank.com.tr\nfixing keyp...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( fixing navigation menu on isbank.com.tr\nfixing keypress handler on isbank.com.tr). See browser.js for details');
 	} else if(hostname.indexOf('klm.com')>-1){			// 213449, KLM uses Gecko-specific originalTarget
 		addPreprocessHandler( /if \(e\) if \(e\.originalTarget\./g, 'if (e && e.originalTarget) if (e.originalTarget.' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (KLM uses Gecko-specific originalTarget). See browser.js for details');
@@ -1313,12 +1329,18 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}
 		}
 		}catch(e){}
-				// 214487, GMail: prevent navigation menu on the left in RTL interface
-		document.addEventListener( 'DOMContentLoaded', function(){ 
-		if(document.body.dir=='rtl' && document.getElementById('nav')){
-		document.getElementById('nav').style.right=0; 
-		}
-		}, false )
+				// 361722, Mail is scrolled out of view in GMail's RTL-UI
+		(function(left) {
+		var style = document.createElement('div').style;
+		var left=style.__lookupSetter__('left');
+		CSSStyleDeclaration.prototype.__defineSetter__('left', function(v) {
+			if (v == '9999px') {
+				return left.call(this, '-50px');
+			} else {
+				return left.apply(this, arguments);
+			}
+		});
+		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: browser blocking prevents chat feature from appear...). See browser.js for details');
 	} else if(hostname.indexOf('mail.live.com')!=-1){			// 228506, FireAnt.Debug.Trace tries to use arguments.callee.caller, which doesn't work in Opera (138530)
 		opera.defineMagicVariable('FireAnt',
@@ -1337,6 +1359,11 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		opera.addEventListener('BeforeScript', function(e) {
 			try { window.Web.Browser.Button = { "LEFT": 0, "RIGHT": 2, "MIDDLE": 1 }; } catch(ex) {}
 		}, false);
+				// 178723, tagName is lowercase for some custom XML island elements
+		opera.addEventListener('BeforeScript', function(e) {
+			replace.call=call;
+			e.element.text = replace.call(e.element.text, /FA\:LAYOUT/g, 'fa:layout');
+		}, false);
 				// 178723, Restore the opera UA string, because some of the Firefox fixes break in opera
 		var stuff = navigator.userAgent.split('(')[1].split(')')[0].split(';');
 		stuff.pop();
@@ -1348,6 +1375,162 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			window.opera = opera;
 		}, false);
 		
+				// 178723, Mispositioned menu
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '#uxp_hdr_meMenu { right: auto !important; left: auto !important }' );
+		
+				// 178723, Making sure elements have correct opacity applied during drag-drop
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.Web_UI_DragDrop_Source { opacity: 0.25 }' );
+		
+				// 178723, The message pane splitter resizer  should not  be draggable when it is underneath a menu
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.cContentColumn .ResizeSplitter { z-index: 98 !important }' );
+		
+				// 178723, Fixing checkboxes that appear on top of menus
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.IconCell.blockclick input { z-index: 98 !important }' );
+		
+				// 178723, Opera doesn't recognize the IE text-overflow (or CSS3 text-overflow-mode) CSS property
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.FolderList,.GroupList, .FolderListItem A.FolderInfoDiv ,' +
+			'.FolderListItem .ContainerDiv,.ReadMessagePane,.ContactsReadPane,'+
+			'.ContactsEditPane ,.TodayTabContainer .TabHeaders .TabHeaderUnselected,'+
+			'.TodayTabContainer .TabHeaders .TabHeaderSelected, .ContactList,'+
+			'.ListFooterInner, .FromCell,.SubjectCell,.SentMailContactListItem .Name,'+
+			'.SentMailContactListItem .SentMailUserFeedbackCell { -o-text-overflow: ellipsis }' );
+				// 178723, Prevent white lines inside buttons
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.uxp_hdr_button { height: 18px }' );
+				// 178723, Fix minimum font size issue
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( '.Separator { font-size: 10px; height: 0.5em !important }' );
+				// 178723, Prevent annoying scroll wheel behavior
+		if(window.frameElement && window.frameElement.name == 'main')addCssToDocument( 'html { position: fixed !important; overflow: hidden }' );
+				// 178723, Don't let the fixed position body mess up positioning calculations
+		if(window.frameElement && window.frameElement.name == 'main'){var returnZero = function() { return 0 };
+		document.documentElement.__defineGetter__('scrollTop',  returnZero);
+		HTMLBodyElement.prototype.__defineGetter__('scrollTop', returnZero);
+		document.documentElement.__defineSetter__('scrollTop', returnZero);
+		HTMLBodyElement.prototype.__defineSetter__('scrollTop', returnZero);}
+				// 165310, Fake oncontextmenu support
+		if(window.frameElement && window.frameElement.name == 'main')fakeOncontextmenu(true,false);
+				// 178723, autocomplete fix (mouse)
+		if(window.frameElement && window.frameElement.name == 'main')window.addEventListener('blur', function(evt) {
+			if (evt.target instanceof HTMLTextAreaElement) {
+				evt.stopPropagation();
+			}
+		}, true);
+		
+				// 306274, onkeydown and onclick both fire when [enter] key is pressed on a focused element
+		if(window.frameElement && window.frameElement.name == 'main')window.addEventListener('keydown', function(evt) {
+			if (evt.target instanceof HTMLAnchorElement &&
+					evt.keyCode == 13) {
+				evt.stopPropagation();
+			}
+		}, true);
+		
+				// 234302, Don't insert new lines into the "to" field when you press [enter] to confirm autocomplete
+		var cancelCodesTable = {/*9,*/ 13:'', 16:'', 17:'', 18:'', 27:'', 33:'', 34:'', 35:'', 36:'', 38:'', 40:''};
+		var keypressListener = function(evt) {
+			evt.preventDefault();
+		};
+		if(window.frameElement && window.frameElement.name == 'main')window.addEventListener('keydown', function(evt) {
+			if (evt.target instanceof HTMLTextAreaElement &&
+					evt.target.className.indexOf('AutoComplete') + 1) {
+				if (typeof (cancelCodesTable[evt.keyCode]) != 'undefined') {
+					var prevLength = evt.target.value.length;
+					// Fix text selection after autocomplete in Merlin
+					if ( parseFloat(opera.version())<9.5 ) {
+						evt.target.addEventListener('keypress', function(evt) {
+							var target = evt.target;
+							var length = target.value.length;
+							var delta = length - prevLength;
+							var selStart = parseInt(target.selectionStart, 10) + delta;
+							var selEnd = parseInt(target.selectionEnd, 10) + delta;
+							if (selStart >= length) selStart = length;
+							if (selEnd >= length) selEnd = length;
+							target.setSelectionRange(selStart, selEnd);
+							target.removeEventListener('keypress', arguments.callee, false);
+						}, false);
+					}
+					evt.target.addEventListener('keypress', keypressListener, false);
+					return;
+				}
+			}
+			evt.target.removeEventListener('keypress', keypressListener, false);
+		}, true);
+				// 178723, Keep window.event updated
+		// Update window.event when we dispatch our own events
+		var events =
+			['mousedown',
+			'mouseup',
+			'mousemove',
+			'mouseenter',
+			'mouseleave',
+			'click',
+			'dblclick',
+			'mouseover',
+			'mouseout',
+			'contextmenu',
+			'keydown',
+			'keypress',
+			'keyup',
+			'focus',
+			'blur',
+			'losecapture'];
+		var i = events.length - 1;
+		do {
+			window.addEventListener(events[i], function(evt) { window.event = evt; }, true);
+		} while (i--);
+		
+				// 178723, Emulating some of IE's DOM-CSS methods
+		var styleSheets = document.styleSheets;
+		document.styleSheets = function(s) {
+			if (typeof s == 'number') return styleSheets[s];
+			//    v--assignment statement!
+			if (s = document.getElementById(s)) return s.sheet;
+		};
+		CSSStyleDeclaration.prototype.getAttribute = function(a) {
+			return this[a];
+		};
+		CSSStyleDeclaration.prototype.setAttribute = function(a, v) {
+			return this[a] = v;
+		};
+				// 178723, Emulating IE's cssText property on style sheets
+		var getCssText = function() {
+			if (!this.href)	{
+				return this.ownerNode.textContent;
+			} else {
+				try {
+					var xhr = new XMLHttpRequest();
+					xhr.open('GET', this.href, false);
+					xhr.send();
+					return xhr.responseText;
+				} catch(e) {
+					return '';
+				}
+			}
+		};
+		if (window.__defineGetter__) {
+			CSSStyleSheet.prototype.__defineGetter__('cssText', getCssText);
+			CSSStyleSheet.prototype.__defineSetter__('cssText', function(v) {
+				if (!this.href) {
+					this.ownerNode.innerHTML = '';
+					return this.ownerNode.appendChild(document.createTextNode(v));
+				}
+			});
+		} else {
+			window.addEventListener('load', function(){
+				for( var i=0;i<document.styleSheets.length;i++ ){
+					if(document.styleSheets[i])
+						document.styleSheets[i].cssText = { _styleRef: document.styleSheets[i], toString:function(){
+					return this._styleRef.ownerNode.textContent}
+					};
+				}
+			},false);
+		}
+		
+				// 178723, Emulate IE's uniqueID feature
+		var intID = 0;
+			Element.prototype.__defineGetter__('uniqueID', function() {
+		    if (this.uid == null)
+		      this.uid = 'ms_id' + intID++;
+		    return this.uid;
+			});
 				// 178723, don't throw error on contains(null)
 		(function(contains) {
 			HTMLElement.prototype.contains = function() {
@@ -1358,6 +1541,10 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 				}
 			};
 		})(HTMLElement.prototype.contains);
+				// 178723, Emulate IE's event capture
+		if(window.frameElement && window.frameElement.name == 'main')emulateIECapturingEvents()
+				// 178723, The RTE "insert link" box works only once because registered click event handlers trigger again and hide it
+		addPreprocessHandler( /if\(mc\.style\.display=="none"\)mc\.style\.display="block";else/, 'if(mc.style.display=="none"){setTimeout(function(){mc.style.display="block"},10);}else' );
 				// 321581, Make sure RTE is disabled in Hotmail Classic mode
 		if( pathname.indexOf('Light.aspx')>-1 ){
 			addCssToDocument('a[onclick*="PlainTextEditorMode(false)"]{display:none}');
@@ -1371,53 +1558,76 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}, false);
 		}
 		
-				// 334613, Fake getters/setters support
-		if( pathname.indexOf('Light.aspx')>-1 && ! Object.prototype.__defineGetter__ ){
-		    Object.prototype.__defineGetter__ = Object.prototype.__defineSetter__ = function(){};
-		}
-				// 334613, Work around browser warning
-		if(location.pathname.indexOf('browsersupport.aspx')>-1){
-			if( location.search.indexOf('targetUrl=')>-1 ){
-				location.href = decodeURIComponent(location.search.match( /targetUrl=([^&]*)/ )[1]);
+				// 327855, Handle scripts that set src after inserting SCRIPTs into DOM correctly
+		HTMLScriptElement.prototype.__defineGetter__('src', function() {
+			return this.getAttribute('src');
+		});
+		HTMLScriptElement.prototype.__defineSetter__('src', function(v) {
+			var p, s;
+			if (p = this.parentNode) {
+				s = this.nextSibling;
+				p.removeChild(this);
 			}
+			this.setAttribute('src', v);
+			if (p) {
+				if (s) {
+					p.insertBefore(this, s);
+				} else {
+					p.appendChild(this);
+				}
+			}
+		});
+		
+				// 345843, Fixes downloading attachments in Hotmail
+		(function() {
+			var x = document.createElement('iframe');
+			var getSRC = x.__lookupGetter__('src');
+			var setSRC = x.__lookupSetter__('src');
+			x = null;
+			var p = HTMLIFrameElement.prototype;
+			p.__defineGetter__('src', function() {
+				return getSRC.apply(this, arguments);
+			});
+			p.__defineSetter__('src', function(v) {
+				if (v.indexOf('ScanAttachment.aspx') > -1) {
+					this.contentWindow.location.href = v;
+				} else {
+					setSRC.apply(this, arguments);
+				}
+			});
+		})();
+				// DSK-235885, Hotmail uses lookupGetter on prototypes, not instances
+		var styleSetterLookupMethod = document.createElement('span').style.__lookupSetter__;
+		 CSSStyleDeclaration.prototype.__lookupSetter__ = function(prop){
+			return styleSetterLookupMethod.call(document.createElement('span').style, prop);
+		 };
+				// CORE-15945, It's usually not necessary to define properties that are already supported with getters and setters.
+		var realHTMLElementDefineGetter = HTMLElement.prototype.__defineGetter__;
+		HTMLElement.prototype.__defineGetter__ = function(name, func){
+			if( name in {'document':''} ) return;
+			realHTMLElementDefineGetter.call(this, name, func);
 		}
+		
+				// CORE-15973, Resize function causes rendering loop
+		opera.defineMagicFunction('dap_Resize', function(){});
+				// DSK-235885, RTE._getSelectionImpl must use the createRange for Mozilla
+		document.addEventListener( 'load', function(e){
+			if(e.target instanceof HTMLIFrameElement){
+				e.target.contentDocument.selection.createRange = function(){return document.createRange(); };
+			}
+		},true);
+		
+				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
+		addCssToDocument('.RTE .Container iframe{width: 100%}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FireAnt.Debug.Trace tries to use arguments.callee.caller, which doesn\'t work in Opera (138530)\nMaki...). See browser.js for details');
-	} else if(hostname.indexOf('makemytrip.com')>-1){			// 206463, MakeMyTrip search fails
-		document.all=null;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MakeMyTrip search fails). See browser.js for details');
-	} else if(hostname.indexOf('mapquest.com')>-1){			// 240094, MapQuest uses .all collection with text nodes in
-		opera.addEventListener('BeforeEvent.load', function(e){ 
-		    if(document.body){
-		        removeEventListener.call=call;
-		        document.body.all=null;
-		        removeEventListener.call(opera,'BeforeEvent.load', arguments.callee, false);
-		    } 
-		}, false)
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MapQuest uses .all collection with text nodes in). See browser.js for details');
-	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165620, scrollTop, scrollLeft bug on inline elements such as BUTTON makes menus appear at left edge of screen
-		HTMLButtonElement.prototype.getBoundingClientRect=function(){
-			var top=0,left=0,right=0,bottom=0, el=this, hasBug=false;
-			while(el){
-				hasBug = el.currentStyle.display=='inline' && el.scrollLeft == el.offsetLeft;
-				top+=el.offsetTop;
-				left+=el.offsetLeft;
-				if( ! hasBug ){ top-=el.scrollTop; left-=el.scrollLeft; }
-				el=el.offsetParent;
-			}
-			right=left+this.offsetWidth;
-			bottom=top+this.offsetHeight;
-			return { top:top, left:left, right:right, bottom:bottom };
-		}
-				// 305279, Map is too narrow
-		addCssToDocument('#msve_mapContainer{width: 95%!important}');
-				// 305279, Loading Atlas libraries depends on immediate load events for scripts
-		fixScriptOnloadBehaviour(Element.prototype.appendChild);
-				// 165310, Fake oncontextmenu support
+	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (scrollTop, scrollLeft bug on inline elements such as BUTTON makes menus appear at left edge of scree...). See browser.js for details');
-	} else if(hostname.indexOf('maps.ubiest.com')>-1){			// 256721, Ubiest.com uses CSS filters if document.all exists
-		document.all=null;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ubiest.com uses CSS filters if document.all exists). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
+	} else if(hostname.indexOf('marktplaats.nl')!=-1){			// PATCH-3, Can't add article to favourites because setting link.search has no effect
+		HTMLAnchorElement.prototype.__defineGetter__('search', function(){return this.href.match(/\?.*/)||'';});
+		HTMLAnchorElement.prototype.__defineSetter__('search', function(v){
+			this.href+=v;});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Can\'t add article to favourites because setting link.search has no effect). See browser.js for details');
 	} else if(hostname.indexOf('maybank2u.com.my')>-1){			// 249799, maybank2u, onresize event causes a refresh whenever the softkeyboard is opened
 		opera.addEventListener('BeforeEventListener.resize',function (e) { preventDefault.call=call;
 			preventDefault.call(e);
@@ -1439,32 +1649,26 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
-	} else if(hostname.indexOf('nbc4.tv')>-1){			// 215526, NBC4.tv uses capturing load events
-		preventEventCapture(window, 'load');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC4.tv uses capturing load events). See browser.js for details');
-	} else if(hostname.indexOf('nbcolympics.com')>-1){			// 197145, NBC Olympics site uses capturing load events
-		preventEventCapture(window, 'load');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC Olympics site uses capturing load events). See browser.js for details');
-	} else if(hostname.indexOf('nectar.com')>-1){			// 240950, Nectar uses getYear where they should use getFullYear
-		Date.prototype.getYear=Date.prototype.getFullYear;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nectar uses getYear where they should use getFullYear). See browser.js for details');
+	} else if(hostname.indexOf('news.bbc.co.uk')!=-1){			// 356736, Disabling Opera detection that prevents the BBC Olympic Map from appearing
+		opera.addEventListener('BeforeExternalScript', function(e){
+			indexOf.call=replace.call=addEventListener.call=call;
+			var oldUA = navigator.userAgent;
+			if (indexOf.call(e.element.src, 'glow.js')!=-1){
+				navigator.userAgent = replace.call(navigator.userAgent, 'Opera', '0pera (spoofing as Firefox)');
+			}
+			if(navigator.userAgent!=oldUA)addEventListener.call(opera,'AfterExternalScript', function(e){
+				removeEventListener.call=call;
+				navigator.userAgent=oldUA;
+				removeEventListener.call(opera,'AfterExternalScript', arguments.callee, false);
+			}, false);
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disabling Opera detection that prevents the BBC Olympic Map from appearing). See browser.js for details');
 	} else if(hostname.indexOf('news.msn.co.kr') >-1){			// 342895, news.msn.co.kr navigation bar is offset from the page
 		addCssToDocument('#home{position:relative!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (news.msn.co.kr navigation bar is offset from the page). See browser.js for details');
-	} else if(hostname.indexOf('nick.com')>-1||hostname.indexOf('nickjr.com')>-1){			// 82209, Nick.com flash detection fix
-		document.all=null;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nick.com flash detection fix). See browser.js for details');
 	} else if(hostname.indexOf('nrg.co.il')>-1){			// 244416,  NRG.co.il saving articles does not work
 		addPreprocessHandler('document.getElementById("launcher").innerHTML="";', '');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( NRG.co.il saving articles does not work). See browser.js for details');
-	} else if(hostname.indexOf('orbitz.com')>-1){			// 240577, Orbitz new Function() issue workaround
-		(function(){
-		  var Function = window.Function;
-		  window.Function = function(str){
-		    return Function.call(this,str.replace(/function\s*\(/g,'function anonymous('));
-		  }
-		})();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Orbitz new Function() issue workaround). See browser.js for details');
 	} else if(hostname.indexOf('picasaweb.google')!=-1){			// 304172, Picasaweb browser sniffing removes functionality Opera has no problems with, for example slideshow
 		var oldua=navigator.userAgent;
 		navigator.userAgent = {
@@ -1474,6 +1678,14 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			indexOf: function(s){ return oldua.indexOf(s); }
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Picasaweb browser sniffing removes functionality Opera has no problems with, for example slideshow). See browser.js for details');
+	} else if(hostname.indexOf('poczta.onet.pl')>-1){			// 338246,  poczta.onet.pl RTE broken in 9.50
+		opera.addEventListener('BeforeEvent.load', function(e){
+			if( document.getElementById('idIframka') ){
+				document.getElementById('idIframka').contentDocument.designMode='on';
+			}
+		}, false);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( poczta.onet.pl RTE broken in 9.50). See browser.js for details');
 	} else if(hostname.indexOf('pogo.com')>-1){			// 305697,  Java detection fails on pogo.com
 		if(navigator.javaEnabled()){
 			var javaVersion = java.lang.System.getProperty('java.version');
@@ -1482,15 +1694,7 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			navigator.mimeTypes[navigator.mimeTypes.length] = {type: 'application/x-java-applet;version=' + javaVersion };
 			navigator.mimeTypes.length = navigator.mimeTypes.length+1;
 		}
-				// 222328, Loading problems on pogo.com because of document.load in frameset event handler scope
-		opera.addEventListener( 'BeforeEventListener.load', 
-			function(e){ document.load=self.load;
-		},false );
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Java detection fails on pogo.com\nLoading problems on pogo.com because of document.load in frameset...). See browser.js for details');
-	} else if(hostname.indexOf('prisjakt.nu')>-1){			// 242474,  prisjakt.nu capturing load events on back navigation
-		preventEventCapture(window, 'load');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( prisjakt.nu capturing load events on back navigation). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Java detection fails on pogo.com). See browser.js for details');
 	} else if(hostname.indexOf('rabobank.nl')!=-1){			// 277063,  Rabobank cancels t keypress
 		opera.addEventListener('AfterEvent.keypress', function(e){
 			preventDefault.call=call;
@@ -1518,6 +1722,38 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('show.co.kr')!=-1){			// 348818, Pre-filled text as INPUT background not cleared on focus
 		document.addEventListener('focus', function(e){if(e.target.tagName=='INPUT'){e.target.style.backgroundImage='none'; e.target.onfocus=null;}},true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Pre-filled text as INPUT background not cleared on focus). See browser.js for details');
+	} else if(hostname.indexOf('spaces.live.com')!=-1){			// 311225, Overriding spaces.live.com browser sniffing
+		opera.addEventListener(
+			'BeforeScript',
+			function(){ window.opera=undefined; },
+			false
+		);
+		
+		opera.addEventListener(
+			'AfterScript',
+			function(e){
+				var ok=false;
+				if( typeof attachOperaCompatibility == 'function' ){
+					attachOperaCompatibility(window);
+					ok=true;
+				}else if( typeof $Browser !='undefined' && typeof $Browser.attachOperaCompatibility == 'function' ){
+					$Browser.attachOperaCompatibility(window);
+				}
+				if(ok){
+					opera.removeEventListener( 'AfterScript', arguments.callee, false );
+					
+				}
+			},
+			false
+		);
+		
+				// 311225, Make Range.prototype.insertNode automatically import nodes from other documents
+		var rangeInsertNode = Range.prototype.insertNode;
+		Range.prototype.insertNode = function(n){
+			if(this.startContainer && this.startContainer.ownerDocument && n.ownerDocument != this.startContainer.ownerDocument )n=this.startContainer.ownerDocument.importNode(n, true);
+			return rangeInsertNode.call(this,n);
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Overriding spaces.live.com browser sniffing\nMake Range.prototype.insertNode automatically import no...). See browser.js for details');
 	} else if(hostname.indexOf('spreadsheets')==0&&hostname.indexOf('.google.')>-1){			// 215770, Faking support for event object properties layerX and layerY
 		opera.addEventListener( 'BeforeEventListener', function( e ){
 			if(e.event.offsetX){
@@ -1551,12 +1787,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('tistory.com')!=-1){			// 347990, two login buttons on tistory.com
 		addCssToDocument('#memberbox .btn-login {text-indent:-100px;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (two login buttons on tistory.com). See browser.js for details');
-	} else if(hostname.indexOf('toeslagen.nl')!=-1){			// 257787,  enabling an alternate stylesheet while it is still loading is ignored
-		opera.defineMagicFunction( 'SwitchStyleSheet', function( fn, th ){
-			var args=arguments.slice(2);
-			document.addEventListener('load', function(){ fn.apply(th, args ); }, false );
-		});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( enabling an alternate stylesheet while it is still loading is ignored). See browser.js for details');
 	} else if(hostname.indexOf('united.com')>-1 || hostname.indexOf('flyted.com')>-1 || hostname.indexOf('itn.net')>-1){			// 193907,  United.com flight search problem: hidden images do not load, so no onload event
 				document.addEventListener('load', function(){
 					var i,img;
@@ -1575,16 +1805,29 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 					}
 				}, false);	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( United.com flight search problem: hidden images do not load, so no onload event). See browser.js for details');
+	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
+		opera.addEventListener('BeforeEvent.invalid', function(e){
+			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
+			and make sure they are temporarily "un-required" if they are */
+			getAttribute.call = getComputedStyle.call = removeAttribute.call = setTimeout.call = preventDefault.call = call;
+			var el=e.event.target;
+			if( getAttribute.call(el, 'required')=='True' && getComputedStyle.call(window, el).visibility=='hidden' ){
+				removeAttribute.call(el,'required');
+				setTimeout.call(window, function(){setAttribute.call=call; setAttribute.call(el,'required', 'True');},0 )
+				preventDefault.call(e.event);
+			}
+		}, false);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( USAirways is not compatible with WF2 spec required attribute). See browser.js for details');
 	} else if(hostname.indexOf('video.nbc.com')>-1||href.indexOf('nbc.com/Video')>-1){			// 243428, NBC.com video problems
 		document['all']=null;
 		addCssToDocument('#flashcontent{height:550px!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC.com video problems). See browser.js for details');
-	} else if(hostname.indexOf('wachovia.com')>-1){			// 128405, Viewing checks calls createElement with markup strings if document.all exists
-		document.all=null;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Viewing checks calls createElement with markup strings if document.all exists). See browser.js for details');
 	} else if(hostname.indexOf('walla.co.il')!=-1){			// 184398,  Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793
 		addCssToDocument(' .btn-t,.btn-r, .btn{display:inline !important;} .wp-0-b{width:auto !important}table {table-layout: auto !important}.w2b + table { width: 100%;}');
 		
+				// 327825, New mail UI on Walla requires IE-style event capture
+		emulateIECapturingEvents();
 				// 209477, walla.co.il custom videoplayer does not work
 		opera.defineMagicFunction( 'showPlayerObject', function( origfunc, origthis, id, url ){
 			document.getElementById(id).innerHTML='<object type="video/x-ms-asf" data="'+url+'"  width="100%" height="282" autostart="true"> failed to render object </object>';
@@ -1597,7 +1840,7 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 				// 205887, Walla workaround for white-space issue
 		addCssToDocument('button.w2 {white-space: nowrap;}');
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nwalla.co.il custo...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nNew mail UI on Wa...). See browser.js for details');
 	} else if(hostname.indexOf('walmart.com')!=-1){			// 279084, Walmart hides "find in store" popup unintentionally
 		addCssToDocument('#overlay{display: block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Walmart hides "find in store" popup unintentionally). See browser.js for details');
@@ -1608,10 +1851,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		document.all=null;
 		fakeOncontextmenu(true, 500);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Mouseover popups do not appear due to document.all sniffing). See browser.js for details');
-	} else if(hostname.indexOf('yellowpages.com.au')>-1 ){			// 231853, Yellow pages event capture fix
-		preventEventCapture(window, 'load');
-			
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yellow pages event capture fix). See browser.js for details');
 	} else if(hostname.indexOf('ynet.co.il')>-1||hostname.indexOf('ynetnews.com')>-1){			// 224708, YNet article comments display fix
 		addCssToDocument('table {display:table !important}');
 		
@@ -1634,8 +1873,5 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
-	} else if(pathname.indexOf('wp-admin')>-1){			// 261699, Wordpress Admin prev/next link styling makes them unclickable
-		addCssToDocument('.navigation{display:inline !important;} .navigation div{display:block !important;}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Wordpress Admin prev/next link styling makes them unclickable). See browser.js for details');
 	}
 })(opera);
