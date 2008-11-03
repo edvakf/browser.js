@@ -1,4 +1,4 @@
-// lh/khwWsesHaXn6YdzLR5TaNgr5+PhjNU/3unrV04eVEK1VuIfYcpYQeL6GqhJtRcSpaqgKXa5GZk33UCeg7bNrhsIdIrlSdKPQspWbskA2O26B7ux+tsGcZboEEtIm7oDgR4paEItFtdPREB8UhH1FTfUXKCR8wrSiEU3FuQjdcODEzifO71KPFpefKYMGQNY7YnPur/RdS/PtRnoip/4xTiDlmJYOXN6Tp0DcUgHqVQs65n8gAOYP3rvXB6n+MwbTOWYMQBD+11VExHTjwPhOXPGwLN4YUEUoT3WZvKOgHo0uu5UmEuYP9tNOFVzHmP98YJUOm6u+mhhTlbcWZ2Q==
+// ctk4UKer0fVi7izf9HofrFfAULvctv3XmEBLV0b/daGbcjUUyIgVKQwwedDpqWQPl23W021vMTQKZ8rqADRvlN4wR3xpnW374YSHGFNy+fCVqZO3uNUVUR/ZUZlsNajdHnO+wuNQ1pP1VA8C4Xq1dHYj9ueg7+6hbWSPR/EQnpxuMaYMiBYAPJu0nbK6AOdC6xNb9vvfDSHecsuiyvm6CKDuJTBqHLjXJ8xS//SCsd7KZ5fxj+ympcu6iUasJWsvcZ0I1ZsTi+MM3cLui+lBA4qf0JfejjxJO52PfhckqA/BVnrkDZi6jdcxYMyO0kHWjNY/HVq0kgfTkzv7FyA72g==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 9.50, November 3, 2008 ';
+	var bjsversion=' Opera Desktop 9.60, November 3, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -681,28 +681,13 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}
 	, false);
 }
-function workAroundBug343019(){
-	document.addEventListener('DOMContentLoaded', function(){
-		for( var frms=document.getElementsByTagName('form'),i=0,frm; frm=frms[i];i++ ){
-			if(!frm.action)return;
-			if(/^javascript:/i.test(frm.action))return;
-			var actionSubstring = /^http/i.test( frm.action ) ? frm.action.substr(7) : frm.action ;
-			if( /(:)/.test(actionSubstring) ){
-				var colonPosition = actionSubstring.indexOf(':')+1
-				actionSubstring = actionSubstring.substr( colonPosition );
-				frm.action = frm.action.substr(0, colonPosition) + (actionSubstring.replace(/\+/g, '%252B' ).replace( /\//g, '%252F' ));
-			}
-		}
 
-	},false);
-}
 
 	// The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
 // Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
 // Compatibility layer for Google Gears initialization script
 // PDF security patch
-// document.domain can not be set to last TLD
 			// 305669, The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 	document.addEventListener('load', function(){
 		try{var obj = document.evaluate( '//input[translate(@required, "FALSE", "false")="false"]', document.documentElement, null, 4, null ), el ;
@@ -920,18 +905,6 @@ function workAroundBug343019(){
 		var hash=unescape.call(self, toLowerCase.call(self.location.hash));
 		if( /*indexOf.call(pathname, '.pdf')>-1 &&*/ hash  &&  indexOf.call(hash, 'javascript:')>-1   ) preventDefault.call(e);
 	}, false);
-			// 366749, document.domain can not be set to last TLD
-	var oldDocDomainSetter = document.__lookupSetter__('domain');
-	var oldDocDomainGetter = document.__lookupGetter__('domain');
-	document.__defineSetter__('domain', function(newDomain){
-		if( newDomain.indexOf('.')==-1 || newDomain.indexOf('.')==(newDomain.length-1) ){
-			throw 'Security Exception: document.domain set to illegal value';
-		}
-		oldDocDomainSetter.call(this, newDomain);
-	});
-	document.__defineGetter__('domain', function(){
-		return oldDocDomainGetter.call(this);
-	});
 
 
 	if( hostname.indexOf('.saab.')>-1 ){			// 145261,  sniffing on saab.com and saab.de excludes Opera
@@ -969,9 +942,6 @@ function workAroundBug343019(){
 		navigator.product='Gecko';
 		addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
-	} else if(hostname.indexOf('.anz.com')!=-1){			// 343019, ANZ online bank form action URLs are incorrectly decoded
-		workAroundBug343019();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ANZ online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -1008,9 +978,6 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('.ibm.com')>-1){			// 206984, IBM driver download has HTML comments inside SCRIPT tag, breaks parsing
 		removeClosingHTMLComments();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IBM driver download has HTML comments inside SCRIPT tag, breaks parsing). See browser.js for details');
-	} else if(hostname.indexOf('.icicibank.')!=-1){			// 343019, ICICI online bank form action URLs are incorrectly decoded
-		workAroundBug343019();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ICICI online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
 		location.href='/dc/launch?sysreq=ignore';
 		
@@ -1249,9 +1216,7 @@ function workAroundBug343019(){
 					preventDefault.call(e);
 				}
 			}, false);
-				// 314246, Work around bug that breaks Deviantart categories menu
-		opera.addEventListener('BeforeEvent.blur', function(e){if(e.event.target==self)e.preventDefault();}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files\nWork around...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files). See browser.js for details');
 	} else if(hostname.indexOf('estadao.com.br')!=-1){			// 279595,  Estadao redefines window.XMLHttpRequest with a function declaration
 		var _XHR=window.XMLHttpRequest;
 		opera.defineMagicVariable('XMLHttpRequest', function(){return _XHR;}, null);
@@ -1342,20 +1307,7 @@ function workAroundBug343019(){
 		});
 		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: browser blocking prevents chat feature from appear...). See browser.js for details');
-	} else if(hostname.indexOf('mail.live.com')!=-1){			// 228506, FireAnt.Debug.Trace tries to use arguments.callee.caller, which doesn't work in Opera (138530)
-		opera.defineMagicVariable('FireAnt',
-			function(curVal) {
-				if (curVal && curVal.Debug) {
-					curVal.Debug.Trace = function() { };
-				}
-				return curVal;
-			},
-			function(newVal) {
-				return newVal;
-			}
-		);
-		
-				// 178077, Making sure button constants are DOM-standard compatible
+	} else if(hostname.indexOf('mail.live.com')!=-1){			// 178077, Making sure button constants are DOM-standard compatible
 		opera.addEventListener('BeforeScript', function(e) {
 			try { window.Web.Browser.Button = { "LEFT": 0, "RIGHT": 2, "MIDDLE": 1 }; } catch(ex) {}
 		}, false);
@@ -1619,7 +1571,7 @@ function workAroundBug343019(){
 		
 				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
 		addCssToDocument('.RTE .Container iframe{width: 100%}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FireAnt.Debug.Trace tries to use arguments.callee.caller, which doesn\'t work in Opera (138530)\nMaki...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure button constants are DOM-standard compatible\ntagName is lowercase for some custom XML i...). See browser.js for details');
 	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
@@ -1678,14 +1630,6 @@ function workAroundBug343019(){
 			indexOf: function(s){ return oldua.indexOf(s); }
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Picasaweb browser sniffing removes functionality Opera has no problems with, for example slideshow). See browser.js for details');
-	} else if(hostname.indexOf('poczta.onet.pl')>-1){			// 338246,  poczta.onet.pl RTE broken in 9.50
-		opera.addEventListener('BeforeEvent.load', function(e){
-			if( document.getElementById('idIframka') ){
-				document.getElementById('idIframka').contentDocument.designMode='on';
-			}
-		}, false);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( poczta.onet.pl RTE broken in 9.50). See browser.js for details');
 	} else if(hostname.indexOf('pogo.com')>-1){			// 305697,  Java detection fails on pogo.com
 		if(navigator.javaEnabled()){
 			var javaVersion = java.lang.System.getProperty('java.version');
