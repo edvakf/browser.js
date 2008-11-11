@@ -1,4 +1,4 @@
-// j8DXxMSU9uXYsD3fJQMVIiHn1SovChSLIhRZs//KxFM/oMv7+/k0B493eOAyIxCn13mLQhj3qB0sH38ND4BW3Lp4+5mZkb+MKHPE4XRj4Vk+mGqAC8h7iOzgGgfywtkzwGJqVyw1IQ4HEIz1ROQ5tEt4jdkbV7NMuD2ylGnNCqCznrlRHWw9fRJzLb+dirZ9CeKQlQwITOXNZ1M5Kp1ySLud5gWiCcAJ8I4XZXBgIvoWAkJo5Kq6ciRn4p4cm+M/gxwakBSb0XlByIk51/2Z0eiKMGjkCL2cuLez12qAvrP3f2SSPJAaALedKWhb+oWLCne/QfVqm4HJlucDhzS4eg==
+// NxUH9YzgSRtpObVFZozZVRjBaA0p3aD3HSLEF8+KhSH03iDGib1ytPIUzt2qxh87hpjnxTh0p9M9IHnfpipH26z75XT2yso4UeHBjRGZviQI1Q0lUiHINikEDMg+tJbCRcgpBUKZAaMCEdCECR/vQ4Rdf99NoiboZXrjPKZIU4KhtcPVIPaibIaMka1r24E014Q9GIo3g9adZ1O9KlWZpdNuGyvexNPW5/k09bTcHw20oTlsEqePJv1ltr0ZNHRDnVgWvSl3yRM426fRNnpPPOHtbnXtZxo52V30BlaHeZ50e1YPca6yZ02Y/tI0iVGfh5OhGBQxjoK7pqYLzePA8A==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 8.54, November 3, 2008 ';
+	var bjsversion=' Opera  8.54, November 10, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -43,6 +43,7 @@
 	getElementById=Document.prototype.getElementById,
 	appendChild=Node.prototype.appendChild,
 	removeChild=Node.prototype.removeChild,
+	replaceChild=Node.prototype.replaceChild,
 	evaluate=Document.prototype.evaluate,
 	getElementsByTagName=Document.prototype.getElementsByTagName,
 	createElement=Document.prototype.createElement,
@@ -51,6 +52,7 @@
 	preventDefault=Event.prototype.preventDefault,
 	getComputedStyle=window.getComputedStyle,
 	slice=Array.prototype.slice,
+	shift=Array.prototype.shift,
 	setTimeout=window.setTimeout,
 	removeAttribute=Element.prototype.removeAttribute,
 	addEventListener=Document.prototype.addEventListener,
@@ -750,12 +752,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
-	} else if(hostname.indexOf('americanexpress.')!=-1){			// 340054,  American Express login broken by WebForms2
-		document.addEventListener('DOMContentLoaded', function(){
-			var col=document.selectNodes('//input[@action]');
-			if(col[0])col[0].removeAttribute('action');
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( American Express login broken by WebForms2). See browser.js for details');
 	} else if(hostname.indexOf('aol.co.uk') >-1){			// 179107, AOL login hidden by IFRAME
 		document.addEventListener('load', function(ev){ var i = document.getElementById('loginLayer');if( i && i.firstChild && i.firstChild.style.zIndex==-1 ){i.firstChild.style.display='none';}   }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL login hidden by IFRAME). See browser.js for details');
@@ -802,6 +798,18 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('blogger.com')>-1){			// 177059, Blogger: browser detection prevents WYSIWYG editing
 		navigator.product = 'Gecko';
 		navigator.userAgent = navigator.userAgent.replace(/Opera/, 'Firefox')+' ( rv:1.9.0.3)';
+		
+		opera.defineMagicVariable(
+			'Detect',
+			function( obj ){return obj;},
+			function( obj ){
+				obj.OPERA = function(){return false;}
+				obj.MOZILLA = function(){return true;}
+				obj.IE=function(){return false;}
+				obj.IE_5_5_newer=function(){return false;}
+				return obj;
+			}
+		);
 		
 				// 187226, Blogger: Should distinguish AltGr and Ctrl
 		opera.defineMagicFunction('isCtrlKeyPressed', function(f, t, e){ return e.ctrlKey&&!e.altKey;  });
@@ -942,6 +950,11 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('kr.msn.com')!=-1){			// 349584, head layout broken on kr.msn.com
 		addCssToDocument('li:after, ul:after{display:none!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (head layout broken on kr.msn.com). See browser.js for details');
+	} else if(hostname.indexOf('mail.126.com')!=-1){			// PATCH-5, can't read E-mail on 126.com due to XML parse error
+		addPreprocessHandler(
+		/if\(([A-Za-z0-9_$]*)=="opera"\)\{[A-Za-z0-9_$]*=[A-Za-z0-9_$]*\.replace\(\/&lt;\/gi, "<"\)\.replace\(\/&gt;\/gi, ">"\);\}/, 'if(false){}');
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t read E-mail on 126.com due to XML parse error). See browser.js for details');
 	} else if(hostname.indexOf('mail.163.com')!= -1){			// 347923, Fixed add files issue in mail.163.com
 		addCssToDocument('.upload .input_browser { width:auto !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fixed add files issue in mail.163.com). See browser.js for details');
