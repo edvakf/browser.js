@@ -1,4 +1,4 @@
-// ctk4UKer0fVi7izf9HofrFfAULvctv3XmEBLV0b/daGbcjUUyIgVKQwwedDpqWQPl23W021vMTQKZ8rqADRvlN4wR3xpnW374YSHGFNy+fCVqZO3uNUVUR/ZUZlsNajdHnO+wuNQ1pP1VA8C4Xq1dHYj9ueg7+6hbWSPR/EQnpxuMaYMiBYAPJu0nbK6AOdC6xNb9vvfDSHecsuiyvm6CKDuJTBqHLjXJ8xS//SCsd7KZ5fxj+ympcu6iUasJWsvcZ0I1ZsTi+MM3cLui+lBA4qf0JfejjxJO52PfhckqA/BVnrkDZi6jdcxYMyO0kHWjNY/HVq0kgfTkzv7FyA72g==
+// vc0EyR7PtjGbxtTuAxfFQDBHodvd3MojiUyENPYuVchLBSHOCMmZreO+6mKD4il49Qs6S06Edl8JJOq72RA8xZdHkbdbWUhRozViQ2sk4Z42VOLgBNnY8zWp0VhONgzgIkehHJQg7cV4qug4cfvIY0eqF/1//nijeFxod/H6HPlIvC4uZm617kl/aDT3P6tkLl9aRu562rwOZIMUq27A2On17a3gRswqCugxHIj0ZGa49Wn7Pf2Q75zOA6xq1on8TNqD65QzP9VTTKLXkqRPj88EYvnZSnrG6npPtuQS6QhCUwUt8/TH/AIgXC2GMbClE7bTxZ09PVoQHs1a6ECleQ==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 9.60, November 3, 2008 ';
+	var bjsversion=' Opera  9.60, November 10, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -43,6 +43,7 @@
 	getElementById=Document.prototype.getElementById,
 	appendChild=Node.prototype.appendChild,
 	removeChild=Node.prototype.removeChild,
+	replaceChild=Node.prototype.replaceChild,
 	evaluate=Document.prototype.evaluate,
 	getElementsByTagName=Document.prototype.getElementsByTagName,
 	createElement=Document.prototype.createElement,
@@ -51,6 +52,7 @@
 	preventDefault=Event.prototype.preventDefault,
 	getComputedStyle=window.getComputedStyle,
 	slice=Array.prototype.slice,
+	shift=Array.prototype.shift,
 	setTimeout=window.setTimeout,
 	removeAttribute=Element.prototype.removeAttribute,
 	addEventListener=Document.prototype.addEventListener,
@@ -535,6 +537,53 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
+}function fixJQueryScriptSchedulingTrouble(){
+	var scriptQueue = [];
+	Element.prototype.appendChild = (function(ac){
+		return function(child, fromQueue){
+			if( ! fromQueue && child instanceof HTMLScriptElement && child.src){
+					scriptQueue.push({child: child, parent: this});
+					return child;
+			}else
+				return ac.call(this, child);
+		}
+	})(Element.prototype.appendChild)
+
+	opera.addEventListener('AfterScript', function(e){
+		removeChild.call = replaceChild.call = appendChild.call = shift.call = call;
+		if(e.element.__operaRemovalFlag){
+			removeChild.call(e.element.parentNode, e.element);
+		}
+		if( scriptQueue.length ){
+			var script = shift.call(scriptQueue);
+			if( script.replaceEl ){
+				replaceChild.call( script.parent, script.child, script.replaceEl, true );
+			}else{
+				appendChild.call( script.parent, script.child, true );
+			}
+		}
+	}, false);
+
+	Element.prototype.removeChild = (function( rc ){
+		return function( child ){
+			if(child instanceof HTMLScriptElement && child.src && child.readyState != 'loaded' ){
+				child.__operaRemovalFlag=true;
+				return child;
+			}else
+				return rc.call(this, child);
+		}
+	})(Element.prototype.removeChild);
+
+	// This fixes Sarissa too..
+	Element.prototype.replaceChild = (function(ac){
+		return function( child, existing, fromQueue ){
+			if( ! fromQueue && child instanceof HTMLScriptElement ){
+					scriptQueue.push({child: child, parent: this, replaceEl: existing });
+					return existing;
+			}else
+				return ac.call(this, child, existing);
+		}
+	})(Element.prototype.replaceChild)
 }function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
 	if(fixed)return; fixed=true;
@@ -1108,12 +1157,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 				// 331093, Work around Opera bug where second BR tag overwrites newly inserted IMG
 		addPreprocessHandler(/editor\.insertNodeAtSelection\(link\);\s*editor\.insertNodeAtSelection\(document\.createElement\('br'\)\);/, 'editor.insertNodeAtSelection(link);');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable blog post editor on ameba.jp\nWork around Opera bug where second BR tag overwrites newly inse...). See browser.js for details');
-	} else if(hostname.indexOf('americanexpress.')!=-1){			// 340054,  American Express login broken by WebForms2
-		document.addEventListener('DOMContentLoaded', function(){
-			var col=document.selectNodes('//input[@action]');
-			if(col[0])col[0].removeAttribute('action');
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( American Express login broken by WebForms2). See browser.js for details');
 	} else if(hostname.indexOf('aol.com') >-1){			// 179219, AOL miscalculated widths cause overlaps at top
 		opera.addEventListener('BeforeEvent.'+(opera.version()>9?'DOMContentLoaded':'load'), function(ev){ if(ev.event.target!=document)return;
 		var i;
@@ -1159,6 +1202,18 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('blogger.com')>-1){			// 177059, Blogger: browser detection prevents WYSIWYG editing
 		navigator.product = 'Gecko';
 		navigator.userAgent = navigator.userAgent.replace(/Opera/, 'Firefox')+' ( rv:1.9.0.3)';
+		
+		opera.defineMagicVariable(
+			'Detect',
+			function( obj ){return obj;},
+			function( obj ){
+				obj.OPERA = function(){return false;}
+				obj.MOZILLA = function(){return true;}
+				obj.IE=function(){return false;}
+				obj.IE_5_5_newer=function(){return false;}
+				return obj;
+			}
+		);
 		
 				// 187226, Blogger: Should distinguish AltGr and Ctrl
 		opera.defineMagicFunction('isCtrlKeyPressed', function(f, t, e){ return e.ctrlKey&&!e.altKey;  });
@@ -1240,6 +1295,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		navigator.__defineSetter__('family', function(){})
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (browser sniffing breaks ibank.isb.ru). See browser.js for details');
+	} else if(hostname.indexOf('icelandair.')!=-1){			// DSK-238649, jQuery script scheduling trouble on Icelandair
+		fixJQueryScriptSchedulingTrouble();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (jQuery script scheduling trouble on Icelandair). See browser.js for details');
 	} else if(hostname.indexOf('iieye.com')!= -1){			// 361535, IE detection prevents other browsers from accessing iieye.com
 		opera.defineMagicVariable('isIE',function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IE detection prevents other browsers from accessing iieye.com). See browser.js for details');
@@ -1271,6 +1329,11 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			}
 		}, false)
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( LG Mobile Flash does not load as expected because of missing type attribute). See browser.js for details');
+	} else if(hostname.indexOf('mail.126.com')!=-1){			// PATCH-5, can't read E-mail on 126.com due to XML parse error
+		addPreprocessHandler(
+		/if\(([A-Za-z0-9_$]*)=="opera"\)\{[A-Za-z0-9_$]*=[A-Za-z0-9_$]*\.replace\(\/&lt;\/gi, "<"\)\.replace\(\/&gt;\/gi, ">"\);\}/, 'if(false){}');
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t read E-mail on 126.com due to XML parse error). See browser.js for details');
 	} else if(hostname.indexOf('mail.163.com')!= -1){			// 347923, Fixed add files issue in mail.163.com
 		addCssToDocument('.upload .input_browser { width:auto !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fixed add files issue in mail.163.com). See browser.js for details');
@@ -1570,7 +1633,7 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		},true);
 		
 				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
-		addCssToDocument('.RTE .Container iframe{width: 100%}');
+		addCssToDocument('.RTE .Container iframe{width: 100% !important; height: 100% !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure button constants are DOM-standard compatible\ntagName is lowercase for some custom XML i...). See browser.js for details');
 	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
@@ -1646,6 +1709,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Rabobank cancels t keypress). See browser.js for details');
+	} else if(hostname.indexOf('redfin.com')!=-1){			// DSK-231794, Solve Dojo script scheduling trouble on redfin.com
+		fixJQueryScriptSchedulingTrouble();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Solve Dojo script scheduling trouble on redfin.com). See browser.js for details');
 	} else if(hostname.indexOf('reviews.cnet.com') >-1){			// 179484, CNet videos: document.write adds a script that depends on variables defined later
 		opera.addEventListener('BeforeScript',
 		function(ev){ 
