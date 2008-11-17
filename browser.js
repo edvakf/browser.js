@@ -1,4 +1,4 @@
-// oTUvTlWU87yX8VxF1Q+gosX1aK/PiJozDcJTFxToRnorz8DPL/JcPg99eKOPH3OFq0B3dLTfAeAv6hwpcteq6n1Zasgt9//qININ2cJm0HSwYLIWyqzUtlX9IoQMLHw4qk9lB/HC9SSTwzfuK3RNAyhhFFI1GNDXz0yg0S/cbAj2aCBJXiZT8PJGMD5Jc5jrnXXuah51dkzCGW0AEXJBxk9DdbZru5dzHzWjAqcjA/UkFfSn3Z+3u2A35ADgewzPaim2WZx3cq2cRsHQA69cFmkctryVb1eigGm80+Mi9I61DjV1DYo983IdgpYBq0ypC94B6hcgqG08pPHPYtYtsw==
+// WoGoxXNGVtEJiU58PxiaF028PYTLtG9Y62VBFkUcHdRXTm7zvMcU2rDWLz3rafkrdd9A7jUI5ItDXbGBV6sKuwa5/XCEB30LQRJs3rn+/6ZgDLHE0I+5C8NcP+p1sndVBcvYJX153CIWPO1P2qiAMwmj42RjxsPMvV1bwkdx1lWdnpVvzF8cnmgn48D0B7g1AWgEly2fghV4Wwco0mzYP36BE9BjfsMTFGoZwYMfByn8BPYv6+24JxN4a4k/71nPcKKb9NKP6uQVah+8ARnn2TZ0nlIuwfktBLOkAJZSfwfKq7E6JcLz+fEiSmuu0Z9YI1OtDY521rdKujJHW3HwLw==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.20, November 10, 2008 ';
+	var bjsversion=' Opera  9.20, November 14, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1437,6 +1437,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		},false);
 		opera.defineMagicFunction('MM_checkBrowser', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (maybank2u, onresize event causes a refresh whenever the softkeyboard is opened). See browser.js for details');
+	} else if(hostname.indexOf('millenet.pl')!=-1){			// PATCH-7, Semicolon insertion fails after do..while() conditional
+		addPreprocessHandler(/;do num=Math\.ceil\(Math\.random\(\)\*maxNum\);while\(uniqueInt\.a\.hasMember\(num\)\)uniqueInt\.a\[uniqueInt\.a\.length\]=num;/, 'do num=Math.ceil(Math.random()*maxNum);while(uniqueInt.a.hasMember(num));uniqueInt.a[uniqueInt.a.length]=num;');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Semicolon insertion fails after do..while() conditional). See browser.js for details');
 	} else if(hostname.indexOf('monster.')!=-1){			// 315865, Monster category tree broken by their selectNodes function overwriting .text on nodes
 		addPreprocessHandler( /(item|result)\.text\s*=\s*(item|result)\.textContent;\s*/g, 'if(typeof $1.text==\'undefined\')$1.text = $1.textContent;' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Monster category tree broken by their selectNodes function overwriting .text on nodes). See browser.js for details');
