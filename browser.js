@@ -1,4 +1,4 @@
-// NxUH9YzgSRtpObVFZozZVRjBaA0p3aD3HSLEF8+KhSH03iDGib1ytPIUzt2qxh87hpjnxTh0p9M9IHnfpipH26z75XT2yso4UeHBjRGZviQI1Q0lUiHINikEDMg+tJbCRcgpBUKZAaMCEdCECR/vQ4Rdf99NoiboZXrjPKZIU4KhtcPVIPaibIaMka1r24E014Q9GIo3g9adZ1O9KlWZpdNuGyvexNPW5/k09bTcHw20oTlsEqePJv1ltr0ZNHRDnVgWvSl3yRM426fRNnpPPOHtbnXtZxo52V30BlaHeZ50e1YPca6yZ02Y/tI0iVGfh5OhGBQxjoK7pqYLzePA8A==
+// BTS2/0Ba/2l0sCH3dUVecU+0REzNrOF3soLS9qqyyP82IKQv3ptD+QT0I+ovqddxHR5QPCmrxZKFuInAUJMvHXj7LSGAHzoM+XJvG+O+zMObeDsHIdI6H8O8zBD+8K6A+vSlStjiroYsNotQe1DYk/CaDaondLKEgkGrywJpdRNLSHxAP8x4l+mHufGXTIAq3KkQjg3eIsQZilg4l/gTUzO3NUTDtMk+MHHFqAR9XHkMpOmpTwpJ9xpsq55JcXur6ZrICv2UzMXA6LfTzaX0nZ7Ygc+0FBFzORYgKm9ZaZNJlmI1vVccEHFJFmPzjIrq36iQWekKxza31AKgc5sv6Q==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  8.54, November 10, 2008 ';
+	var bjsversion=' Opera  8.54, November 14, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -984,6 +984,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('maps.ubiest.com')>-1){			// 256721, Ubiest.com uses CSS filters if document.all exists
 		document.all=null;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ubiest.com uses CSS filters if document.all exists). See browser.js for details');
+	} else if(hostname.indexOf('millenet.pl')!=-1){			// PATCH-7, Semicolon insertion fails after do..while() conditional
+		addPreprocessHandler(/;do num=Math\.ceil\(Math\.random\(\)\*maxNum\);while\(uniqueInt\.a\.hasMember\(num\)\)uniqueInt\.a\[uniqueInt\.a\.length\]=num;/, 'do num=Math.ceil(Math.random()*maxNum);while(uniqueInt.a.hasMember(num));uniqueInt.a[uniqueInt.a.length]=num;');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Semicolon insertion fails after do..while() conditional). See browser.js for details');
 	} else if(hostname.indexOf('msnbc.com')>-1){			// 207178, MSNBC sniffing hides Flash content
 		opera.defineMagicVariable('oSniff', function(o){return o;},function(){ window['oSniff'].nn=5; });
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSNBC sniffing hides Flash content). See browser.js for details');
