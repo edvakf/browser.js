@@ -1,4 +1,4 @@
-// fakxKUbmfwPGZG1MWWfEEsB9n98bKIvVpmmiIZCYmip3hG1Wf/w8L39tuql0OtiHSqps3pvgvzG6GNtMwAdtgT17cMrawRWauOWuR/bj++DmG43YWg7D1/VTz2myUcVucYHYgb5PcUj1dHQdyeOz7TOW2CRiOhhiu78SnutgFIis9XqQ3C/bvhs50D9tKdVBsxUcL/HKfbqLaLXhZL/ae/9u8RcCoipVHL42lhmigWtRwOWxK085pYqpXznvDaXRZAmbA4cjTs0h0B1+NfNZwEINEQbpuYIkxIXxcwIXryC35/XR56x6dxZTJDXL992ehWpbvYvlQaaYFzh2hIMmjg==
+// WBkB0vp5PNSfe+GludsyQdUt+42+iVuQOe3hJO8t1KdHs12w58mfcNlUS0rhQ43z24sweiRMpuuZVFit/RUcLHFVGfC1Je7zeP13Q7n+hzBghi4ZbKQBIdY8Y000WE6pXvsMEGJNRVwFBlTCQWsWYrohvNnmbaWRG86xHYH9MvD7NS85qVXcHRcSR3nFgigZf8VLTyWh3k6CHjIJj4s5ZR7h1snlShnWRxfOT/EoGM8XPzLB4pZLWlbYvw4/g/XZbtd2Os8+YvVpSZXwsFxG7B6o8CGNQltip02wtRdj9ED+8CrapWWDrYSgF+C3rW1fZMJpu+JYXLSlft+aOM3irg==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.50, November 10, 2008 ';
+	var bjsversion=' Opera  9.50, November 14, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1051,9 +1051,6 @@ function workAroundBug343019(){
 		}, false );
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: IFRAME expands forever\neBay: speed up back+forward navigation\neBay tries to communicate with...). See browser.js for details');
-	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/reader/')>-1){			// 317896, Google Reader constantly focuses page, causing blue tint
-		HTMLBodyElement.prototype.focus = function(){}
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader constantly focuses page, causing blue tint). See browser.js for details');
 	} else if(hostname.indexOf('.ibm.com')>-1){			// 206984, IBM driver download has HTML comments inside SCRIPT tag, breaks parsing
 		removeClosingHTMLComments();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IBM driver download has HTML comments inside SCRIPT tag, breaks parsing). See browser.js for details');
@@ -1392,18 +1389,6 @@ function workAroundBug343019(){
 			}
 		}
 		}catch(e){}
-				// 361722, Mail is scrolled out of view in GMail's RTL-UI
-		(function(left) {
-		var style = document.createElement('div').style;
-		var left=style.__lookupSetter__('left');
-		CSSStyleDeclaration.prototype.__defineSetter__('left', function(v) {
-			if (v == '9999px') {
-				return left.call(this, '-50px');
-			} else {
-				return left.apply(this, arguments);
-			}
-		});
-		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: browser blocking prevents chat feature from appear...). See browser.js for details');
 	} else if(hostname.indexOf('mail.live.com')!=-1){			// 228506, FireAnt.Debug.Trace tries to use arguments.callee.caller, which doesn't work in Opera (138530)
 		opera.defineMagicVariable('FireAnt',
@@ -1697,6 +1682,9 @@ function workAroundBug343019(){
 		},false);
 		opera.defineMagicFunction('MM_checkBrowser', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (maybank2u, onresize event causes a refresh whenever the softkeyboard is opened). See browser.js for details');
+	} else if(hostname.indexOf('millenet.pl')!=-1){			// PATCH-7, Semicolon insertion fails after do..while() conditional
+		addPreprocessHandler(/;do num=Math\.ceil\(Math\.random\(\)\*maxNum\);while\(uniqueInt\.a\.hasMember\(num\)\)uniqueInt\.a\[uniqueInt\.a\.length\]=num;/, 'do num=Math.ceil(Math.random()*maxNum);while(uniqueInt.a.hasMember(num));uniqueInt.a[uniqueInt.a.length]=num;');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Semicolon insertion fails after do..while() conditional). See browser.js for details');
 	} else if(hostname.indexOf('monster.')!=-1){			// 315865, Monster category tree broken by their selectNodes function overwriting .text on nodes
 		addPreprocessHandler( /(item|result)\.text\s*=\s*(item|result)\.textContent;\s*/g, 'if(typeof $1.text==\'undefined\')$1.text = $1.textContent;' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Monster category tree broken by their selectNodes function overwriting .text on nodes). See browser.js for details');
