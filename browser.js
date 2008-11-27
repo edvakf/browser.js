@@ -1,4 +1,4 @@
-// tu8Ezrv6IFZ5vrW306CefoZbvcrL8xXG+k+wT4geJ/4kF4mqOvZ2ZRvQWnh5W36JcLt20J4bILXutNNYwHY5wUIAiWC9yhkQgsQU5aJdDt+auYVSLheLJjKxjzj6WawoOcEQn2qLCEDajqg2rbtsea/DpOehhIJyYBG28H99Hm5Urho+mhKm4Njr2LyhYAvYcFcxevsY/AI5gvVqr4ThIUrk7ab/4Uh6zADeKqL5DKG2VI8wlefjiChqgtJXQpbyQAMzluajm2geez76o1/YrwJyN+PmvK6XtcWYVnL3vQc0njodZEwarX3PnBD8Q9kV9vUDtC2n3uZIyGguYv5avw==
+// DVFSj+33LfdIaAXrWHXkcKNNNo+9EU1pS66IUkigWrZlF8uO1CBjatDn2ELTbsswOoF43NShb3EkQJ+5LdcdYuMTi1u5Oa8kBKglB5sLa+AlHv4U6wGgclZQp9tGvbPj/9Le1l0sP8LRuk+5z9+Wn3nEfuUB0LSV5i7VROiqLQNwYvL8SGu5MIM7QINtwg9So3n3GvZmKCY4vcbhZSEmaghW9w9U9dmjgxygbAKzj+FNmEOxcanga798bK0mbJXyx6jNoNnctN6fyDVZOF6CEsJwqZfCku5AhKAdQEPDM8b5cwDa1YGtDjDa64aLkutEZG5/r07OLrjMu5Qg+iiZTA==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, November 14, 2008 ';
+	var bjsversion=' Opera Desktop 9.60, November 25, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -537,22 +537,25 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
-}function fixJQueryScriptSchedulingTrouble(){
+}
+function fixJQueryScriptSchedulingTrouble(){
 	var scriptQueue = [];
 	Element.prototype.appendChild = (function(ac){
 		return function(child, fromQueue){
-			if( ! fromQueue && child instanceof HTMLScriptElement && child.src){
+			if( ! fromQueue && child instanceof HTMLScriptElement ){
 					scriptQueue.push({child: child, parent: this});
 					return child;
 			}else
 				return ac.call(this, child);
 		}
-	})(Element.prototype.appendChild)
+	})(Element.prototype.appendChild);
 
 	opera.addEventListener('AfterScript', function(e){
 		removeChild.call = replaceChild.call = appendChild.call = shift.call = call;
 		if(e.element.__operaRemovalFlag){
 			removeChild.call(e.element.parentNode, e.element);
+		}else{
+			e.element.__operaScriptExecutedFlag=true;
 		}
 		if( scriptQueue.length ){
 			var script = shift.call(scriptQueue);
@@ -566,7 +569,7 @@ function fixIFrameSSIscriptII(name, iFrameId){
 
 	Element.prototype.removeChild = (function( rc ){
 		return function( child ){
-			if(child instanceof HTMLScriptElement && child.src && child.readyState != 'loaded' ){
+			if(child instanceof HTMLScriptElement &&  ! child.__operaScriptExecutedFlag  ){
 				child.__operaRemovalFlag=true;
 				return child;
 			}else
@@ -584,7 +587,8 @@ function fixIFrameSSIscriptII(name, iFrameId){
 				return ac.call(this, child, existing);
 		}
 	})(Element.prototype.replaceChild)
-}function fixLiknoAllWebMenus(ev){
+}
+function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
 	if(fixed)return; fixed=true;
 	if( indexOf.call(ev.element.text, 'AllWebMenus Libraries Version # ' )>-1 ){
@@ -1148,6 +1152,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
+	} else if(hostname.indexOf('allabout.co.jp')!=-1){			// DSK-227082, Works around script scheduling bug on AllAbout
+		fixJQueryScriptSchedulingTrouble();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Works around script scheduling bug on AllAbout). See browser.js for details');
 	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
 		navigator.product='Gecko';
 		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
@@ -1871,5 +1878,57 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
+	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
+		opera.addEventListener("BeforeEvent.unload", function(e){
+			if( location.pathname.indexOf("Maconomy/MaconomyPortal") > -1 ){
+				var original_function = doSubmitEmptyData;
+		
+				doSubmitEmptyData = function( command, parameter_1, parameter_2, parameter_3, formSetup ){
+		
+					var form = viewDocument.forms["emptyForm"], node;
+					setupForm(form, formSetup);
+					form.windowSerialId.value = windowSerialId;
+					form.command.value        = command;
+					form.parameter_1.value    = parameter_1;
+					form.parameter_2.value    = parameter_2;
+					form.parameter_3.value    = parameter_3;
+					form.dataChanged.value    = (formSetup.dataChanged == null ? 0 : (formSetup.dataChanged ? 1 : 0));
+					form.componentName.value  = "";
+		
+					var getstr = "";
+					for (i=0; node = form.elements[i]; i++) {
+						switch(node.type){
+							case "hidden":
+							case "text":
+							case "select-one":
+								getstr += escape(node.name) + "=" + escape(node.value) + "&";
+								break;
+							case "checkbox":
+								if (node.checked) {
+									getstr += escape(node.name) + "=" + escape(node.value) + "&";
+								} else {
+									getstr += escape(node.name) + "=&";
+								}
+								break;
+							case "radio":
+								if (node.checked) {
+									getstr += escape(node.name) + "=" + escape(node.value) + "&";
+								}
+								break;
+						}
+		
+					}
+					getstr = getstr.replace(/&$/,""); //remove trailing &
+					var xhr = new XMLHttpRequest();
+					xhr.open("POST",form.action,true);
+					xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+					xhr.send(getstr);
+					resetForm(form);
+					doSubmitEmptyData = original_function;
+					opera.postError("Opera has modified unload submit behavior on this Maconomy portal");
+			}
+		 }
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix unload form submit behavior on Maconomy portals). See browser.js for details');
 	}
 })(opera);
