@@ -1,4 +1,4 @@
-// DVFSj+33LfdIaAXrWHXkcKNNNo+9EU1pS66IUkigWrZlF8uO1CBjatDn2ELTbsswOoF43NShb3EkQJ+5LdcdYuMTi1u5Oa8kBKglB5sLa+AlHv4U6wGgclZQp9tGvbPj/9Le1l0sP8LRuk+5z9+Wn3nEfuUB0LSV5i7VROiqLQNwYvL8SGu5MIM7QINtwg9So3n3GvZmKCY4vcbhZSEmaghW9w9U9dmjgxygbAKzj+FNmEOxcanga798bK0mbJXyx6jNoNnctN6fyDVZOF6CEsJwqZfCku5AhKAdQEPDM8b5cwDa1YGtDjDa64aLkutEZG5/r07OLrjMu5Qg+iiZTA==
+// WOybg6/FCUUqGCAAk1+WliH30S5IahhPeV/e9zK/ymnrA+ZwmRs3DkJLXOv0e+wPXuH5sDKuWqZgoRi1ytJivHy5PtPT+K50xG6uVTthr99LZN+EWP7giHWDIU2Pc/S0UbGt3Os3RYMVh6SpxlL34zUrWmQUiLfzn7ngle4p5zJsGR7oNSDP7avbuSSePM8+k+4pNau2tPLIxSWqbe2jLyymDjONxR5Ltr4KTx6YNUSFB99LZ48mh/z92RYHEKIIeWqvlWFzBFRDL/a8L5kMvT+yOZGcAW3AaIJ6rQ2Qr50Jqmrq5D8tSGJDceBLsGUpUw9/yJ6uEwtWoAZNGJ4GGA==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 9.60, November 25, 2008 ';
+	var bjsversion=' Opera  10, Desktop, December 3, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -537,58 +537,7 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
-}
-function fixJQueryScriptSchedulingTrouble(){
-	var scriptQueue = [];
-	Element.prototype.appendChild = (function(ac){
-		return function(child, fromQueue){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
-					scriptQueue.push({child: child, parent: this});
-					return child;
-			}else
-				return ac.call(this, child);
-		}
-	})(Element.prototype.appendChild);
-
-	opera.addEventListener('AfterScript', function(e){
-		removeChild.call = replaceChild.call = appendChild.call = shift.call = call;
-		if(e.element.__operaRemovalFlag){
-			removeChild.call(e.element.parentNode, e.element);
-		}else{
-			e.element.__operaScriptExecutedFlag=true;
-		}
-		if( scriptQueue.length ){
-			var script = shift.call(scriptQueue);
-			if( script.replaceEl ){
-				replaceChild.call( script.parent, script.child, script.replaceEl, true );
-			}else{
-				appendChild.call( script.parent, script.child, true );
-			}
-		}
-	}, false);
-
-	Element.prototype.removeChild = (function( rc ){
-		return function( child ){
-			if(child instanceof HTMLScriptElement &&  ! child.__operaScriptExecutedFlag  ){
-				child.__operaRemovalFlag=true;
-				return child;
-			}else
-				return rc.call(this, child);
-		}
-	})(Element.prototype.removeChild);
-
-	// This fixes Sarissa too..
-	Element.prototype.replaceChild = (function(ac){
-		return function( child, existing, fromQueue ){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
-					scriptQueue.push({child: child, parent: this, replaceEl: existing });
-					return existing;
-			}else
-				return ac.call(this, child, existing);
-		}
-	})(Element.prototype.replaceChild)
-}
-function fixLiknoAllWebMenus(ev){
+}function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
 	if(fixed)return; fixed=true;
 	if( indexOf.call(ev.element.text, 'AllWebMenus Libraries Version # ' )>-1 ){
@@ -1152,9 +1101,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
-	} else if(hostname.indexOf('allabout.co.jp')!=-1){			// DSK-227082, Works around script scheduling bug on AllAbout
-		fixJQueryScriptSchedulingTrouble();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Works around script scheduling bug on AllAbout). See browser.js for details');
 	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
 		navigator.product='Gecko';
 		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
@@ -1299,9 +1245,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		navigator.__defineSetter__('family', function(){})
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (browser sniffing breaks ibank.isb.ru). See browser.js for details');
-	} else if(hostname.indexOf('icelandair.')!=-1){			// DSK-238649, jQuery script scheduling trouble on Icelandair
-		fixJQueryScriptSchedulingTrouble();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (jQuery script scheduling trouble on Icelandair). See browser.js for details');
 	} else if(hostname.indexOf('iieye.com')!= -1){			// 361535, IE detection prevents other browsers from accessing iieye.com
 		opera.defineMagicVariable('isIE',function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IE detection prevents other browsers from accessing iieye.com). See browser.js for details');
@@ -1641,9 +1584,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		},false);
 		opera.defineMagicFunction('MM_checkBrowser', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (maybank2u, onresize event causes a refresh whenever the softkeyboard is opened). See browser.js for details');
-	} else if(hostname.indexOf('millenet.pl')!=-1){			// PATCH-7, Semicolon insertion fails after do..while() conditional
-		addPreprocessHandler(/;do num=Math\.ceil\(Math\.random\(\)\*maxNum\);while\(uniqueInt\.a\.hasMember\(num\)\)uniqueInt\.a\[uniqueInt\.a\.length\]=num;/, 'do num=Math.ceil(Math.random()*maxNum);while(uniqueInt.a.hasMember(num));uniqueInt.a[uniqueInt.a.length]=num;');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Semicolon insertion fails after do..while() conditional). See browser.js for details');
 	} else if(hostname.indexOf('monster.')!=-1){			// 315865, Monster category tree broken by their selectNodes function overwriting .text on nodes
 		addPreprocessHandler( /(item|result)\.text\s*=\s*(item|result)\.textContent;\s*/g, 'if(typeof $1.text==\'undefined\')$1.text = $1.textContent;' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Monster category tree broken by their selectNodes function overwriting .text on nodes). See browser.js for details');
@@ -1704,9 +1644,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Rabobank cancels t keypress). See browser.js for details');
-	} else if(hostname.indexOf('redfin.com')!=-1){			// DSK-231794, Solve Dojo script scheduling trouble on redfin.com
-		fixJQueryScriptSchedulingTrouble();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Solve Dojo script scheduling trouble on redfin.com). See browser.js for details');
 	} else if(hostname.indexOf('reviews.cnet.com') >-1){			// 179484, CNet videos: document.write adds a script that depends on variables defined later
 		opera.addEventListener('BeforeScript',
 		function(ev){ 
@@ -1792,24 +1729,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('tistory.com')!=-1){			// 347990, two login buttons on tistory.com
 		addCssToDocument('#memberbox .btn-login {text-indent:-100px;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (two login buttons on tistory.com). See browser.js for details');
-	} else if(hostname.indexOf('united.com')>-1 || hostname.indexOf('flyted.com')>-1 || hostname.indexOf('itn.net')>-1){			// 193907,  United.com flight search problem: hidden images do not load, so no onload event
-				document.addEventListener('load', function(){
-					var i,img;
-					var isHidden = function(el){
-						if(!el){ return false;}
-						var elmIsHidden=((el.style && el.style.display=='none') || window.getComputedStyle(el).display=='none');
-						return (elmIsHidden || isHidden( el.parentNode ));
-					}
-					for(i=document.images.length-1;img=document.images[i];i--){
-						if(img.onload){
-							if( isHidden( img ) ){
-								img.onload();
-								return;
-							}
-						}
-					}
-				}, false);	
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( United.com flight search problem: hidden images do not load, so no onload event). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
@@ -1841,9 +1760,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		document.addEventListener('load', function(){
 			var play=document.getElementById('td_play');if(play && play.tagName=='TD'){play.parentNode.parentNode.parentNode.parentNode.style.display='none';}
 		}, false);
-		
-				// 205887, Walla workaround for white-space issue
-		addCssToDocument('button.w2 {white-space: nowrap;}');
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nNew mail UI on Wa...). See browser.js for details');
 	} else if(hostname.indexOf('walmart.com')!=-1){			// 279084, Walmart hides "find in store" popup unintentionally
@@ -1880,11 +1796,8 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
-			if( location.pathname.indexOf("Maconomy/MaconomyPortal") > -1 ){
 				var original_function = doSubmitEmptyData;
-		
 				doSubmitEmptyData = function( command, parameter_1, parameter_2, parameter_3, formSetup ){
-		
 					var form = viewDocument.forms["emptyForm"], node;
 					setupForm(form, formSetup);
 					form.windowSerialId.value = windowSerialId;
@@ -1925,9 +1838,7 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 					xhr.send(getstr);
 					resetForm(form);
 					doSubmitEmptyData = original_function;
-					opera.postError("Opera has modified unload submit behavior on this Maconomy portal");
 			}
-		 }
 		},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix unload form submit behavior on Maconomy portals). See browser.js for details');
 	}
