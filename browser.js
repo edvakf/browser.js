@@ -1,4 +1,4 @@
-// DVFSj+33LfdIaAXrWHXkcKNNNo+9EU1pS66IUkigWrZlF8uO1CBjatDn2ELTbsswOoF43NShb3EkQJ+5LdcdYuMTi1u5Oa8kBKglB5sLa+AlHv4U6wGgclZQp9tGvbPj/9Le1l0sP8LRuk+5z9+Wn3nEfuUB0LSV5i7VROiqLQNwYvL8SGu5MIM7QINtwg9So3n3GvZmKCY4vcbhZSEmaghW9w9U9dmjgxygbAKzj+FNmEOxcanga798bK0mbJXyx6jNoNnctN6fyDVZOF6CEsJwqZfCku5AhKAdQEPDM8b5cwDa1YGtDjDa64aLkutEZG5/r07OLrjMu5Qg+iiZTA==
+// AZZInMGu0leTph/PL5ezW/5nkKCBayILKORTo2JtMQQCsewNpicBW+Lj7J3coJD8c4x863Ig4GFI+mdL417ccSdFgbq7nIWzSFsGk5cJu1kvBail3KN0njLDbU9rStopajeT+Qs6b+REdrzelTEp1ym4QOvwWSEAEg3y76llV7psD4yKWf2cPpmKOpkuJxfaPcayvjFfZ/YEzrNYu4+mDzI+ZEs/BWnUS02aVEg38pp+OhwggV6r5tYTDIswRxlXOe6hm70yVBVrOJ+sOHjeYhogTCwuubTmVDGre+kz/TsYaFvEzL8UTaUTjr4IKAcSZ+XRZNlynYNmHrxx+rq6Vw==
 /**
 ** Copyright (C) 2000-2008 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera Desktop 9.60, November 25, 2008 ';
+	var bjsversion=' Opera  9.60, Desktop, December 10, 2008 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -734,7 +734,21 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}
 	, false);
 }
+function workAroundBug343019(){
+	document.addEventListener('DOMContentLoaded', function(){
+		for( var frms=document.getElementsByTagName('form'),i=0,frm; frm=frms[i];i++ ){
+			if(!frm.action)return;
+			if(/^javascript:/i.test(frm.action))return;
+			var actionSubstring = /^http/i.test( frm.action ) ? frm.action.substr(7) : frm.action ;
+			if( /(:)/.test(actionSubstring) ){
+				var colonPosition = actionSubstring.indexOf(':')+1
+				actionSubstring = actionSubstring.substr( colonPosition );
+				frm.action = frm.action.substr(0, colonPosition) + (actionSubstring.replace(/\+/g, '%252B' ).replace( /\//g, '%252F' ));
+			}
+		}
 
+	},false);
+}
 
 	// The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
@@ -995,6 +1009,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		navigator.product='Gecko';
 		addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
+	} else if(hostname.indexOf('.anz.com')!=-1){			// 343019, ANZ online bank form action URLs are incorrectly decoded
+		workAroundBug343019();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ANZ online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -1028,6 +1045,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('.ibm.com')>-1){			// 206984, IBM driver download has HTML comments inside SCRIPT tag, breaks parsing
 		removeClosingHTMLComments();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IBM driver download has HTML comments inside SCRIPT tag, breaks parsing). See browser.js for details');
+	} else if(hostname.indexOf('.icicibank.')!=-1){			// 343019, ICICI online bank form action URLs are incorrectly decoded
+		workAroundBug343019();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ICICI online bank form action URLs are incorrectly decoded). See browser.js for details');
 	} else if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
 		location.href='/dc/launch?sysreq=ignore';
 		
@@ -1727,6 +1747,13 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 	} else if(hostname.indexOf('show.co.kr')!=-1){			// 348818, Pre-filled text as INPUT background not cleared on focus
 		document.addEventListener('focus', function(e){if(e.target.tagName=='INPUT'){e.target.style.backgroundImage='none'; e.target.onfocus=null;}},true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Pre-filled text as INPUT background not cleared on focus). See browser.js for details');
+	} else if(hostname.indexOf('shutterfly.com')!=-1){			// CORE-16706, Array splice throws on 0-length arrays, breaks Shutterfly.com
+		var realsplice = Array.prototype.splice; 
+		Array.prototype.splice = function () { 
+		if( this.length == 0 ) { return []; } 
+		return realsplice.apply(this,arguments); 
+		};
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Array splice throws on 0-length arrays, breaks Shutterfly.com). See browser.js for details');
 	} else if(hostname.indexOf('spaces.live.com')!=-1){			// 311225, Overriding spaces.live.com browser sniffing
 		opera.addEventListener(
 			'BeforeScript',
@@ -1768,9 +1795,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}, false );
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Faking support for event object properties layerX and layerY). See browser.js for details');
-	} else if(hostname.indexOf('synaptics.com')>-1||href.indexOf('shareholder.com/synaptics')>-1){			// 191364, Synaptics.com outdated HVMenu
-		fixHVMenu('var.js');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Synaptics.com outdated HVMenu). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
@@ -1880,11 +1904,8 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
-			if( location.pathname.indexOf("Maconomy/MaconomyPortal") > -1 ){
 				var original_function = doSubmitEmptyData;
-		
 				doSubmitEmptyData = function( command, parameter_1, parameter_2, parameter_3, formSetup ){
-		
 					var form = viewDocument.forms["emptyForm"], node;
 					setupForm(form, formSetup);
 					form.windowSerialId.value = windowSerialId;
@@ -1925,9 +1946,7 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 					xhr.send(getstr);
 					resetForm(form);
 					doSubmitEmptyData = original_function;
-					opera.postError("Opera has modified unload submit behavior on this Maconomy portal");
 			}
-		 }
 		},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix unload form submit behavior on Maconomy portals). See browser.js for details');
 	}
