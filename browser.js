@@ -1,4 +1,4 @@
-// ON9hCIBVZjI7/73l/VTialtkXlvf1aYHZ+EnV4+SVpNZxsc/9aeXXBX+Y2PAqMP5aSdt0NkBkexBcjJOWIhIp9HKpvWd2G8J4bqObVu9FE+cPSRMyCD9buTBGmtOe20f0dLnxzWX8fzgbVLxp7EiHutXX4wR4Hg5uaQxpdurt9X8R7UqLNY2OXu657T+YOb7gphhQKQPgyUzh+9Y1icvF39/CYYIjbU4gXcqrXabni0Xla1DxLI9CJYLSWz0EWgPAB70sOS4TxZ56eRq7jmolAxqEPEi5CAqPKsu6vISrbsdkN8IfRekyrR/xmuaO5rCxpGfgj71F0xNNfBWzQYGjQ==
+// dow7dJavEpq0+WxXfmL0hsBvgFaKGBS+xbdtET+tH4oosc91iCmxjk66veXmTyYqYSZrYRLtPpjZGSdOfxThNi7lltrY60UF1jdKq5baI/XDlwGMwM1PZZ4S3rKW3Y3szedzflFklBQC/DHvZ5d/CbcD4wISKNtVPykU6PCbwXF730e3qpNX10XBxF7TPiAqjPvl7TfzeZXmLrWSP2LqD4k9U7CJUlcvD0L8rDDPQra8Tp81BOTUbVPuDJWp20aXynD+PM7DSRAzkWs4SpvN6ltnbPjDzQH0bhpQKIhODLftiXRy/bsmVcY6uYUEFqo+lp0oaUQ6OoE/aGYdLjQV9w==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.50, Desktop, January 6, 2009 ';
+	var bjsversion=' Opera  9.50, Desktop, January 15, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -752,7 +752,6 @@ function workAroundBug343019(){
 
 	// The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
-// Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
 // Compatibility layer for Google Gears initialization script
 // PDF security patch
 // document.domain can not be set to last TLD
@@ -932,22 +931,6 @@ function workAroundBug343019(){
 			, false);
 		}
 	}, false);
-			// 329543, Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
-	try{
-	var realWindowTop = window.top;
-	var duringJSUrl = false;
-	var topWasSet=false;
-	var topValue;
-	opera.addEventListener('BeforeJavaScriptURL', function( e ){
-		duringJSUrl=true;
-	}, false);
-	opera.addEventListener('AfterJavaScriptURL', function( e ){
-		duringJSUrl=false;
-	}, false);
-	opera.defineMagicVariable('top', function(){
-		if( duringJSUrl ) return realWindowTop;
-		return topWasSet ? topValue : realWindowTop;
-	}, function(val){ topWasSet=true; topValue=val; });}catch(e){}
 			// 366392, Compatibility layer for Google Gears initialization script
 	if (window.opera && opera.createWorkerPool && 
 	    navigator.mimeTypes["application/x-googlegears"] &&
@@ -1074,6 +1057,31 @@ function workAroundBug343019(){
 				// 315686, Remember to create documentElement properties on XML nodes
 		addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
 		
+				// CORE-17537, Y!Mail search results show overlapping text due to vertical-align for table contents different from Firefox
+		addCssToDocument('tbody, thead, tfoot, table > tr { vertical-align: middle } tr, th, td { vertical-align: inherit }');
+				// CORE-17539, Y!Mail spell check fix
+		document.__defineGetter__('designMode', function() {
+			return this.documentElement.contentEditable ? 'on' : 'off';
+		});
+		
+		document.__defineSetter__('designMode', function(v) {
+			this.documentElement.contentEditable = (v == 'on');
+		});
+				// CORE-17538, Y!Mail avoid text selection on drag-and-drop
+		window.addEventListener('mousedown', function(evt) {
+			var target = evt.target;
+			var cursor = getComputedStyle(target, null).cursor;
+			if (/move/i.test(cursor) || /size/i.test(cursor)) {
+				evt.preventDefault();
+			} else if (!('value' in target) /* don't preventDefault for <input>, etc */) {
+				for (var node = target; node; node = node.parentNode) {
+					if (node.hasAttribute && node.hasAttribute('tabindex')) {
+						evt.preventDefault();
+						break;
+					}
+				}
+			}
+		}, true);
 				// 321384, createElement in XML document should put un-prefixed nodes in null namespace
 		var docCreateElement = Document.prototype.createElement;
 		if( window.XMLDocument ){
@@ -1393,8 +1401,117 @@ function workAroundBug343019(){
 		}
 		}catch(e){}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: browser blocking prevents chat feature from appear...). See browser.js for details');
-	} else if(hostname.indexOf('mail.live.com')!=-1){			// 165310, Fake oncontextmenu support
-		if(window.frameElement && window.frameElement.name == 'main')fakeOncontextmenu(true,false);
+	} else if(hostname.indexOf('mail.live.com')!=-1){			// CORE-17444, Fix drag and drop in Hotmail
+		function fixButton(e) {
+			if (e.button == 1) {
+				e.__defineGetter__('button', function() { return 0 });
+			}
+		};
+		window.addEventListener('mousedown', fixButton, true);
+		window.addEventListener('mousemove', fixButton, true);
+		window.addEventListener('mouseup', fixButton, true);
+		
+				// CORE-17444, define document.selection.empty in Hotmail (part of drag-and-drop fix)
+		document.selection.empty = function() {
+			var sel = getSelection();
+			if (!sel.isCollapsed) {
+				sel.removeAllRanges();
+			}
+		};
+				// CORE-17447, Mispositioned sprites due to missing CSS
+		addCssToDocument('.c_is { display: inline-block }');
+				// CORE-17445, Detecting style.filter causes missing opacity effects
+		CSSStyleDeclaration.prototype.__defineGetter__('filter', function() {
+			return undefined;
+		});
+				// CORE-17446, Borders on folders remain after dragging things past them
+		var styleDec = (document.documentElement) ? document.documentElement.style : null;
+		if(styleDec){
+			var getBorderColor = styleDec.__lookupGetter__('borderColor');
+			var setBorderColor = styleDec.__lookupSetter__('borderColor');
+			CSSStyleDeclaration.prototype.__defineGetter__('borderColor', function() {
+				if (parseFloat(this.borderWidth, 10)) {
+					return getBorderColor.apply(this, arguments);
+				}
+				return '';
+			});
+			CSSStyleDeclaration.prototype.__defineSetter__('borderColor', setBorderColor);
+		}
+				// CORE-17451, Defining a setter causes difference between point and bracket notation for ES properties, breaks panel resize
+		var ds = CSSStyleDeclaration.prototype.__defineSetter__;
+		CSSStyleDeclaration.prototype.__defineSetter__ = function(prop, fn) {
+			if (!this.__lookupGetter__(prop)) {
+				var getter = document.documentElement.style.__lookupGetter__(prop);
+				this.__defineGetter__(prop, getter);
+			}
+			return ds.apply(this, arguments);
+		};
+				// CORE-17459, Handle setting style.left/top to null
+		function allowNull(styleProp) {
+			CSSStyleDeclaration.prototype.__defineGetter__(styleProp, function() {
+				return this.getPropertyValue(styleProp);
+			});
+			
+			CSSStyleDeclaration.prototype.__defineSetter__(styleProp, function(v) {
+				return this.setProperty(styleProp, v || '', '');
+			});
+		};
+		allowNull('left');
+		allowNull('top');
+		
+				// CORE-17497, Opera doesn't support col-resize/row-resize cursors.
+		addCssToDocument('html .SplitterBarH { cursor: s-resize } html .SplitterBarV { cursor: e-resize }');
+				// CORE-17500, Identify as Opera to the client-side sniffer
+		if (!/EditMessageLight/.test(location.pathname)) {
+			var browser = undefined;
+			window.__defineGetter__('Browser', function() {
+				return browser;
+			});
+			window.__defineSetter__('Browser', function(v) {
+				browser = v;
+				if (browser) {
+					delete browser.isFF;
+					delete browser.isFF2;
+					delete browser.isFF3;
+				}
+				return browser;
+			});
+		}
+		
+		// Restore Opera UA string (we mask as Firefox to get the correct code over HTTP)
+		var stuff = navigator.userAgent.split('(')[1].split(')')[0].split(';');
+		stuff.pop();
+		navigator.userAgent = 'Opera/' + opera.version() + ' (' +
+				stuff.join(';') + ') Presto/' +
+				(parseFloat(opera.version()) < 10 ? '2.1' : '2.2');
+				// CORE-17499, Correct browser detection cookie
+		if (/Firefox\=1/.test(document.cookie)) {
+			var isMac = /Mac OS X/.test(navigator.userAgent);
+			document.cookie = 'BrowserSense=Win=' + Number(!isMac) + '&Mac=' + Number(isMac) + '&Downlevel=0&WinIEOnly=0&Firefox=0&Opera=1&OperaVersion=' + opera.version() + '&Safari=0;path=/;domain=live.com';
+			if (top === self) {
+				location.reload();
+			}
+		}
+		
+				// CORE-17498, Ensure a font with bold/italic variants is default for editor on Mac
+		if (/Mac OS X/.test(navigator.userAgent)) {
+			addCssToDocument('html .EditArea, html .ExternalClass  { font-family: Verdana }');
+		}
+				// CORE-17461, Fixes downloading attachments in Hotmail
+		HTMLAnchorElement.prototype.getAttribute= function(n){
+			if( n=='aNewWin' && getAttribute.call(this, 'aIdx')!=null )return 'true';
+			return getAttribute.call(this,n);
+		}
+		var window_open=window.open;
+		window.open=function(){
+			if( /ScanAttachment\.aspx/.test(arguments[0]) ){
+				var url=arguments[0];
+				arguments[0]='data:text/html,'+encodeURIComponent('<html><head></head><body><p style="text-align:center; margin-top: 100px">Downloading attachment...<br><a href="javascript:window.close()">Close window</a></p></body></html>');
+			}
+			var w=window_open.apply(this, arguments);
+			if(url)w.location.href=url;
+			return w;
+		}
 				// 178723, Emulating IE's cssText property on style sheets
 		var getCssText = function() {
 			if (!this.href)	{
@@ -1472,10 +1589,14 @@ function workAroundBug343019(){
 		},true); 
 				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
 		addCssToDocument('.RTE .Container iframe{width: 100% !important; height: 100% !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support\nEmulating IE\'s cssText property on style sheets\nHotmail uses lookupGett...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix drag and drop in Hotmail\ndefine document.selection.empty in Hotmail (part of drag-and-drop fix)...). See browser.js for details');
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-17333, The constructor property of DOM nodes should not be Object
 		Element.prototype.constructor=Element;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (The constructor property of DOM nodes should not be Object). See browser.js for details');
+				// CORE-633, Enable alt-click to show context menu in map
+		fakeOncontextmenu(false, true);
+				// CORE-17460, Constructor property of event should be Event interface
+		Event.prototype.constructor=Event;
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (The constructor property of DOM nodes should not be Object\nEnable alt-click to show context menu in...). See browser.js for details');
 	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
@@ -1581,9 +1702,6 @@ function workAroundBug343019(){
 		}
 		,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet videos: document.write adds a script that depends on variables defined later). See browser.js for details');
-	} else if(hostname.indexOf('santandertotta.pt')!=-1){			// 260929, Santandertotta.pt IFRAME resize script detects Opera
-		fixIFrameSSIscriptII('startdyncode', 'ws');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Santandertotta.pt IFRAME resize script detects Opera). See browser.js for details');
 	} else if(hostname.indexOf('sfile.ydy.com')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on sfile.ydy.com
 		opera.defineMagicFunction('announcementScroll', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on sfile.ydy.com). See browser.js for details');
@@ -1650,6 +1768,9 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('teletekst.nos.nl')>-1){			// 126136, Teletext focus fix
 		window.focus = function () {event.preventDefault();};
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Teletext focus fix). See browser.js for details');
+	} else if(hostname.indexOf('tickets.com')!=-1){			// MGTRN-2289, Scripts are not allowed to use reserved identifier "top"
+		addPreprocessHandler( /top\(\)/g, '_top()' );
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Scripts are not allowed to use reserved identifier "top"). See browser.js for details');
 	} else if(hostname.indexOf('tiscali.it')!=-1){			// 344935, Allows some frame nesting on web.tiscali.it
 		opera.defineMagicVariable('address', function(current) {
 		if (window == window.top && current == window.location) {
@@ -1667,6 +1788,9 @@ function workAroundBug343019(){
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com). See browser.js for details');
+	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
+		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
 	} else if(hostname.indexOf('united.com')>-1 || hostname.indexOf('flyted.com')>-1 || hostname.indexOf('itn.net')>-1){			// 193907,  United.com flight search problem: hidden images do not load, so no onload event
 				document.addEventListener('load', function(){
 					var i,img;
