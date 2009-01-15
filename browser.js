@@ -1,4 +1,4 @@
-// PoKhODBR9k3JFNeGQIc3TnG29/cecuH0+Y/rc6Vq7Vkic3OXaWFwrcAgkf1mq0VErYyqVDPelnppIZmfQxvWC+vhrzf8MIlDixoJw3YkP6A8hh92z7viKfx2o+oVsqa/6bpJ4TUpaj5qS8ThLc9dF58j1rDMNq0Hs19uBEGNx0rEOsw7HcB+BaF0Bma4+34fDGEN5gunL08JxYoM21a4nxuCRpboO1/z7vIJjdYbR1jdHBFbht9pWKJHoKwwvWo8D7pHJhcoyl3M4m4vvGz8OXyPSJuZRDfG7wFMgp1bZ/f0jZuiufqWt4m1lT04cJuEx5gZWQam3kDcXezgNAYJtw==
+// yPDTpqrbDU5P9wGnq3TtihJgdQyWwQodUwy3MKk1RMc1/tBPaQcV8afMSf/zfhfOyW4iAdsWgwgWNbM3Iy+G/+7dxT2kqNlLRL9deFs1sdgW9Y2eXrcYXTGz737ZIi26JoN0xOPfhL5opl39bKANG1qgjcYIXtn4v0yBvZdQArYW6yLD7oHZUirgvq9ZVzMUi/8rQpboaOjdSl2VsqhfK/4SVp7NIoWjOxDN532sqGqMBwSQ4IXWU+mqbD3ypkMwm1/phWBbLopK52FOqjeZMKDPUODvMluc+ainWcuSyl9V6V9PLA6U2G757tPUNtzRHtuVi4PIqJtgenfn1URwiw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.10, Desktop, January 6, 2009 ';
+	var bjsversion=' Opera  9.10, Desktop, January 15, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1260,7 +1260,9 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MapQuest uses .all collection with text nodes in). See browser.js for details');
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-17333, The constructor property of DOM nodes should not be Object
 		Element.prototype.constructor=Element;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (The constructor property of DOM nodes should not be Object). See browser.js for details');
+				// CORE-17460, Constructor property of event should be Event interface
+		Event.prototype.constructor=Event;
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (The constructor property of DOM nodes should not be Object\nConstructor property of event should be ...). See browser.js for details');
 	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
@@ -1361,9 +1363,6 @@ function scriptForEventFix(){ // neutralising IE's <script for.. event.. > synta
 		}
 		,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet videos: document.write adds a script that depends on variables defined later). See browser.js for details');
-	} else if(hostname.indexOf('santandertotta.pt')!=-1){			// 260929, Santandertotta.pt IFRAME resize script detects Opera
-		fixIFrameSSIscriptII('startdyncode', 'ws');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Santandertotta.pt IFRAME resize script detects Opera). See browser.js for details');
 	} else if(hostname.indexOf('sfile.ydy.com')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on sfile.ydy.com
 		opera.defineMagicFunction('announcementScroll', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on sfile.ydy.com). See browser.js for details');
