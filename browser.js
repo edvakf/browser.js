@@ -1,4 +1,4 @@
-// MsGcNaWGYxJY88yLAC7Xj9CUaqxvlvumVxYciWKdgsABcnWoceZO950knZeDa12a7nEhvkgEU5IlHgpscBsk2Mk7wAijFSh6NRSYiLhw+xB6ZTHEqa5bBu2qL6zi2HqcgjcDvkzHNyjQM1FloBS1hV4SJ0+zy5HPuYQeUMDOAuaO74lO2g+PlwNjsL1f2daKdxigykZwrdX4Z7Xeiodiss8KfiKRVp5ULCcY4Ibrr73UtNax+9jpdZF2TNEk+8wUBzdQROXhuqqzlSF9P1bTRQjZfcs67EGs0jDCemIpZNzhm/+YlOSLuk1mhsDlYdoD8S/I+I/ZDCUgGbrn9UAi9Q==
+// Q7+FRVi+MdiDki8djOrJNU5FR28u8Ncmo3sijhlS6Om3gt7+AyGRvkgHlge1K8WuS0He9NgmGEc8cIq2kA4Cnp475QrjlxZ9ulKPLfbkbOQZjJ1VoLO/DtyVIW5jxAvihDaq/PNcWeho5LJh0d4yIflp8CSlu35kpijQyLN33ePOwyj7LIBvpXjX1ukIEkyABala7IU0vGNU9tZKvhx/0pYbD5XqwCSYn2v4syzewHu0Lz+5GPTToIa1TlsCnufbjqRbSE6R7jj1YHaDP2u5w0VL6JdZnStzgR4V049/s8uzI1csha9mwtTuifM3p1uyPYEJxTFEVlqTMUVCy3URUg==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, January 12, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, January 15, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -752,7 +752,6 @@ function workAroundBug343019(){
 
 	// The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
-// Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
 // Compatibility layer for Google Gears initialization script
 // PDF security patch
 			// 305669, The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
@@ -931,22 +930,6 @@ function workAroundBug343019(){
 			, false);
 		}
 	}, false);
-			// 329543, Allow scripts to define reserved word top, but not not allow javascript: URLs to read the custom value
-	try{
-	var realWindowTop = window.top;
-	var duringJSUrl = false;
-	var topWasSet=false;
-	var topValue;
-	opera.addEventListener('BeforeJavaScriptURL', function( e ){
-		duringJSUrl=true;
-	}, false);
-	opera.addEventListener('AfterJavaScriptURL', function( e ){
-		duringJSUrl=false;
-	}, false);
-	opera.defineMagicVariable('top', function(){
-		if( duringJSUrl ) return realWindowTop;
-		return topWasSet ? topValue : realWindowTop;
-	}, function(val){ topWasSet=true; topValue=val; });}catch(e){}
 			// 366392, Compatibility layer for Google Gears initialization script
 	if (window.opera && opera.createWorkerPool && 
 	    navigator.mimeTypes["application/x-googlegears"] &&
@@ -1063,7 +1046,7 @@ function workAroundBug343019(){
 		
 				// CORE-17537, Y!Mail search results show overlapping text due to vertical-align for table contents different from Firefox
 		addCssToDocument('tbody, thead, tfoot, table > tr { vertical-align: middle } tr, th, td { vertical-align: inherit }');
-				// CORE-17539, Y!Mail search results show overlapping text due to vertical-align for table contents different from Firefox
+				// CORE-17539, Y!Mail spell check fix
 		document.__defineGetter__('designMode', function() {
 			return this.documentElement.contentEditable ? 'on' : 'off';
 		});
@@ -1071,6 +1054,21 @@ function workAroundBug343019(){
 		document.__defineSetter__('designMode', function(v) {
 			this.documentElement.contentEditable = (v == 'on');
 		});
+				// CORE-17538, Y!Mail avoid text selection on drag-and-drop
+		window.addEventListener('mousedown', function(evt) {
+			var target = evt.target;
+			var cursor = getComputedStyle(target, null).cursor;
+			if (/move/i.test(cursor) || /size/i.test(cursor)) {
+				evt.preventDefault();
+			} else if (!('value' in target) /* don't preventDefault for <input>, etc */) {
+				for (var node = target; node; node = node.parentNode) {
+					if (node.hasAttribute && node.hasAttribute('tabindex')) {
+						evt.preventDefault();
+						break;
+					}
+				}
+			}
+		}, true);
 				// 321384, createElement in XML document should put un-prefixed nodes in null namespace
 		var docCreateElement = Document.prototype.createElement;
 		if( window.XMLDocument ){
@@ -1685,9 +1683,6 @@ function workAroundBug343019(){
 		}
 		,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet videos: document.write adds a script that depends on variables defined later). See browser.js for details');
-	} else if(hostname.indexOf('santandertotta.pt')!=-1){			// 260929, Santandertotta.pt IFRAME resize script detects Opera
-		fixIFrameSSIscriptII('startdyncode', 'ws');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Santandertotta.pt IFRAME resize script detects Opera). See browser.js for details');
 	} else if(hostname.indexOf('sfile.ydy.com')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on sfile.ydy.com
 		opera.defineMagicFunction('announcementScroll', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on sfile.ydy.com). See browser.js for details');
@@ -1754,6 +1749,9 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('teletekst.nos.nl')>-1){			// 126136, Teletext focus fix
 		window.focus = function () {event.preventDefault();};
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Teletext focus fix). See browser.js for details');
+	} else if(hostname.indexOf('tickets.com')!=-1){			// MGTRN-2289, Scripts are not allowed to use reserved identifier "top"
+		addPreprocessHandler( /top\(\)/g, '_top()' );
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Scripts are not allowed to use reserved identifier "top"). See browser.js for details');
 	} else if(hostname.indexOf('tiscali.it')!=-1){			// 344935, Allows some frame nesting on web.tiscali.it
 		opera.defineMagicVariable('address', function(current) {
 		if (window == window.top && current == window.location) {
@@ -1771,6 +1769,9 @@ function workAroundBug343019(){
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com). See browser.js for details');
+	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
+		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
 	} else if(hostname.indexOf('united.com')>-1 || hostname.indexOf('flyted.com')>-1 || hostname.indexOf('itn.net')>-1){			// 193907,  United.com flight search problem: hidden images do not load, so no onload event
 				document.addEventListener('load', function(){
 					var i,img;
