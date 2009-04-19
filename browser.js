@@ -1,4 +1,4 @@
-// bB75KIklhOrCFwEY53p4IPC91IMGcoPUPD/knoavG4mFH37rUW97PSNoCaTYU3KSN3D0GCiuiyqI1gBIVgA2cPooGqfgmnNZa0y9evIvoLDQCAUxR24sc88H010RKg5yobw1Fdxj4uUvgPjOUQl3OSIcsnF2duGJHQPARLB3MPQCRE4IBfN4xNlnevq+pMnwX5ybBL8fz9hojvgVJUXChcZydf454XjISpKIact1IF5ssiuccf8IfUf3nMPq0E6vrhSIszA4PcNEIhpaJbCQN0szXEbp3WzutZoGZl6sP+8Ku0qjM5XCdci4g5hZQg8hU7zAUw8TFefKG5M5zA4hCw==
+// nJUFR9zDiX6QaRCo1x2bJ0JXxJcl5HrAUmfN5A0uJb6Skory5+nHlu6TkeFJnNmQs/bOcmS8X7jzCmdfISLPHP8T7aRCEMewnwotafbB0cBd1LXRwe1BO8E3qjp/meSKLdiIbUel3i+1noi4lxquTzK+fGd/eAx7La+oqREAem8Gt8x/HCTC+4ZnkfAjo4lKKhHjZwl/1UXBnuhw+QQv1QV9GxDNlaL3eDUmzqVOQuQIC//pfFL9pNuHU98q0StdUk2N4SmnI16A4Te11WFaMA3PoCan2FEuO0pU75TBa6K7ZR1lvJkoSg4+ab9Um7rEoriY4jf8pVqjgX1Gm3o/XA==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, April 6, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, April 16, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -538,12 +538,11 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
-}
-function fixJQueryScriptSchedulingTrouble(){
+}function fixJQueryScriptSchedulingTrouble(){
 	var scriptQueue = [];
 	Element.prototype.appendChild = (function(ac){
 		return function(child, fromQueue){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
+			if( ! fromQueue && child.tagName=='SCRIPT' ){
 					scriptQueue.push({child: child, parent: this});
 					return child;
 			}else
@@ -551,26 +550,33 @@ function fixJQueryScriptSchedulingTrouble(){
 		}
 	})(Element.prototype.appendChild);
 
-	opera.addEventListener('AfterScript', function(e){
+	opera.addEventListener('AfterScript', processQueue, false);
+
+	function processQueue(e){
 		removeChild.call = replaceChild.call = appendChild.call = shift.call = call;
-		if(e.element.__operaRemovalFlag){
-			removeChild.call(e.element.parentNode, e.element);
-		}else{
-			e.element.__operaScriptExecutedFlag=true;
-		}
-		if( scriptQueue.length ){
-			var script = shift.call(scriptQueue);
-			if( script.replaceEl ){
-				replaceChild.call( script.parent, script.child, script.replaceEl, true );
+		if(e.element){
+			if(e.element.__operaRemovalFlag){
+				removeChild.call(e.element.parentNode, e.element);
 			}else{
-				appendChild.call( script.parent, script.child, true );
+				e.element.__operaScriptExecutedFlag=true;
 			}
 		}
-	}, false);
+		if( scriptQueue.length ){
+			setTimeout( function(){
+				if( scriptQueue.length==0 )return;
+				var script = shift.call(scriptQueue);
+				if( script.replaceEl ){
+					replaceChild.call( script.parent, script.child, script.replaceEl, true );
+				}else{
+					appendChild.call( script.parent, script.child, true );
+				}
+			}, 30);
+		}
+	}
 
 	Element.prototype.removeChild = (function( rc ){
 		return function( child ){
-			if(child instanceof HTMLScriptElement &&  ! child.__operaScriptExecutedFlag  ){
+			if(child.tagName=='SCRIPT' &&  ! child.__operaScriptExecutedFlag  ){
 				child.__operaRemovalFlag=true;
 				return child;
 			}else
@@ -581,7 +587,7 @@ function fixJQueryScriptSchedulingTrouble(){
 	// This fixes Sarissa too..
 	Element.prototype.replaceChild = (function(ac){
 		return function( child, existing, fromQueue ){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
+			if( ! fromQueue && child.tagName=='SCRIPT' ){
 					scriptQueue.push({child: child, parent: this, replaceEl: existing });
 					return existing;
 			}else
@@ -674,10 +680,11 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 }
 	function fixSoThinkMenus(){
 		if(fixed){return;}fixed=true;
-		defineMagicVariable.call=call;
+		defineMagicVariable.call=addEventListener.call=call;
 		defineMagicVariable.call(opera, 'nOP',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nIE',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nNN6',function(){return true;},null);
+		addEventListener.call(document, 'load', function(e){ if(window.st_onload)st_onload(e); }, false );//PATCH-55
 	}
 	function fixTransmenus(){
 		// Fixing bugs in menu script from http://www.youngpup.net/2004/transmenus/ 
@@ -952,7 +959,7 @@ function solveEventOrderBugs(){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+='KHTML';//356736
 			shouldRestore=true;
-		}else if(indexOf.call(name,'s_code')>-1){
+		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
 		}
 		
@@ -1227,6 +1234,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('allabout.co.jp')!=-1){			// DSK-227082, Works around script scheduling bug on AllAbout
 		fixJQueryScriptSchedulingTrouble();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Works around script scheduling bug on AllAbout). See browser.js for details');
+	} else if(hostname.indexOf('allegro.pl')>-1){			// PATCH-57, Fix randomly ocurring script scheduling freeze on allegro.pl
+		fixJQueryScriptSchedulingTrouble();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix randomly ocurring script scheduling freeze on allegro.pl). See browser.js for details');
 	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
 		navigator.product='Gecko';
 		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
@@ -1333,6 +1343,9 @@ function solveEventOrderBugs(){
 				// 209929, chosun.com scrollarea fix
 		addCssToDocument('#nscrollarea, #nscrolltxt{display: inline !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Morningplus.chosun.com misplaced content\nchosun.com scrollarea fix). See browser.js for details');
+	} else if(hostname.indexOf('cnet.com')>-1){			// CORE-19950, CNet polls misrendered due to lack of default margin on form elements
+		addCssToDocument('input[type="radio"]{margin: 3px 3px 0px 5px; padding:0} input[type="checkbox"]{margin: 3px 3px 3px 4px; padding:0}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet polls misrendered due to lack of default margin on form elements). See browser.js for details');
 	} else if(hostname.indexOf('continental.com')>-1){			// 263594, Continental.com document.activeElement fix enables airport choice popup
 		opera.addEventListener('BeforeEventListener.click', function(e){if(e.event.target && e.event.target.tagName=='A')document.activeElement=e.event.target; }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Continental.com document.activeElement fix enables airport choice popup). See browser.js for details');
@@ -1445,7 +1458,7 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('mail.google.')>-1){			// 244011, GMail deletes messages on End key presses
 		opera.addEventListener( 'BeforeEventListener.keypress', function(e){
 			preventDefault.call=call;
-			if(e.event.keyCode==35){
+			if(e.event.keyCode==35&&!e.event.shiftKey){
 				preventDefault.call(e);
 			}
 		}, false );
@@ -1871,7 +1884,7 @@ function solveEventOrderBugs(){
 			try{
 				oF.call(oT, urlPath, thirdParty);
 			}catch(e){
-				top.postMessage(etURL.parse(urlPath,thirdParty), 'www.etrade.wallst.com');
+				top.postMessage(etURL.parse(urlPath,thirdParty), 'http://www.etrade.wallst.com');
 			}
 		});
 		
