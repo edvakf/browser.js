@@ -1,4 +1,4 @@
-// A/RslV7tXTmVlBTYhg05+fAi54Jtm7otyWG/cvnVxPTVrEr2K9GQdEIEARo9C5Kn7wygsReKdh5idu5pz08kGlQdBNKp4QF0PxzqaM5iT/sPyeJhV82Z05WTURAa86PQeIof8twqMvFbHUBrXRwIZ+75K7qBcwn2EdT3wReDJ06nr+koS9bsMD8KYa6GY0QKTPjFN3QyO5ysCXk3riqr2dF3X+V/7lc+9VSHxPg5FiuOYQ+qrOfhgNzo3DmdmUnX0Jul6homvJwqwRDAYwXs4mJDYXz07f6kAWbDiEjqNBbGvYROcU6oYmwIghdqhItRhjzj0YisVCv21zb+5RnvmA==
+// AktkX7kejel/82zVhLkrJQ4941SiDhibXRiwoR5q6SxL+mdPGSSA04qw4yPpAqnwDLocr44ilAgb9naTjoiPxmNRutmzAzxhc7eJZo9dPAB1W5hoOrEhw0DAXH9qiwm7z9lrfhwYaFXHfkLuMQvr7ijsjZNMOh4+FwxjgNVxa57UBxwKqeaD19xkPhXRSjEQG9nj2LgE9lpulK5lYK8FyTWILLCy9dor/1Cn3OilbBvJyW2jz9WTqtla4tT85nzx3BHQ16HWQ19/G4ehcrVng5/AmOZeV5jkGzWv8K4Q2CQNj8AhMRUT5Bb+3ybWE9McSx7/xXzfqvDHsavRZytSUA==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.50, Desktop, April 6, 2009 ';
+	var bjsversion=' Opera  9.50, Desktop, April 16, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -538,12 +538,11 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
-}
-function fixJQueryScriptSchedulingTrouble(){
+}function fixJQueryScriptSchedulingTrouble(){
 	var scriptQueue = [];
 	Element.prototype.appendChild = (function(ac){
 		return function(child, fromQueue){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
+			if( ! fromQueue && child.tagName=='SCRIPT' ){
 					scriptQueue.push({child: child, parent: this});
 					return child;
 			}else
@@ -551,26 +550,33 @@ function fixJQueryScriptSchedulingTrouble(){
 		}
 	})(Element.prototype.appendChild);
 
-	opera.addEventListener('AfterScript', function(e){
+	opera.addEventListener('AfterScript', processQueue, false);
+
+	function processQueue(e){
 		removeChild.call = replaceChild.call = appendChild.call = shift.call = call;
-		if(e.element.__operaRemovalFlag){
-			removeChild.call(e.element.parentNode, e.element);
-		}else{
-			e.element.__operaScriptExecutedFlag=true;
-		}
-		if( scriptQueue.length ){
-			var script = shift.call(scriptQueue);
-			if( script.replaceEl ){
-				replaceChild.call( script.parent, script.child, script.replaceEl, true );
+		if(e.element){
+			if(e.element.__operaRemovalFlag){
+				removeChild.call(e.element.parentNode, e.element);
 			}else{
-				appendChild.call( script.parent, script.child, true );
+				e.element.__operaScriptExecutedFlag=true;
 			}
 		}
-	}, false);
+		if( scriptQueue.length ){
+			setTimeout( function(){
+				if( scriptQueue.length==0 )return;
+				var script = shift.call(scriptQueue);
+				if( script.replaceEl ){
+					replaceChild.call( script.parent, script.child, script.replaceEl, true );
+				}else{
+					appendChild.call( script.parent, script.child, true );
+				}
+			}, 30);
+		}
+	}
 
 	Element.prototype.removeChild = (function( rc ){
 		return function( child ){
-			if(child instanceof HTMLScriptElement &&  ! child.__operaScriptExecutedFlag  ){
+			if(child.tagName=='SCRIPT' &&  ! child.__operaScriptExecutedFlag  ){
 				child.__operaRemovalFlag=true;
 				return child;
 			}else
@@ -581,7 +587,7 @@ function fixJQueryScriptSchedulingTrouble(){
 	// This fixes Sarissa too..
 	Element.prototype.replaceChild = (function(ac){
 		return function( child, existing, fromQueue ){
-			if( ! fromQueue && child instanceof HTMLScriptElement ){
+			if( ! fromQueue && child.tagName=='SCRIPT' ){
 					scriptQueue.push({child: child, parent: this, replaceEl: existing });
 					return existing;
 			}else
@@ -674,10 +680,11 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 }
 	function fixSoThinkMenus(){
 		if(fixed){return;}fixed=true;
-		defineMagicVariable.call=call;
+		defineMagicVariable.call=addEventListener.call=call;
 		defineMagicVariable.call(opera, 'nOP',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nIE',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nNN6',function(){return true;},null);
+		addEventListener.call(document, 'load', function(e){ if(window.st_onload)st_onload(e); }, false );//PATCH-55
 	}
 	function fixTransmenus(){
 		// Fixing bugs in menu script from http://www.youngpup.net/2004/transmenus/ 
@@ -953,7 +960,7 @@ function solveEventOrderBugs(){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+='KHTML';//356736
 			shouldRestore=true;
-		}else if(indexOf.call(name,'s_code')>-1){
+		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
 		}
 		
@@ -1346,6 +1353,9 @@ function solveEventOrderBugs(){
 				// 209929, chosun.com scrollarea fix
 		addCssToDocument('#nscrollarea, #nscrolltxt{display: inline !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Morningplus.chosun.com misplaced content\nchosun.com scrollarea fix). See browser.js for details');
+	} else if(hostname.indexOf('cnet.com')>-1){			// CORE-19950, CNet polls misrendered due to lack of default margin on form elements
+		addCssToDocument('input[type="radio"]{margin: 3px 3px 0px 5px; padding:0} input[type="checkbox"]{margin: 3px 3px 3px 4px; padding:0}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet polls misrendered due to lack of default margin on form elements). See browser.js for details');
 	} else if(hostname.indexOf('continental.com')>-1){			// 263594, Continental.com document.activeElement fix enables airport choice popup
 		opera.addEventListener('BeforeEventListener.click', function(e){if(e.event.target && e.event.target.tagName=='A')document.activeElement=e.event.target; }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Continental.com document.activeElement fix enables airport choice popup). See browser.js for details');
@@ -1457,7 +1467,7 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('mail.google.')>-1){			// 244011, GMail deletes messages on End key presses
 		opera.addEventListener( 'BeforeEventListener.keypress', function(e){
 			preventDefault.call=call;
-			if(e.event.keyCode==35){
+			if(e.event.keyCode==35&&!e.event.shiftKey){
 				preventDefault.call(e);
 			}
 		}, false );
@@ -1887,7 +1897,7 @@ function solveEventOrderBugs(){
 			try{
 				oF.call(oT, urlPath, thirdParty);
 			}catch(e){
-				top.postMessage(etURL.parse(urlPath,thirdParty), 'www.etrade.wallst.com');
+				top.postMessage(etURL.parse(urlPath,thirdParty), 'http://www.etrade.wallst.com');
 			}
 		});
 		
