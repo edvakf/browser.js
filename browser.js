@@ -1,4 +1,4 @@
-// UYEB0Bjd1/jqpMP61578bPF+7gboAc9F8+/kA4Ah66CfpN6Q17fK0X5iRbaTVyMTSHoLEZ0E4S3etzG0KFzbOpxs6O2ba1XFv+OVH7wsd8HICKsHvX2Flx+C5wTUTLktVk16L/LgzwMWb02GxPQ73rgFZI9SViKjsK6M9PDFLq5OZ7kjRs9VBSqM68XzcIQBd5zjrCgABmdCaNKrSUVx5cVG8oAE6usi+WJrlzg3T+4Xjo1Jx8w7dFOlIq2ljidEKeNCdrXoSQzaBJp4S6yA5Qac5/rMPPydykAkzu08vqPPcJjkkmy4U6BDpxHjCAY8+7hGZ7++A8ETVKSBzqsOwA==
+// u37OLJSSe4Qrb4XD5o25TY3GoGkxG4T1V2wQocv3HyiTirw4SwMtgAGVOSOrnwKLPRJZxu3NGKd8XYf/ZsHMl0OZlXEin8uA77q9rnfu0KpTycEcuKg05RGiTeVKzl/yooUXipiai8UT7RxU+hlKI9OUKNOFWo9gFOu7kLSecJ77tbOx8bBWa4Mc9Bdljhsfene5dWYbJaQ/o/YBlRW62vUlkfitwfSh1C07Wv7wQGMveKjYxrllwy+ezAPLJaWx/Dh9wTM693P7Obk3w/tz90FeymHVkowky9eXB/ycSiQTSVWowNO03pbRHsZ1h+ah0rjh2bV9onC6PEHE9yCJfQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.03, Desktop, March 20, 2009 ';
+	var bjsversion=' Opera  9.03, Desktop, May 18, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -184,6 +184,11 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 		newEv.initMouseEvent('contextmenu', true, true, doc.defaultView, e.detail,
 			e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey,
 			e.shiftKey, e.metaKey, 2, e.relatedTarget);
+		if(newEv.__defineGetter__){
+			newEv.__defineGetter__('offsetX', function(){return this.clientX;});
+			newEv.__defineGetter__('offsetY', function(){return this.clientY;});
+		}
+
 		e.target.dispatchEvent(newEv);
 	};
 	
@@ -339,7 +344,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 	// OpenCube menu
 	window.vxml = window.vxml||{}; // to fix semi-opera-detection
 	//Some versions try to call a function q99 which is only defined in the Opera library
-	addEventListener.call(document, 'load', function(){ if(typeof q99=='undefined')window.q99=function(){}  }, false);
+	addEventListener.call(window, 'load', function(){ if(typeof q99=='undefined')window.q99=function(){}  }, false);
 	// fake some support for the menu version that tries to use CSS filters in spite of magic var below
 	fakeCSSFilters();
 	// We'll overrule their sniffing and find the correct library for Opera
@@ -360,7 +365,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		// prevent the menu from trying to use CSS filters
 		defineMagicVariable.call(opera, 'DQM_sub_menu_effect',  function(){return 'none';}, null);
 		if(document.evaluate){ // we have an event transparency problem on some sites, see for example bug 239622
-			addEventListener.call(document, 'load', function(){
+			addEventListener.call(window, 'load', function(){
 				var nodes=document.evaluate( '//a/child::img[substring(@id, 0, 4)=\'qmim\']', document.body,null,XPathResult.ORDERED_NODE_ITERATOR_TYPE,null ),node;
 				while( node=nodes.iterateNext()){
 					node.parentElement.parentElement.replaceChild(node, node.parentElement );
@@ -382,10 +387,11 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 }
 	function fixSoThinkMenus(){
 		if(fixed){return;}fixed=true;
-		defineMagicVariable.call=call;
+		defineMagicVariable.call=addEventListener.call=call;
 		defineMagicVariable.call(opera, 'nOP',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nIE',function(){return false;},null);
 		defineMagicVariable.call(opera, 'nNN6',function(){return true;},null);
+		addEventListener.call(window, 'load', function(e){ if(window.st_onload)st_onload(e); }, false );//PATCH-55
 	}
 	function fixTransmenus(){
 		// Fixing bugs in menu script from http://www.youngpup.net/2004/transmenus/ 
@@ -408,12 +414,16 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		defineMagicVariable.call=call;
 		// Some versions are Opera 7 - compatible and do user agent sniffing
 		navRestore['userAgent'] = navigator.userAgent;
-		navigator.userAgent +=' opera 7.5';
+		navigator.userAgent =' opera 9.5 '+navigator.userAgent;
 		shouldRestore = true;
 		// If the menu is a 3.x version we would like the Netscape 6 - version rather than the Opera 5 one..
 		defineMagicVariable.call(opera, 'op5',function () { return 0; },null);
 		defineMagicVariable.call(opera, 'ns6',function () { return 1; },null);
-	}
+
+		// certain versions break if insertRule throws exceptions. Also see bug 242411.
+		// Better fake missing support for DOM2Style then..
+		defineMagicVariable.call(opera, 'um', function(o){ o.ss=false; return o; }, null);
+    }
 	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
 		var ael=object.addEventListener;
 		object.addEventListener=function(type, func, cap){
@@ -425,8 +435,11 @@ function removeClosingHTMLComments(){
     opera.addEventListener( 'BeforeScript', function(e){ replace.call=call; e.element.text=replace.call( e.element.text, /\r\n\s*-->\s*\r\n/, '' ); }, false );
 }
 
+//SELECT * FROM patches, patch_information WHERE patches.patch_id = patch_information.patch_id AND patch_information.platform LIKE "desktop" AND (patch_information.obsolete_from LIKE "0.00" OR patch_information.obsolete_from > "9.03") AND patch_information.requires_version <= "9.03" AND patches.active LIKE "1" AND patches.looks_safe LIKE "1" AND  patches.parent = 633 AND patch_information.review_status LIKE 'ACCEPTED' ORDER BY patches.if_clause
 
 	// working around incompatibility with prototype - argument extends array but not all methods work correctly
+// The constructor property of DOM nodes should not be Object
+// Constructor property of event should be Event interface
 // Generic JS library patches
 // Router configuration SCRIPT in OPTION tag fix
 // PDF security patch
@@ -445,6 +458,10 @@ function removeClosingHTMLComments(){
 	    }
 	    return array;
 	}
+			// CORE-17333, The constructor property of DOM nodes should not be Object
+	Element.prototype.constructor=Element;
+			// CORE-17460, Constructor property of event should be Event interface
+	Event.prototype.constructor=Event;
 			// 0, Generic JS library patches
 	// Use an event listener to detect specific scripts
 	opera.addEventListener( 'BeforeExternalScript', function(ev){
@@ -494,7 +511,7 @@ function removeClosingHTMLComments(){
 				match.call=postError.call=call;
 				if( match.call(name, /udm[_-]/)  || indexOf.call(ev.element.text, 'UDM')>-1 || indexOf.call(ev.element.text, 'um.ov=um.ov.split(/opera[\\/ ]7./);um.ov=um.pi(um.ov[1].charAt(0));')>-1 ){
 					fixUDM(name);
-					postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Coolmenus fix). See browser.js for details.');
+					postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (UDM fix). See browser.js for details.');
 				}
 			}, false);
 			return;
@@ -600,7 +617,7 @@ function removeClosingHTMLComments(){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+='KHTML';//356736
 			shouldRestore=true;
-		}else if(indexOf.call(name,'s_code')>-1){
+		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
 		}
 		
@@ -694,6 +711,20 @@ function removeClosingHTMLComments(){
 		navigator.product='Gecko';
 		addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
+	} else if(hostname.indexOf('.aol.') >-1){			// 0, AOL sites, multiple patches
+		/*various AOL patches*/
+	
+	
+		if(hostname.indexOf('aol.com') >-1){			// 226390, AOL browser sniffing blocks opera  
+			opera.defineMagicVariable( 'is_supported', function(){return 1;}, null);
+			
+					// 188197, Making sure AOL pages are not overwritten by ad script
+			avoidDocumentWriteAbuse();
+					// 262693, AOL browser sniffing causes missing styling
+			document.addEventListener('DOMContentLoaded', function(){document.documentElement.className='SAF';}, false);
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL browser sniffing blocks opera  \nMaking sure AOL pages are not overwritten by ad script\nAOL bro...). See browser.js for details');
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL sites, multiple patches). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -984,19 +1015,6 @@ function removeClosingHTMLComments(){
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
-	} else if(hostname.indexOf('aol.com') >-1){			// 179219, AOL miscalculated widths cause overlaps at top
-		opera.addEventListener('BeforeEvent.'+(opera.version()>9?'DOMContentLoaded':'load'), function(ev){ if(ev.event.target!=document)return;
-		var i;
-		i = getElementById.call(document, 'static'); if(i){ i.style.width = (i.offsetWidth-2)+'px';}
-		}, false);
-				// 226390, AOL browser sniffing blocks opera  
-		opera.defineMagicVariable( 'is_supported', function(){return 1;}, null);
-		
-				// 188197, Making sure AOL pages are not overwritten by ad script
-		avoidDocumentWriteAbuse();
-				// 262693, AOL browser sniffing causes missing styling
-		document.addEventListener('DOMContentLoaded', function(){document.documentElement.className='SAF';}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL miscalculated widths cause overlaps at top\nAOL browser sniffing blocks opera  \nMaking sure AOL...). See browser.js for details');
 	} else if(hostname.indexOf('apple.viamichelin.com')>-1){			// 288490, Text on Apple store locator page is misaligned and overlapping
 		addCssToDocument('center table{text-align: left} div#poilist table td img+img{ display: block;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Text on Apple store locator page is misaligned and overlapping). See browser.js for details');
@@ -1082,9 +1100,15 @@ function removeClosingHTMLComments(){
 				// 209929, chosun.com scrollarea fix
 		addCssToDocument('#nscrollarea, #nscrolltxt{display: inline !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Morningplus.chosun.com misplaced content\nchosun.com scrollarea fix). See browser.js for details');
+	} else if(hostname.indexOf('cnet.com')>-1){			// CORE-19950, CNet polls misrendered due to lack of default margin on form elements
+		addCssToDocument('input[type="radio"]{margin: 3px 3px 0px 5px; padding:0} input[type="checkbox"]{margin: 3px 3px 3px 4px; padding:0}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet polls misrendered due to lack of default margin on form elements). See browser.js for details');
 	} else if(hostname.indexOf('continental.com')>-1){			// 263594, Continental.com document.activeElement fix enables airport choice popup
 		opera.addEventListener('BeforeEventListener.click', function(e){if(e.event.target && e.event.target.tagName=='A')document.activeElement=e.event.target; }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Continental.com document.activeElement fix enables airport choice popup). See browser.js for details');
+	} else if(hostname.indexOf('cs.kddi.com')>-1){			// OTW-4917, Prevent KDDI site's "anti-multiple-tabs" script from closing window randomly
+		window.close=function(){};
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent KDDI site\'s "anti-multiple-tabs" script from closing window randomly). See browser.js for details');
 	} else if(hostname.indexOf('dancenter.com')>-1){			// 166698, Dancenter use getYear when they should use getFullYear
 		Date.prototype.getYear = Date.prototype.getFullYear;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Dancenter use getYear when they should use getFullYear). See browser.js for details');
@@ -1164,7 +1188,7 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('mail.google.')>-1){			// 244011, GMail deletes messages on End key presses
 		opera.addEventListener( 'BeforeEventListener.keypress', function(e){
 			preventDefault.call=call;
-			if(e.event.keyCode==35){
+			if(e.event.keyCode==35&&!e.event.shiftKey){
 				preventDefault.call(e);
 			}
 		}, false );
@@ -1191,26 +1215,15 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('makemytrip.com')>-1){			// 206463, MakeMyTrip search fails
 		document.all=null;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MakeMyTrip search fails). See browser.js for details');
-	} else if(hostname.indexOf('mapquest.com')>-1){			// 240094, MapQuest uses .all collection with text nodes in
-		opera.addEventListener('BeforeEvent.load', function(e){ 
-		    if(document.body){
-		        removeEventListener.call=call;
-		        document.body.all=null;
-		        removeEventListener.call(opera,'BeforeEvent.load', arguments.callee, false);
-		    } 
-		}, false)
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MapQuest uses .all collection with text nodes in). See browser.js for details');
-	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-17333, The constructor property of DOM nodes should not be Object
-		Element.prototype.constructor=Element;
-				// CORE-17460, Constructor property of event should be Event interface
-		Event.prototype.constructor=Event;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (The constructor property of DOM nodes should not be Object\nConstructor property of event should be ...). See browser.js for details');
 	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
 		fakeOncontextmenu(true,false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(hostname.indexOf('maps.ubiest.com')>-1){			// 256721, Ubiest.com uses CSS filters if document.all exists
 		document.all=null;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ubiest.com uses CSS filters if document.all exists). See browser.js for details');
+	} else if(hostname.indexOf('mcafee.com')>-1){			// OTW-3741, McAfee.com menu requires navigator.appName to be Netscape
+		navigator.appName='Netscape';
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (McAfee.com menu requires navigator.appName to be Netscape). See browser.js for details');
 	} else if(hostname.indexOf('millenet.pl')!=-1){			// PATCH-7, Semicolon insertion fails after do..while() conditional
 		addPreprocessHandler(/;do num=Math\.ceil\(Math\.random\(\)\*maxNum\);while\(uniqueInt\.a\.hasMember\(num\)\)uniqueInt\.a\[uniqueInt\.a\.length\]=num;/, 'do num=Math.ceil(Math.random()*maxNum);while(uniqueInt.a.hasMember(num));uniqueInt.a[uniqueInt.a.length]=num;');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Semicolon insertion fails after do..while() conditional). See browser.js for details');
@@ -1282,6 +1295,15 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('sfile.ydy.com')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on sfile.ydy.com
 		opera.defineMagicFunction('announcementScroll', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on sfile.ydy.com). See browser.js for details');
+	} else if(hostname.indexOf('shoptime.com.br')>-1){			// PATCH-81, Fix for not possible to type since Opera does not support charCode
+		defineMagicFunction.call(opera, 'soNums',
+					function(real, e, args){
+						evt = event.keyCode;
+						if (evt <20 || (evt >47 && evt<58) ){return true;}
+		            return false;
+					},
+				null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix for not possible to type since Opera does not support charCode). See browser.js for details');
 	} else if(hostname.indexOf('show.co.kr')!=-1){			// 348818, Pre-filled text as INPUT background not cleared on focus
 		document.addEventListener('focus', function(e){if(e.target.tagName=='INPUT'){e.target.style.backgroundImage='none'; e.target.onfocus=null;}},true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Pre-filled text as INPUT background not cleared on focus). See browser.js for details');
@@ -1321,7 +1343,7 @@ function removeClosingHTMLComments(){
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com). See browser.js for details');
 	} else if(hostname.indexOf('united.com')>-1 || hostname.indexOf('flyted.com')>-1 || hostname.indexOf('itn.net')>-1){			// 193907,  United.com flight search problem: hidden images do not load, so no onload event
-				document.addEventListener('load', function(){
+				window.addEventListener('load', function(){
 					var i,img;
 					var isHidden = function(el){
 						if(!el){ return false;}
@@ -1353,19 +1375,10 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('walla.co.il')!=-1){			// 184398,  Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793
 		addCssToDocument(' .btn-t,.btn-r, .btn{display:inline !important;} .wp-0-b{width:auto !important}table {table-layout: auto !important}.w2b + table { width: 100%;}');
 		
-				// 209477, walla.co.il custom videoplayer does not work
-		opera.defineMagicFunction( 'showPlayerObject', function( origfunc, origthis, id, url ){
-			document.getElementById(id).innerHTML='<object type="video/x-ms-asf" data="'+url+'"  width="100%" height="282" autostart="true"> failed to render object </object>';
-			
-		});
-		document.addEventListener('load', function(){
-			var play=document.getElementById('td_play');if(play && play.tagName=='TD'){play.parentNode.parentNode.parentNode.parentNode.style.display='none';}
-		}, false);
-		
 				// 205887, Walla workaround for white-space issue
 		addCssToDocument('button.w2 {white-space: nowrap;}');
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nwalla.co.il custo...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nWalla workaround ...). See browser.js for details');
 	} else if(hostname.indexOf('westjet.com')>-1 ){			// 270752,  Westjet browser sniffing causes reload loop
 		opera.defineMagicVariable('browser', function(o){ o.isSupported=true; return o; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Westjet browser sniffing causes reload loop). See browser.js for details');
@@ -1384,8 +1397,12 @@ function removeClosingHTMLComments(){
 			addPreprocessHandler(   /if\(xmlHttp(\d+) == null\)\s*\{\s*xmlHttp\d+ = createXmlHttp\(\);\s*\}/g, 'xmlHttp$1 = createXmlHttp();'     );
 			opera.setOverrideHistoryNavigationMode('fast');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (au my page XMLHttp re-use issue). See browser.js for details');
+	} else if(location.hostname.indexOf('.legolandholidays.dk')>-1){			// PATCH-73, Fix to show relative positioned table contents
+		document.addEventListener('DOMContentLoaded', function(){document.evaluate('//td[@height=900]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.position='absolute';}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
 	} else if(pathname.indexOf('wp-admin')>-1){			// 261699, Wordpress Admin prev/next link styling makes them unclickable
 		addCssToDocument('.navigation{display:inline !important;} .navigation div{display:block !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Wordpress Admin prev/next link styling makes them unclickable). See browser.js for details');
 	}
+
 })(opera);
