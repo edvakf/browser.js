@@ -1,4 +1,4 @@
-// Yr8B8dECZtbjOfuyj8gEnCHAiMo4XNuQmfR3N0mcm3BjkAPncFx7K1hwYvdbHe8qi8qv1KYhOs+ZlAMZfRqnGWDvfhsouDJNQM4EQ8BY0SEevNUUBRfnwoSszfptPmQlEe1CcDuaTBR0tPUjWhxa51IBDbhS/XKfbxm10oAmfdzNqHN+htzgXsRf3B6UdrJTf10itAkTp4PZGqfTq/rF92osAnCkrYl61jX++hUmGgEPWHNcBq1ryeIAe8S6pyqanmDFfSQZy0seAaXI1rUzb89nLcK0aLXgyfCAxmY8dKpowQhHU69Z1U2Vwlyuc8arPZOROcTkRrj6o5W1/GJjTg==
+// IMOYWm/V0AfycUH4C2A9JOdO3vD3PMnVAzZnceUFxgDikaT98jlKlf58RCjqb02+BNESBpU0TlPWOSxDIRvZDcril0UZfzE7gQX6jAB97Iqi7+oBHgkLCVzD0BIZ5HUW+AfYWAjQ610O0/A88RWTgiPUblkSnZDPS5qd3LIpvPXIVdShLT/PMQ7KCi8Tyzg6sGvnUK7W7SnHJ6+ecBnXTlysReNExdtdZG0qsOoPhNxfadP9T5MBHZJZbpo7qElr5qcuvhjKVCsC8xHg1/f9dKqtscMV116zQZSnr24IC9FyWRRtxCyj0Wt5+7oBdKDLUYvED4kURPesxI2cIZfxZQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, June 16, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, June 26, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1550,21 +1550,6 @@ function solveEventOrderBugs(){
 		if (/Mac OS X/.test(navigator.userAgent)) {
 			addCssToDocument('html .EditArea, html .ExternalClass  { font-family: Verdana }');
 		}
-				// CORE-17461, Fixes downloading attachments in Hotmail
-		HTMLAnchorElement.prototype.getAttribute= function(n){
-			if( n=='aNewWin' && getAttribute.call(this, 'aIdx')!=null )return 'true';
-			return getAttribute.call(this,n);
-		}
-		var window_open=window.open;
-		window.open=function(){
-			if( /ScanAttachment\.aspx/.test(arguments[0]) ){
-				var url=arguments[0];
-				arguments[0]='data:text/html,'+encodeURIComponent('<html><head></head><body><p style="text-align:center; margin-top: 100px">Downloading attachment...<br><a href="javascript:window.close()">Close window</a></p></body></html>');
-			}
-			var w=window_open.apply(this, arguments);
-			if(url)w.location.href=url;
-			return w;
-		}
 				// 178723, Emulating IE's cssText property on style sheets
 		var getCssText = function() {
 			if (!this.href)	{
@@ -1608,6 +1593,24 @@ function solveEventOrderBugs(){
 			return result;
 		}
 		
+				// PATCH-107, Fixes downloading attachments in Hotmail for O10.
+		HTMLAnchorElement.prototype.getAttribute= function(n){
+		if( n=='aNewWin' && getAttribute.call(this, 'aIdx')!=null )return 'true';
+			return getAttribute.call(this,n);
+		}
+		var window_open=window.open;
+		window.open=function(){
+			if( /ScanAttachment\.aspx/.test(arguments[0]) ){
+				var url=arguments[0];
+				arguments[0]='';
+			}
+			var w=window_open.apply(this, arguments);
+			if(url){
+				w.location.href='data:text/html,'+encodeURIComponent('<html><head></head><body><p style="text-align:center; margin-top: 100px">Downloading attachment...<br><a href="javascript:window.close()">Close window</a></p></body></html>');
+				setTimeout(function(){w.location.href=url},1);
+			}
+			return w;
+		}
 				// DSK-235885, Hotmail uses lookupGetter on prototypes, not instances
 		var styleSetterLookupMethod = document.createElement('span').style.__lookupSetter__;
 		 CSSStyleDeclaration.prototype.__lookupSetter__ = function(prop){
@@ -1954,6 +1957,9 @@ function solveEventOrderBugs(){
 		
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
+	} else if(hostname.indexOf('youtube.com')>-1){			// CORE-21796, Fix bad painting of dropdown menus
+		addCssToDocument( '.yt-menubutton, .yt-menulink { display: inline-block !important; } ');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix bad painting of dropdown menus). See browser.js for details');
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
