@@ -1,4 +1,4 @@
-// nxJ85B1s2CbkVNyguRXKdLXX7sB2b8NuIZ2UI4AHyDsttWYQ0EsV3PKRo9hYapaYtlnxB5mr9cagGs/t53bE0zSDTj9qcZyjK/MX5KPjaHUmMqSTbRx4IELcMEZz8J/yJpQjKwfUWt1ev+IMafqQt0LsWbaktg2V93c+rgcR3p2X4zfwLo5+JPf5t2e9wDRBEX9p/Y+XvCA3lkZt7ckYkFN5cUj/r4dfTv8bJQ6Sj1Cvlj//ElyRszJ3hTc3ubwNw3qXIlKFFiL+P6orgqEcq4O9C/4ETQGGp1PJIzC8bQjUcrEWIiovNTY6xDe3/bvcSRkutV+yOIj4ED4eapPx/A==
+// itszAaOlza7pmkAH59V69oLcvc8mkj1fk7fIe7+nX6Npunr+xOK81V2wTWMjgGRjMgqXZQCNbbbd9PEUFVrE3OAfQfLctwisV0baCa59WA5M97BCy7IpYrlBEWLEY1EFrz7tz6lV4gL4QjUCNF50b/DQn7FAg412eRyln4wjWp5qSq8av1yMAo7lU44xw+Zh5trNdUltQXQWT+zi1R3PbAAG7jR7pRQFvIG9v5bkOF27+/K5XhEMeQTqU6YDr04qBShYv0RyyGlOtWUYMkxu2o9PZvi6ma7fGWyfm2BvUOocisB/AjC5m+l5A/tCD3oDabqdhPHmqdHT4vJ318b+rQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, July 10, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, July 16, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1899,6 +1899,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
+	} else if(hostname.indexOf('tam.com.br')>-1){			// CORE-21798, Fixing TAM form element reference issue
+		opera.defineMagicVariable('dsMesRetorno', function(o){ return document.viajefacilForm.dsMesRetorno; }, null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fixing TAM form element reference issue). See browser.js for details');
 	} else if(hostname.indexOf('taobao.com')!=-1){			// PATCH-96, Fix Taobao search layout overlap issue
 		addCssToDocument('#ListSubCategory{height:auto !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix Taobao search layout overlap issue). See browser.js for details');
