@@ -1,4 +1,4 @@
-// m8xs4BfAIBxVUNF2JGXo1aVIfhP5Jr8qVs1qUF6LMPGOD9HxptP7EY8LbEvOivXJ4thVms43KtvYvYT8yyCrDR2dyowMS5NZohJfZjGmPalGdzwZDLwOR5Ax87Fc/AEh/BhgA4XDeTtPtsTMVeaZ8uCCehRc/26hzXwbT5QP4KNAAUYdqzgx1yeGfp/GDrNjkCVnVyCPLqTOqUY3rqPwW3l8GCBGwWeTlnKlHC6b7f0+qTNScFHW/16GyRpIzQh4Yt7X8xr3LRYGEt/oJXRqxYrjyW5UpOLTg9iMQOsNznEMif+npq06V1vrmjpv7tqBRMX4Ba8Q2A4diL3cbQ9QOw==
+// MwrtBZ8s0/7Y2L/fHSn6G7x53acFWeMRCwyHBe7rgz2dtFi2EFyw7PNDD2PdheZIOLqBidD+HWuabhkiv4OO9cJNNnpItF+y3Zd+JI2RS27NgrlyNaCjaxLEo2sINFO29mYM7bAorP82Zslnl57RVENWyA1s2RFK9X6vFkbqmC0vZZ88iPod5rH7OaZUR10HAFdi+tw8NOB8wxb18wtexkOehHY5/rLw0e40Z9p8qJs2FLgo7Ai31nH40h0TXUpe255hVokW1h+fVNJvIa9G1Y2v4CUFW6qeVmOY6t3xqOeJKlg/sXkfB5bNWk1RM4bxMkU2/1dMUsazvmARKjFDKg==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, July 10, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, July 16, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1723,6 +1723,8 @@ function solveEventOrderBugs(){
 			return result;
 		}
 		
+				// PATCH-120, Fake oncontextmenu support on Hotmail
+		fakeOncontextmenu(false, 300);
 				// DSK-235885, Hotmail uses lookupGetter on prototypes, not instances
 		var styleSetterLookupMethod = document.createElement('span').style.__lookupSetter__;
 		 CSSStyleDeclaration.prototype.__lookupSetter__ = function(prop){
@@ -2024,7 +2026,9 @@ function solveEventOrderBugs(){
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
 		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com). See browser.js for details');
+				// PATCH-121, Tuenti.com thinks images are not loaded if we don't send them a load event. This only happens to visible images.
+		addCssToDocument('.mod.h .loadImage .photoAndTags {display: block !important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nTuenti.com thinks images are not loaded if ...). See browser.js for details');
 	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
 		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
