@@ -1,4 +1,4 @@
-// rn2PCaUabOllpHp3RL7IJPEbiXIGmBQN32wmrFPFDMtXyEatmKTUcQcQP7gFLbcxHBWR/z2AtKy48rSeKdWztoPUcwwxu4G8wF7VH1GMbvYn/Gn2wInt/eeXXX/MEtfpG1lGo9CzgcLXSZgLhez901+clbBxtCPhILAjl4hbcWhdpLB5MwhOt0TGwPWsy8sLleYWiHDNEN6BDkNrR4Qz1d3TWCiOv3oC/egN2h6IOorVK2n5SjsRm71tOrb1Sy1qc08+UFMTQbzngtZUc6VzGPeb2K3/5sJ4Lf0Cyb/Bd9/1zap2oDLqEgdexKXxs0czhdtj0873YAXndaDjwbok7Q==
+// hTm69PUFZNyHcTLdMlKi/kT2EFT8m5aR3vF1c+i5QuKiTAv1mtEt8PAAQDZb3PKSfbYNjGxVNdOyYdES9B2h8kjgb+23TXaRUvDo5iDms1/AJ8Iysekg+mTN3bnD/togaGW0CBBSD6b6EEjPFrKYhwjEm2gYtHs9KRbm0oRvsCJ6agrNIdZkuEkxLNH6mITD88DYk+TBcxu0St0alIUXb43AcLtGUNeVa2rXe7zVrXJvL+txnPrSHmsa6MSAgeOOWvx7M97JOQNqTWY4gtwcKESpV4eI/1j7mPcYp4J4BpZbJHVMrDYPe4N896n9a8dipBsm0wrwAf9H9doVOYtMRg==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, July 27, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, July 28, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -2171,10 +2171,6 @@ function solveEventOrderBugs(){
 		
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
-	} else if(hostname.indexOf('yandex.')>-1){			// CORE-22272, Make search suggestion dropdown work better
-		addCssToDocument( '#advanced{position:absolute !important;right:3em !important;}.b-head-search{z-index:inherit !important}' );
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make search suggestion dropdown work better). See browser.js for details');
 	} else if(hostname.indexOf('youtube.com')>-1){			// CORE-21796, Fix bad painting of dropdown menus
 		addCssToDocument( '.yt-menubutton, .yt-menulink { display: inline-block !important; } ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix bad painting of dropdown menus). See browser.js for details');
