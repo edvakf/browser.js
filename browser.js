@@ -1,4 +1,4 @@
-// fwEAzj1GhZ6ITo9OxZs4p3+VuSRPzemBVsO0jkik0HJpsY9jyf89kFuLGHxPX1IH2+j7EvFV+yRjyA8tngn/85n7I662g27ouQMi26e0OOkqDwscxn4Pk+hQQ/8YRbn4NFDHBmOW3Hc+Y3JLJmTMFyz4tvB8VeS/TmbOKrlj8p81Z8nK0arIPxN3vDwzZgptd2quo7A9LzFCfvf7qZPGvGz5wfFlbjG9w68ULiJN+Zm/HMTbFHTdBdn5yXgyQeTQWmBMrpddZEBJpzUU3LvRQb2pK/850Z/3UKpKGOHIdK2zNnPWSPdIuTZjELDXSPgCbFKGDizEw7avTPjvYlPurg==
+// aWB301LCugOZqrjX+peRtPV2XJExDzZP9waeN0vmzlfV/8kTU+7YMxb2ia6UF4YjbNbLZG6zx5ETUixeRRTfymST3UYjTkLI8jRjFPFgk/BilCiBX/dYhh5H6E8NcXgXnfuaZJn+pLyrEvbFjRNGu36F4PRTQPxSRtcvnWFsMJClJVQrm/KbvfTW8T0oKWYzuCKWgxbINCKlEWqECuMOUhfgzuRH6xgoYYBiCZPm+XuPZktdTJxvcRu7jHfbNj6yfusldPDuE6AuR5LbjR7gK/fx2o2UCkQrz63uTF3zP/H78r4XIewwz5DwIlwqTNhEXKGaZmlZThlPU/8e14kUdQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.50, Desktop, July 27, 2009 ';
+	var bjsversion=' Opera  9.50, Desktop, July 28, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
