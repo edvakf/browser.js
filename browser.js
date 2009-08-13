@@ -1,4 +1,4 @@
-// hTm69PUFZNyHcTLdMlKi/kT2EFT8m5aR3vF1c+i5QuKiTAv1mtEt8PAAQDZb3PKSfbYNjGxVNdOyYdES9B2h8kjgb+23TXaRUvDo5iDms1/AJ8Iysekg+mTN3bnD/togaGW0CBBSD6b6EEjPFrKYhwjEm2gYtHs9KRbm0oRvsCJ6agrNIdZkuEkxLNH6mITD88DYk+TBcxu0St0alIUXb43AcLtGUNeVa2rXe7zVrXJvL+txnPrSHmsa6MSAgeOOWvx7M97JOQNqTWY4gtwcKESpV4eI/1j7mPcYp4J4BpZbJHVMrDYPe4N896n9a8dipBsm0wrwAf9H9doVOYtMRg==
+// r95JMUGQRtVHPliSRwpXQhUO95q62ohAveyUBNKbtQ7gWryEUvdLJ4N5Yf2SHA3J+0BOCPwNvUNghamDbFbFf+I1+9n3i9uFRrMtoNRyprEDf+IDFB87+WbWL90CzQSO77q1e+pByJRZtQL8+csuT4xvJlEE5zFIaFYtTTakotas+F+v/LUdIYDMVIIfPmoeWlj13aBz3U+YCuF4eRvKcPPIJZMeHo+oMzTB5/7r3OQm8mjtSYnHLgEXZJhsWqIKm4GLulyX81r4Kqi6zmOZvTExpmrSgJYg1Ev7zzomrrktCgHSpDEeH6ruOhkdgnjqjQCmH2ncDbx9aRs3gACyJw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, July 28, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, August 12, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -983,6 +983,10 @@ function solveEventOrderBugs(){
 			shouldRestore=true;
 		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
+		}else if(indexOf.call(name,'setdomain.js')>-1){//PATCH-128
+			navRestore.userAgent = navigator.userAgent;
+			navigator.userAgent+=' Gecko';
+			shouldRestore=true;
 		}
 		
 		// Creating event handler to restore any changed navigator properties
@@ -1050,7 +1054,7 @@ function solveEventOrderBugs(){
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( sniffing on saab.com and saab.de excludes Opera). See browser.js for details');
 	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
-		document.addEventListener((parseInt(opera.version())>9?'DOMContentLoaded':'load'),function(){
+		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
 				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
@@ -1138,7 +1142,16 @@ function solveEventOrderBugs(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DFDS calendar is 1900 years in the future). See browser.js for details');
 	} else if(hostname.indexOf('.ebay.')>-1){			// 228707, eBay: speed up back+forward navigation
 		opera.setOverrideHistoryNavigationMode('fast');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation). See browser.js for details');
+				// PATCH-133, ebay.fr hangs, Opera doesn't support option node passed to SELECT.remove()
+		HTMLSelectElement.prototype.remove=function(child){
+			if ( typeof child === 'number' && this.options[child] ){
+				child=this.options[child];
+			}else if( ! ( typeof child==='object' && child.parentNode === this ) ){ // don't throw for unexpected values, just return
+				return;
+			}
+			Element.prototype.removeChild.call( this, child );
+		};
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation\nebay.fr hangs, Opera doesn\'t support option node passed to S...). See browser.js for details');
 	} else if(hostname.indexOf('.ems.com.cn')>-1){			// PATCH-24, Menus on ems.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on ems.com.cn disappear too quickly). See browser.js for details');
@@ -1393,6 +1406,13 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('bbs.kafan.cn')!= -1){			// 361525, Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn
 		opera.defineMagicFunction('parsetag',function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn). See browser.js for details');
+	} else if(hostname.indexOf('bcbssc.com')>-1){			// PATCH-93, Blue Cross SC looks up named elements with getElementById()
+		(function(gEBI) { 
+		  document.getElementById = function(idOrName) { 
+		    return gEBI.call(document, arguments) || document.getElementsByName(idOrName)[0] || null; 
+		  }; 
+		})(document.getElementById);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blue Cross SC looks up named elements with getElementById()). See browser.js for details');
 	} else if(hostname.indexOf('betfair.com')>-1){			// 309459, Betfair relies on firstChild defined on attribute nodes
 		Attr.prototype.__defineGetter__("firstChild", function() {return this;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Betfair relies on firstChild defined on attribute nodes). See browser.js for details');
@@ -1806,9 +1826,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-633, Enable alt-click to show context menu in map
 		fakeOncontextmenu(false, true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable alt-click to show context menu in map). See browser.js for details');
-	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
-		fakeOncontextmenu(true,false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(hostname.indexOf('marktplaats.nl')!=-1){			// PATCH-3, Can't add article to favourites because setting link.search has no effect
 		HTMLAnchorElement.prototype.__defineGetter__('search', function(){return this.href.match(/\?.*/)||'';});
 		HTMLAnchorElement.prototype.__defineSetter__('search', function(v){
@@ -1965,7 +1982,10 @@ function solveEventOrderBugs(){
 				}
 			});
 		})();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Downloading documents on salesforce.com runs into too strict anti-drive-by-install security). See browser.js for details');
+				// OTW-4939, Salesforce runs into HTML5's data looking for window.data
+		HTMLSelectElement.prototype.__defineGetter__('data', function(){ return window.data; });
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Downloading documents on salesforce.com runs into too strict anti-drive-by-install security\nSalesfo...). See browser.js for details');
 	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
 		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (SEB bank prevents typing certain keys). See browser.js for details');
@@ -2201,6 +2221,9 @@ function solveEventOrderBugs(){
 			},10000);
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (force all images to load before printing TNT delivery sheet). See browser.js for details');
+	} else if(href.indexOf('bing.com/maps/')!=-1){			// 165310, Fake oncontextmenu support
+		fakeOncontextmenu(true,false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(location.hostname.indexOf('.legolandholidays.dk')>-1){			// PATCH-73, Fix to show relative positioned table contents
 		document.addEventListener('DOMContentLoaded', function(){document.evaluate('//td[@height=900]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.position='absolute';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
