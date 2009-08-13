@@ -1,4 +1,4 @@
-// gsmlfCOsx4W3UeCoVDAcm5hDG/8cIVY23lYrfao5j1ijlLzxKkHEn5D3p+dTzEAQ3rDR+gz3LSpz6ZBLWPO81FdJpbKEGFqxDQ7ssH6GrSeVYV5QDwCKyx/9XM8svkpBdlUY7gTRjxDxi07FUAqD+Crlt1bn0yy/GMm5RsbuNQinf4W3BKZRiwLqqZ4Vi//BcX4bnk9Z7qnjTeijY77fK3Pjgedr+kanKKpzVL8A3CpvBMGWjoC5oKAZLcB4x9EbIeF5zbV4tTp1Ja12KGs9v9KT38BFGstojm5UMLBqnY+E4mBvltLSjfL+81CSr3S1uLka605jCYAJ/KfgAYe+TQ==
+// qXy9+xVzV4g7m+MJtm993E1FHndRwb41EBOaaQN8xgjDiXeEIUmqTuE0S/nXUQJem3Gur6WZT6k2io7y6JRf8O34z8cELQ6WqSBCB5jO5aRD3Pl2bmlsasMuczZI6T326Fy3Vvj24XUSvwAe6FpdQ8Vm6gYDp9GMhrisVxKvdUd5lzfgcppJc7RoUYqS+RsAL2b3xu+Rl5WsHyuarhFeOdPjUIOgSybo/84gJ147O61ELGFkW9WlTl0HH0KXxQdFH0OYbLWt0DQ5l2LuXV9+6BzkFIV3Tbsa6XhwqhewBgHP3/yp9u2GfOxmA+3Bc8YRytXXAHCh3BcSKJx/fo5REA==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, July 28, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, August 12, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -926,6 +926,10 @@ function solveEventOrderBugs(){
 			shouldRestore=true;
 		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
+		}else if(indexOf.call(name,'setdomain.js')>-1){//PATCH-128
+			navRestore.userAgent = navigator.userAgent;
+			navigator.userAgent+=' Gecko';
+			shouldRestore=true;
 		}
 		
 		// Creating event handler to restore any changed navigator properties
@@ -993,7 +997,7 @@ function solveEventOrderBugs(){
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( sniffing on saab.com and saab.de excludes Opera). See browser.js for details');
 	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
-		document.addEventListener((parseInt(opera.version())>9?'DOMContentLoaded':'load'),function(){
+		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
 				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
@@ -1085,7 +1089,16 @@ function solveEventOrderBugs(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DFDS calendar is 1900 years in the future). See browser.js for details');
 	} else if(hostname.indexOf('.ebay.')>-1){			// 228707, eBay: speed up back+forward navigation
 		opera.setOverrideHistoryNavigationMode('fast');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation). See browser.js for details');
+				// PATCH-133, ebay.fr hangs, Opera doesn't support option node passed to SELECT.remove()
+		HTMLSelectElement.prototype.remove=function(child){
+			if ( typeof child === 'number' && this.options[child] ){
+				child=this.options[child];
+			}else if( ! ( typeof child==='object' && child.parentNode === this ) ){ // don't throw for unexpected values, just return
+				return;
+			}
+			Element.prototype.removeChild.call( this, child );
+		};
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation\nebay.fr hangs, Opera doesn\'t support option node passed to S...). See browser.js for details');
 	} else if(hostname.indexOf('.ems.com.cn')>-1){			// PATCH-24, Menus on ems.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on ems.com.cn disappear too quickly). See browser.js for details');
@@ -1321,6 +1334,13 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('bbs.pcpop.com') > -1){			// PATCH-102, Page loads blank due to misnested forms
 		addCssToDocument(' #wrapper {width: auto !important} ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Page loads blank due to misnested forms). See browser.js for details');
+	} else if(hostname.indexOf('bcbssc.com')>-1){			// PATCH-93, Blue Cross SC looks up named elements with getElementById()
+		(function(gEBI) { 
+		  document.getElementById = function(idOrName) { 
+		    return gEBI.call(document, arguments) || document.getElementsByName(idOrName)[0] || null; 
+		  }; 
+		})(document.getElementById);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blue Cross SC looks up named elements with getElementById()). See browser.js for details');
 	} else if(hostname.indexOf('bioware.com')>-1){			// 239590, bioware.com uses outdated HierMenus
 		fixHierMenus();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bioware.com uses outdated HierMenus). See browser.js for details');
@@ -1719,9 +1739,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-633, Enable alt-click to show context menu in map
 		fakeOncontextmenu(false, true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable alt-click to show context menu in map). See browser.js for details');
-	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165310, Fake oncontextmenu support
-		fakeOncontextmenu(true,false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(hostname.indexOf('marktplaats.nl')!=-1){			// PATCH-3, Can't add article to favourites because setting link.search has no effect
 		HTMLAnchorElement.prototype.__defineGetter__('search', function(){return this.href.match(/\?.*/)||'';});
 		HTMLAnchorElement.prototype.__defineSetter__('search', function(v){
@@ -1869,7 +1886,10 @@ function solveEventOrderBugs(){
 				}
 			});
 		})();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Downloading documents on salesforce.com runs into too strict anti-drive-by-install security). See browser.js for details');
+				// OTW-4939, Salesforce runs into HTML5's data looking for window.data
+		HTMLSelectElement.prototype.__defineGetter__('data', function(){ return window.data; });
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Downloading documents on salesforce.com runs into too strict anti-drive-by-install security\nSalesfo...). See browser.js for details');
 	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
 		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (SEB bank prevents typing certain keys). See browser.js for details');
@@ -2094,6 +2114,12 @@ function solveEventOrderBugs(){
 			},10000);
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (force all images to load before printing TNT delivery sheet). See browser.js for details');
+	} else if(href.indexOf('/sample_lr.html')>-1){			// PATCH-128, Sun Webmail fails to set document.domain due to browser sniffing
+		navigator.userAgent+=' Gecko';
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sun Webmail fails to set document.domain due to browser sniffing). See browser.js for details');
+	} else if(href.indexOf('bing.com/maps/')!=-1){			// 165310, Fake oncontextmenu support
+		fakeOncontextmenu(true,false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(location.hostname.indexOf('.legolandholidays.dk')>-1){			// PATCH-73, Fix to show relative positioned table contents
 		document.addEventListener('DOMContentLoaded', function(){document.evaluate('//td[@height=900]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.position='absolute';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
