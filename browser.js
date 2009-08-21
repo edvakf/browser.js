@@ -1,4 +1,4 @@
-// r95JMUGQRtVHPliSRwpXQhUO95q62ohAveyUBNKbtQ7gWryEUvdLJ4N5Yf2SHA3J+0BOCPwNvUNghamDbFbFf+I1+9n3i9uFRrMtoNRyprEDf+IDFB87+WbWL90CzQSO77q1e+pByJRZtQL8+csuT4xvJlEE5zFIaFYtTTakotas+F+v/LUdIYDMVIIfPmoeWlj13aBz3U+YCuF4eRvKcPPIJZMeHo+oMzTB5/7r3OQm8mjtSYnHLgEXZJhsWqIKm4GLulyX81r4Kqi6zmOZvTExpmrSgJYg1Ev7zzomrrktCgHSpDEeH6ruOhkdgnjqjQCmH2ncDbx9aRs3gACyJw==
+// mws3rclV9ffTfiffh+afJ7OSMyhV778628grETCyNnfczyJrlT630+0Z6xCTm3sqtMD6E0KKSXaPF2dZ7kKWKwn+s+RcQaB46JwIEw+ctmWhW8y+QnYmg4T/EtyR/G7ndAW1dbqaNlICpKtVQxBSAM+vtDQTH0agY6uBAh/xWHt1qMyRAlpRvywTFoi4RNI/bvZjSjJJlziUDuOoJj4mGo5npXdJATpCein1ysOIP3ghRhJqhXpZtCCsbDsDAEl7Qg3dNVAU2fYZffZ8g5uhuc+3RbQI2Blj1CJnWIYiMjlnF3QGQb6cGi+ue06ylflLOsFPhrVJiyD2e5GK6JcP+Q==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, August 12, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, August 21, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1684,7 +1684,7 @@ function solveEventOrderBugs(){
 		allowNull('top');
 		
 				// CORE-17497, Opera doesn't support col-resize/row-resize cursors.
-		addCssToDocument('html .SplitterBarH { cursor: s-resize } html .SplitterBarV { cursor: e-resize }');
+		addCssToDocument('html .SplitterBarH { cursor: s-resize } html .SplitterBarV { cursor: e-resize } #masterSplitter { cursor: e-resize }');
 				// CORE-17500, Identify as Opera to the client-side sniffer
 		if (!/EditMessageLight/.test(location.pathname)) {
 			var browser = undefined;
@@ -1791,11 +1791,11 @@ function solveEventOrderBugs(){
 			realHTMLElementDefineGetter.call(this, name, func);
 		}
 		
-				// CORE-15973, Resize function causes rendering loop
+				// CORE-15973, Resize function causes event loop due to mutation listener
 		opera.defineMagicFunction('dap_Resize', function(){});
 				// DSK-239582, redefine document.selection with live.com's compat-layer version
 		document.addEventListener( 'load', function(e){
-			if(e.target instanceof HTMLIFrameElement){
+			if(e.target instanceof HTMLIFrameElement  && e.target.id=='RichTextEditor_surface'){
 				try{
 					var doc=e.target.contentDocument;
 					var win=doc.defaultView;
@@ -1846,6 +1846,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
+	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
+		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
 	} else if(hostname.indexOf('msnbc.com')>-1){			// PATCH-30, MSNBC sniffing hides Flash content
 		opera.defineMagicVariable('oSniff', function(o){return o;},function(){ window['oSniff'].nn=5; });
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSNBC sniffing hides Flash content). See browser.js for details');
