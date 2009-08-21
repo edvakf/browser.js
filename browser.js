@@ -1,4 +1,4 @@
-// qXy9+xVzV4g7m+MJtm993E1FHndRwb41EBOaaQN8xgjDiXeEIUmqTuE0S/nXUQJem3Gur6WZT6k2io7y6JRf8O34z8cELQ6WqSBCB5jO5aRD3Pl2bmlsasMuczZI6T326Fy3Vvj24XUSvwAe6FpdQ8Vm6gYDp9GMhrisVxKvdUd5lzfgcppJc7RoUYqS+RsAL2b3xu+Rl5WsHyuarhFeOdPjUIOgSybo/84gJ147O61ELGFkW9WlTl0HH0KXxQdFH0OYbLWt0DQ5l2LuXV9+6BzkFIV3Tbsa6XhwqhewBgHP3/yp9u2GfOxmA+3Bc8YRytXXAHCh3BcSKJx/fo5REA==
+// U5re/AqUUXSsZC6TJ12kiXCwPdSU1CCO8CqbXKjKBpAiuQ64OKfwEgWIPK6vMk4x1jRibY9UV/4COk7Jl2yw0cm5mZJO2On5+vJq1u59Bj5wrMS2AJv4fujtJVg9VV6wrRK/Holu3ccl1xi/hwtxqBtq0Dyu7pKfB7ZLxCNMCSInV+kK7lyKLYRsE5b5LVHV0kc0sUsLtIWOgco9zRdVhOLgix/MJk09vlTKit2CmiwRovYbhQPOC9bSK83IHvQ6AYggS3EwF4Q2TMwXtO9Ur4H+nw+BzNvxzTG2Y5OXT1KOFPhff+ANZl7K+nxUpjOvn37ZAgY4Z3TkofsHD8LwvQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, August 12, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, August 21, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1594,7 +1594,7 @@ function solveEventOrderBugs(){
 		allowNull('top');
 		
 				// CORE-17497, Opera doesn't support col-resize/row-resize cursors.
-		addCssToDocument('html .SplitterBarH { cursor: s-resize } html .SplitterBarV { cursor: e-resize }');
+		addCssToDocument('html .SplitterBarH { cursor: s-resize } html .SplitterBarV { cursor: e-resize } #masterSplitter { cursor: e-resize }');
 				// CORE-17500, Identify as Opera to the client-side sniffer
 		if (!/EditMessageLight/.test(location.pathname)) {
 			var browser = undefined;
@@ -1704,11 +1704,11 @@ function solveEventOrderBugs(){
 			realHTMLElementDefineGetter.call(this, name, func);
 		}
 		
-				// CORE-15973, Resize function causes rendering loop
+				// CORE-15973, Resize function causes event loop due to mutation listener
 		opera.defineMagicFunction('dap_Resize', function(){});
 				// DSK-239582, redefine document.selection with live.com's compat-layer version
 		document.addEventListener( 'load', function(e){
-			if(e.target instanceof HTMLIFrameElement){
+			if(e.target instanceof HTMLIFrameElement  && e.target.id=='RichTextEditor_surface'){
 				try{
 					var doc=e.target.contentDocument;
 					var win=doc.defaultView;
@@ -1756,6 +1756,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
+	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
+		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
 	} else if(hostname.indexOf('msnbc.com')>-1){			// PATCH-30, MSNBC sniffing hides Flash content
 		opera.defineMagicVariable('oSniff', function(o){return o;},function(){ window['oSniff'].nn=5; });
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSNBC sniffing hides Flash content). See browser.js for details');
@@ -1765,6 +1768,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
+	} else if(hostname.indexOf('nasdaq.com')>-1){			// PATCH-23, Fix Nasdaq overlapping content
+		addCssToDocument('#content{clear: none !important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix Nasdaq overlapping content). See browser.js for details');
 	} else if(hostname.indexOf('nba.com')>-1){			// PATCH-89, load event not triggered when expected in video section
 		opera.defineMagicVariable('is_ie', function(o){ return false; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (load event not triggered when expected in video section). See browser.js for details');
