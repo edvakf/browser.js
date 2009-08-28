@@ -1,4 +1,4 @@
-// U5re/AqUUXSsZC6TJ12kiXCwPdSU1CCO8CqbXKjKBpAiuQ64OKfwEgWIPK6vMk4x1jRibY9UV/4COk7Jl2yw0cm5mZJO2On5+vJq1u59Bj5wrMS2AJv4fujtJVg9VV6wrRK/Holu3ccl1xi/hwtxqBtq0Dyu7pKfB7ZLxCNMCSInV+kK7lyKLYRsE5b5LVHV0kc0sUsLtIWOgco9zRdVhOLgix/MJk09vlTKit2CmiwRovYbhQPOC9bSK83IHvQ6AYggS3EwF4Q2TMwXtO9Ur4H+nw+BzNvxzTG2Y5OXT1KOFPhff+ANZl7K+nxUpjOvn37ZAgY4Z3TkofsHD8LwvQ==
+// NgwXF6QLk7BMpuCieF0Qhv98QyraONU/ZCyCEjcLmW9aly2MxDRJDDMLeuNGrIDCFZMJ0j+a4o2uqfICIspgFmQM3Mmat6MQUP+BXwchnb73PuXWZHK68Yysd14pKd4FZQUPWne7kjhLL5+uOUn2PxgThNLtJJvzCKhIxgrbKXJInTtAVhWil+EaEO/vUJVcv0VMw2Zpf5+vTV06017qD20OUSUFuFiyNQv6fcj6vu65bH0myxTbl+OTwOWpVr6ZU3j09bSWcZCPUsaG5yqALTw38x+Dh/P4VHj2TxNZ/VRp0EvAwnFVURWfXfXY7VRfItYN/HFlVcwYOh7rzlc1yA==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, August 21, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, August 28, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -769,7 +769,7 @@ function solveEventOrderBugs(){
 	Element.prototype.constructor=Element;
 			// CORE-17460, Constructor property of event should be Event interface
 	Event.prototype.constructor=Event;
-			// 0, Generic JS library patches
+			// PATCH-139, Generic JS library patches
 	// Use an event listener to detect specific scripts
 	opera.addEventListener( 'BeforeExternalScript', function(ev){
 		match.call=replace.call=indexOf.call=toLowerCase.call=postError.call=addEventListener.call=removeEventListener.call=version.call=parseFloat.call=call;
@@ -971,7 +971,7 @@ function solveEventOrderBugs(){
 			// CORE-3776, Generic patch to support window.scrollX, window.scrollY
 	if(typeof window.scrollX=='undefined')opera.defineMagicVariable('scrollX',function(){ return window.pageXOffset;},null);
 	if(typeof window.scrollY=='undefined')opera.defineMagicVariable('scrollY',function(){ return window.pageYOffset;},null);
-			// 0, Asia-region Generic Patches
+			// PATCH-138, Asia-region Generic Patches
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
 		if(!name){return;}
@@ -1278,8 +1278,6 @@ function solveEventOrderBugs(){
 			/* because Yahoo mail is better at emulating proprietary IE functions than we are.. */
 			Node.prototype.selectSingleNode=undefined;
 			Node.prototype.selectNodes=undefined;
-					// 241691, Y!Mail doesn't load if identifying as IE
-			navigator.userAgent = navigator.userAgent.replace( /MSIE/, '' );
 					// PATCH-118, Y!Mail Send button opens attach file dialog
 			addCssToDocument( '.transparent_attach_btn{ left:60px !important; width: 60px !important }' );
 			
@@ -2011,7 +2009,9 @@ function solveEventOrderBugs(){
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
 		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com). See browser.js for details');
+				// PATCH-134, Videos not shown
+		navigator.userAgent += ' [NOT firefox/3]';
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nVideos not shown). See browser.js for details');
 	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
 		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
