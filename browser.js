@@ -1,4 +1,4 @@
-// NgwXF6QLk7BMpuCieF0Qhv98QyraONU/ZCyCEjcLmW9aly2MxDRJDDMLeuNGrIDCFZMJ0j+a4o2uqfICIspgFmQM3Mmat6MQUP+BXwchnb73PuXWZHK68Yysd14pKd4FZQUPWne7kjhLL5+uOUn2PxgThNLtJJvzCKhIxgrbKXJInTtAVhWil+EaEO/vUJVcv0VMw2Zpf5+vTV06017qD20OUSUFuFiyNQv6fcj6vu65bH0myxTbl+OTwOWpVr6ZU3j09bSWcZCPUsaG5yqALTw38x+Dh/P4VHj2TxNZ/VRp0EvAwnFVURWfXfXY7VRfItYN/HFlVcwYOh7rzlc1yA==
+// SHHT5UwjxoKge0DxmLOa3fbs0vnmyZvpSvkyXDjqxUe4SLc6S0fd4yokWJ5hGlCuHhRR7EkHNqPTXTxgmPP4axMphbU31K4OFT+v/zEcqyhqYojk2xmpRzvLxMQEkkvFtCdGuGZhGH1rK0jRGf+cirz7KKwDmh+R1omS/pcco0On3RJVvLXKjFGbyb/iRF3qJljPiW8t9jiQfZ2Etmq/eLByTq2mWruvDD0yx9caEnySF9axDYAdB8mbZMwfkkfu7RIT4BQecnaWRbv4OC5rD66yGfQobgvW5h+wNsHGl9mQr1Gd0L0mc8Zjq3DY5BHa4OP4N6sSeOQxYoYf+T2O+A==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, August 28, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, September 4, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -653,10 +653,6 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 	function fixUDM(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
-		// Some versions are Opera 7 - compatible and do user agent sniffing
-		navRestore['userAgent'] = navigator.userAgent;
-		navigator.userAgent =' opera 9.5 '+navigator.userAgent;
-		shouldRestore = true;
 		// If the menu is a 3.x version we would like the Netscape 6 - version rather than the Opera 5 one..
 		defineMagicVariable.call(opera, 'op5',function () { return 0; },null);
 		defineMagicVariable.call(opera, 'ns6',function () { return 1; },null);
@@ -976,12 +972,12 @@ function solveEventOrderBugs(){
 		var name=ev.element.src; 
 		if(!name){return;}
 		if((name.indexOf('http://api.e-map.ne.jp/jsapi.cgi')!=-1)&&(name.indexOf('zdccommon.js')!=-1)){
-			// Zenrin Datacom E-Map API
+			// Zenrin Datacom E-Map API, PATCH-115
 			Event.prototype.__defineGetter__('layerX',function(){ return this.offsetX; });
 			Event.prototype.__defineGetter__('layerY',function(){ return this.offsetY; });
 			
 		}else if(name.indexOf('expapi/authentication')!=-1){
-			// Rosenzu ASP Map Service
+			// Rosenzu ASP Map Service, PATCH-122
 			opera.defineMagicFunction('_ch',function(){return true;});
 		}else if(name.indexOf('http://ebook.webcatalog.jp/engine/java/7net/common/sCommonLib.js')!=-1){ 
 			// Netfly TrueEBook, PATCH-125
@@ -1305,6 +1301,16 @@ function solveEventOrderBugs(){
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
+	} else if(hostname.indexOf('aegeanair.com')>-1){			// PATCH-136, aegeanair recursive click patch
+		HTMLAnchorElement.prototype.click=(function(click){
+			return function(){
+				if( window.event && window.event.target.contains(this) ){
+					return;
+				}
+				click.apply(this, arguments);
+			}
+		})(HTMLAnchorElement.prototype.click);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (aegeanair recursive click patch). See browser.js for details');
 	} else if(hostname.indexOf('amazon.com.cn')>-1){			// PATCH-25, Menus on amazon.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on amazon.com.cn disappear too quickly). See browser.js for details');
@@ -1963,7 +1969,7 @@ function solveEventOrderBugs(){
 			return rangeInsertNode.call(this,n);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Overriding spaces.live.com browser sniffing\nMake Range.prototype.insertNode automatically import no...). See browser.js for details');
-	} else if(hostname.indexOf('status.xiaonei.com') > -1){			// PATCH-101, Allow the comments to be visible
+	} else if(hostname.indexOf('status.renren.com') > -1){			// PATCH-101, Allow the comments to be visible
 		addCssToDocument('ul#status-list li{overflow:visible;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Allow the comments to be visible). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
@@ -1996,15 +2002,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('tistory.com')!=-1){			// 347990, two login buttons on tistory.com
 		addCssToDocument('#memberbox .btn-login {text-indent:-100px;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (two login buttons on tistory.com). See browser.js for details');
-	} else if(hostname.indexOf('tudou.com')>-1){			// PATCH-64, tudou login doesn't work because it expects input type=button to support .checked
-		(function(){
-			var tmp=document.createElement('input');
-			var checkedSetter=tmp.__lookupSetter__('checked');
-			var checkedGetter=tmp.__lookupGetter__('checked');
-			HTMLInputElement.prototype.__defineSetter__('checked', function(value){this.__storedCheckedValue=value;checkedSetter.apply(this, arguments);});
-			HTMLInputElement.prototype.__defineGetter__('checked', function(){if(typeof this.__storedCheckedValue!='undefined')return this.__storedCheckedValue; return checkedGetter.apply(this, arguments);});
-		})();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tudou login doesn\'t work because it expects input type=button to support .checked). See browser.js for details');
 	} else if(hostname.indexOf('tuenti.com')!=-1){			// DSK-243723, Problems submitting messages and comments on tuenti.com
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
