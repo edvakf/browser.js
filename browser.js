@@ -1,4 +1,4 @@
-// a7XNoCaRZncWRXHjaSLWjEVHRQyzKnDIkaD2xXmFcFTOegxIoAL0QnSei3ZwtlCRpKP8RQ9qrth1YN4qmpfVeXTiNzFTxomrv+J5r/Wk2mrr+ALxAki9A3pYzJJf5WNaYGHX5zF4hb8Um07Vs4jXSqmm6OfGCJBduCPQ0gLhtl4kwQ6UcX86nkjMCNZBEijGfVrK/nBCWEI9yIGuel5snASsrHjg/qLXwwsjop28MlYTF809ljQzCtFMAnL0L//w3o8j32wqYjdEgEcf96e2ke2DXHk3UsWEnQHUKcID06KXgXCdX6pLWWDyl517VL//dK/t9i4M4JgIcPkFYbHSaQ==
+// SKc1u/0ilBnbY0YejBu0cLNjnRCTDxMKCywv/HKXm6pW0iYqUBCZ62rs+8Hci6+UNbmVQPw4hKbUFWXn4d4lIg0o4U7aHERLmWuESZZC4v5RQUripK5BRhUC1tQfjvKVO/5MeXHPrJA28Kmsugy5TawW2V+psjH8EkxfFj8ZrQx0xj/TrbzQggedw51LVE/+csbh9E3wWQTV73WmYSIG4YVpmdNjKY56Ynbk8LbekdAOmH1CQPFolbSfVTbYkeVdLIPss+iUOHb54n6/48bqZoflYQ4SEbrq2NLF2GKsskhMdVjfDVJADqWw7xYwL28PFP3Hk3Ha+WZtWLulfUuwsA==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, August 28, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, September 4, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -710,10 +710,6 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 	function fixUDM(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
-		// Some versions are Opera 7 - compatible and do user agent sniffing
-		navRestore['userAgent'] = navigator.userAgent;
-		navigator.userAgent =' opera 9.5 '+navigator.userAgent;
-		shouldRestore = true;
 		// If the menu is a 3.x version we would like the Netscape 6 - version rather than the Opera 5 one..
 		defineMagicVariable.call(opera, 'op5',function () { return 0; },null);
 		defineMagicVariable.call(opera, 'ns6',function () { return 1; },null);
@@ -1033,12 +1029,12 @@ function solveEventOrderBugs(){
 		var name=ev.element.src; 
 		if(!name){return;}
 		if((name.indexOf('http://api.e-map.ne.jp/jsapi.cgi')!=-1)&&(name.indexOf('zdccommon.js')!=-1)){
-			// Zenrin Datacom E-Map API
+			// Zenrin Datacom E-Map API, PATCH-115
 			Event.prototype.__defineGetter__('layerX',function(){ return this.offsetX; });
 			Event.prototype.__defineGetter__('layerY',function(){ return this.offsetY; });
 			
 		}else if(name.indexOf('expapi/authentication')!=-1){
-			// Rosenzu ASP Map Service
+			// Rosenzu ASP Map Service, PATCH-122
 			opera.defineMagicFunction('_ch',function(){return true;});
 		}else if(name.indexOf('http://ebook.webcatalog.jp/engine/java/7net/common/sCommonLib.js')!=-1){ 
 			// Netfly TrueEBook, PATCH-125
