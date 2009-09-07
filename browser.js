@@ -1,4 +1,4 @@
-// iZlrgtf49edUwCavvJb7TQQ4vM8FokZvnETUDwT1CeyIXDZMYr8rB2N9qZ04256Pj/FSrhBcd5ua4zSSFxbBm1QcoWmM+lHCV/dySWXvnD4o0OTzS4nfd0kaOyAl4PUGVLZrDGuHW0UNc4uJtEEqjabUOXpWQnHaZvm7bqx/b7PimHb1gutspIRq1QCevPGw7QwBlcRDtazcSFT6FqDWr7IcrOBaaQT41N5MxW3Pio9HYLVD+yAsnt0rXvxePvJWYE+Ix0h9NZL3MGtQienTt8E7E/by3zfmay/GfsvO0Tl87w7zsGItxDcTV5kE8AHLhoaVxDC8NIbMacwhwuhnug==
+// fMoJ+70/kWwW/fA3OQj95mtYvkknMpNUdHHwVAigQDlIgjj/1W0ScwHFFiFKUF2YjnssfTAYMRLdyCu1ibeq4zx3oOhgXsqiFaiXM9zHBKCLvr5PZ+KE5uWWEufpD8hb18DWDYjpCcGo8rIjNrEEhFrcltNoXdxeuW1IcpL0q/UVsyDwY6IKXUM+fpBl1JZlReyqdEdkDMluNaYXH5m2xJhdMUhmMjhiKprEu6SBOgVjknQNpf55YnP//ZzVmhC2cvQQEL2yl7yo7RneAB3S9TMmvE9flg9wHijXb6El5CA7l7qlTshAhaiq9vSN4iJFqExueciWDAcVbSzUD0ieQg==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.20, Desktop, May 18, 2009 ';
+	var bjsversion=' Opera  9.20, Desktop, September 4, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -106,17 +106,17 @@
 			}
 		, false);
 	}
-function avoidDocumentWriteAbuse(){
+function avoidDocumentWriteAbuse(contentRegexp){
 	var dw=document.write;
+	contentRegexp = contentRegexp || /(^<img .*?width=("|)1("|)\s+height=("|)1("|)\s+border=("|)0("|)\s+alt="".*?>$|^\[object Object\]$)/i;
 	document.write=function( s ){
-		if( String(s).match( /(^<img .*?width=("|)1("|) height=("|)1("|) border=("|)0("|) alt="">$|^\[object Object\]$)/i ) ){
+		if( String(s).match( contentRegexp ) ){
 			opera.postError('Warning: scripts on '+window.location+' were changed by the s_code patch. See browser.js for details.');
-		}else{
+		}else{//opera.postError(arguments);
 			dw.apply(document, arguments);
 		}
 	};
-}
-	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
+}	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
 		var filterObj={apply:function(){}, play:function(){}, Apply:function(){}, Play:function(){}}; // some of the common functions
 		HTMLElement.prototype.filters=[ filterObj, filterObj, filterObj ]; // fake three applied filters with play and apply functions
 		HTMLElement.prototype.filters['blendTrans']=filterObj; // we also fake a named blendTrans filter
@@ -334,9 +334,9 @@ function fixIFrameSSIscriptII(name, iFrameId){
 		// Menu does not work on Mac if it detects platform
 		defineMagicVariable.call(opera, 'mac', function(){ return false }, function(){ });
 		// bug 330958
-		if(window.__defineGetter__){
-			window.__defineGetter__('scrollY', function(){ return document.body.scrollTop });
-			window.__defineGetter__('scrollX', function(){ return document.body.scrollLeft });
+		if(!window.scrollX){
+			opera.defineMagicVariable('scrollY', function(){ return document.body.scrollTop;}, null);
+			opera.defineMagicVariable('scrollX', function(){ return document.body.scrollLeft;}, null);
 		}
 	}
 function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu functions must be called with an appropriate string argument
@@ -443,10 +443,6 @@ function fixScriptOnloadBehaviour(appendChild) {
 	function fixUDM(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
-		// Some versions are Opera 7 - compatible and do user agent sniffing
-		navRestore['userAgent'] = navigator.userAgent;
-		navigator.userAgent =' opera 9.5 '+navigator.userAgent;
-		shouldRestore = true;
 		// If the menu is a 3.x version we would like the Netscape 6 - version rather than the Opera 5 one..
 		defineMagicVariable.call(opera, 'op5',function () { return 0; },null);
 		defineMagicVariable.call(opera, 'ns6',function () { return 1; },null);
@@ -455,7 +451,14 @@ function fixScriptOnloadBehaviour(appendChild) {
 		// Better fake missing support for DOM2Style then..
 		defineMagicVariable.call(opera, 'um', function(o){ o.ss=false; return o; }, null);
     }
-	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
+function ignoreCancellationOfCertainKeyEvents(type, list){
+	opera.addEventListener( 'BeforeEventListener.'+type, function(e){
+		preventDefault.call=call;
+		if( e.event.keyCode in list ){
+			preventDefault.call(e);
+		}
+	},false );
+}	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
 		var ael=object.addEventListener;
 		object.addEventListener=function(type, func, cap){
 			if(type==eventName)cap=false;
@@ -467,6 +470,7 @@ function removeClosingHTMLComments(){
 }
 
 //SELECT * FROM patches, patch_information WHERE patches.patch_id = patch_information.patch_id AND patch_information.platform LIKE "desktop" AND (patch_information.obsolete_from LIKE "0.00" OR patch_information.obsolete_from > "9.20") AND patch_information.requires_version <= "9.20" AND patches.active LIKE "1" AND patches.looks_safe LIKE "1" AND  patches.parent = 633 AND patch_information.review_status LIKE 'ACCEPTED' ORDER BY patches.if_clause
+//SELECT * FROM patches, patch_information WHERE patches.patch_id = patch_information.patch_id AND patch_information.platform LIKE "desktop" AND (patch_information.obsolete_from LIKE "0.00" OR patch_information.obsolete_from > "9.20") AND patch_information.requires_version <= "9.20" AND patches.active LIKE "1" AND patches.looks_safe LIKE "1" AND  patches.parent = 695 AND patch_information.review_status LIKE 'ACCEPTED' ORDER BY patches.if_clause
 
 	// working around incompatibility with prototype - argument extends array but not all methods work correctly
 // The constructor property of DOM nodes should not be Object
@@ -475,6 +479,7 @@ function removeClosingHTMLComments(){
 // Generic JS library patches
 // Router configuration SCRIPT in OPTION tag fix
 // PDF security patch
+// Generic patch to support window.scrollX, window.scrollY
 // NHK and iui.js relies on array indexOf
 			// 241832, working around incompatibility with prototype - argument extends array but not all methods work correctly
 	Array.prototype.concat = function(){  // working around incompatibility with prototype, bug 241832
@@ -523,7 +528,7 @@ function removeClosingHTMLComments(){
 			}, false );
 		}}catch(e){}
 	}, false);
-			// 0, Generic JS library patches
+			// PATCH-139, Generic JS library patches
 	// Use an event listener to detect specific scripts
 	opera.addEventListener( 'BeforeExternalScript', function(ev){
 		match.call=replace.call=indexOf.call=toLowerCase.call=postError.call=addEventListener.call=removeEventListener.call=version.call=parseFloat.call=call;
@@ -680,6 +685,10 @@ function removeClosingHTMLComments(){
 			shouldRestore=true;
 		}else if(indexOf.call(name,'s_code')>-1||indexOf.call(name,'omniture')>-1){//PATCH-59
 			avoidDocumentWriteAbuse();
+		}else if(indexOf.call(name,'setdomain.js')>-1){//PATCH-128
+			navRestore.userAgent = navigator.userAgent;
+			navigator.userAgent+=' Gecko';
+			shouldRestore=true;
 		}
 		
 		// Creating event handler to restore any changed navigator properties
@@ -724,6 +733,9 @@ function removeClosingHTMLComments(){
 		var hash=unescape.call(self, toLowerCase.call(self.location.hash));
 		if( /*indexOf.call(pathname, '.pdf')>-1 &&*/ hash  &&  indexOf.call(hash, 'javascript:')>-1   ) preventDefault.call(e);
 	}, false);
+			// CORE-3776, Generic patch to support window.scrollX, window.scrollY
+	if(typeof window.scrollX=='undefined')opera.defineMagicVariable('scrollX',function(){ return window.pageXOffset;},null);
+	if(typeof window.scrollY=='undefined')opera.defineMagicVariable('scrollY',function(){ return window.pageYOffset;},null);
 			// 357910, NHK and iui.js relies on array indexOf
 	opera.addEventListener( 'BeforeExternalScript', function(e){
 		match.call = addEventListener.call = postError.call = call;
@@ -747,7 +759,7 @@ function removeClosingHTMLComments(){
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( sniffing on saab.com and saab.de excludes Opera). See browser.js for details');
 	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
-		document.addEventListener((parseInt(opera.version())>9?'DOMContentLoaded':'load'),function(){
+		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
 				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
@@ -776,13 +788,8 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf("epa.qld.gov.au")>-1){			// 212375, epa.qld.gov.au site uses capturing load events. 
 		preventEventCapture(window, 'load');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (epa.qld.gov.au site uses capturing load events. ). See browser.js for details');
-	} else if(hostname.indexOf("rec.feeds.yahoo.")==0){			// 194334, Make "add feeds" dialog work in Y!Mail beta
-		if( location.href.indexOf("bjs_getXMLMarkup")>=0 )location.href = location.href.replace("bjs_getXMLMarkup()","xml");
-		navigator.product='Gecko';
-		addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
-	} else if(hostname.indexOf('.aol.') >-1){			// 0, AOL sites, multiple patches
-		/*various AOL patches*/
+	} else if(hostname.indexOf('.aol.') >-1){			// 0, AOL
+		/* AOL */
 	
 	
 		if(hostname.indexOf('.aol.jp')>-1){			// PATCH-45, AOL.jp sniffing prevents styling
@@ -803,23 +810,24 @@ function removeClosingHTMLComments(){
 			
 					// CORE-17733, Send button does not appear
 			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
-					// CORE-18580, Converting RGB to Hex confuses "high contrast mode" detection
-			opera.defineMagicFunction('inHighContrastMode', function(){return false;});
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (All lower case dojotype attributes break XPath query for dojoType\nSend button does not appear\nConv...). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (All lower case dojotype attributes break XPath query for dojoType\nSend button does not appear). See browser.js for details');
 		}
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL sites, multiple patches). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
-	} else if(hostname.indexOf('.ebay.')>-1){			// 226144, eBay: IFRAME expands forever
-		document.addEventListener( (parseFloat(opera.version())>9?'DOMContentLoaded':'load'), function(){ try{
-			if( ! window.frameElement)return; 
-			document.onresize=null;document.body.onresize=null;
-		}catch(e){}}, false );
-		
-				// 228707, eBay: speed up back+forward navigation
+	} else if(hostname.indexOf('.ebay.')>-1){			// 228707, eBay: speed up back+forward navigation
 		opera.setOverrideHistoryNavigationMode('fast');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: IFRAME expands forever\neBay: speed up back+forward navigation). See browser.js for details');
+				// PATCH-133, ebay.fr hangs, Opera doesn't support option node passed to SELECT.remove()
+		HTMLSelectElement.prototype.remove=function(child){
+			if ( typeof child === 'number' && this.options[child] ){
+				child=this.options[child];
+			}else if( ! ( typeof child==='object' && child.parentNode === this ) ){ // don't throw for unexpected values, just return
+				return;
+			}
+			Element.prototype.removeChild.call( this, child );
+		};
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation\nebay.fr hangs, Opera doesn\'t support option node passed to S...). See browser.js for details');
 	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/calendar/')>-1){			// 229475, Google calendar date selection fails due to order of blur and mousedown events
 		opera.addEventListener('BeforeEvent.blur',function(e){ 
 			indexOf.call=preventDefault.call=call;
@@ -831,220 +839,6 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('.ibm.com')>-1){			// 206984, IBM driver download has HTML comments inside SCRIPT tag, breaks parsing
 		removeClosingHTMLComments();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (IBM driver download has HTML comments inside SCRIPT tag, breaks parsing). See browser.js for details');
-	} else if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
-		location.href='/dc/launch?sysreq=ignore';
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail work around browser blocking). See browser.js for details');
-	} else if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/dc/')==0){			// 290495, can't get past "new features" screen due to redirect
-		document.addEventListener( 'DOMContentLoaded', function(){
-			for( var link_count=0,element;element=document.links[ link_count ]; link_count++ ){
-				if( element.getAttribute('href')=='/dc/launch?consentLW=1' )element.setAttribute('href', '/dc/launch?consentLW=1&sysreq=ignore');
-			}
-		} ,false );
-		
-				// 315686, Remember to create documentElement properties on XML nodes
-		addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
-		
-				// 321384, createElement in XML document should put un-prefixed nodes in null namespace
-		var docCreateElement = Document.prototype.createElement;
-		if( window.XMLDocument ){
-			XMLDocument.prototype.createElement = function(n){ return n.indexOf(':')==-1 ? this.createElementNS(null, n) : docCreateElement.call(this,n); }
-		}else{
-			Document.prototype.createElement = function(n){ return n.indexOf(':')==-1 ? this.createElementNS(null, n) : docCreateElement.call(this,n); }
-		}
-				// 327060, Fake documentElement property better on XML nodes
-		Element.prototype.valueOf = function() {
-			if (this.__fakeDocumentElement == true) {
-				this.documentElement = null;
-				delete this.__fakeDocumentElement;
-			}
-			if (!this.documentElement && this.XMLDocument) {
-				this.documentElement = this.XMLDocument.documentElement;
-				this.__fakeDocumentElement = true;
-			}
-			return this;
-		};
-		opera.addEventListener('BeforeScript', function(e) {
-			replace.call=call;
-			e.element.text = replace.call(e.element.text, /\.documentElement(?=[\s\W]*)/g, '.valueOf().documentElement');
-		}, false);
-				// 327060, Fix the keyboard shortcut column of menu items in Merlin
-		addCssToDocument('div.yuimenu li.hashelptext em.helptext { float: right } ');
-				// 327060, Shadow on dialogs is messed up, so fix it
-		addCssToDocument('.dialogFooterCenter { font-size: 0; line-height: 0 } ');
-				// 327060, The hidden <input type="file"> for the "Attach" button not hidden in Merlin on Mac OS X
-		addCssToDocument('.transparent_attach_btn { padding: 0 !important; background-color: white !important; clip: rect(0 0 0 0) !important; z-index: 1 !important } ' +
-						// Make sure all the buttons are above the <input type="file">...
-						'#messageToolbar > table { position: relative; z-index: 102 } ' +
-						// ...except for the "Attach" button
-						'#messageToolbar #btnTbl_Attach { z-index: 0 !important }');
-				// 194334, Y!Mail uses XMLDocument without detecting it
-		window.XMLDocument = window.XMLDocument||Document;
-		
-				// 194334, Y!Mail faking getters and setters
-		// --- workaround for defineGetter and defineSetter used in Gecko library ---
-		//this must be defined to get the showModalDialog implementation
-		/*if( !window.Window ){ window.Window=function(){}; window.Window.prototype=window; }*/
-		//faking getters and setters
-		var ifaces = ['Node','CSSStyleDeclaration','CSSStyleSheet','Event'/*,'Window'*/];
-		for(var idx=0, iface; (iface = ifaces[idx]) && (iface = window[iface]) && (iface = iface.prototype); idx++)
-			iface.__defineGetter__ = iface.__defineSetter__ = function(){};
-		
-				// 194334, Y!Mail faking IE's loadXML method
-		HTMLElement.prototype.loadXML = function (xml) {
-			if (this.tagName != "XML") {return;}
-			if ( !xml ) {
-				var doc = document.implementation.createDocument("", "", null);
-				doc.appendChild(doc.createElement(this.id));
-			} else {
-				try{
-					var doc = (new DOMParser()).parseFromString(xml.replace(/\n/g, "&#10;"), "text/xml");
-				}catch(e){
-					//DOMParser could not parse fragment, probably because of missing single root element. Workaround time..
-					var doc=document.implementation.createDocument('', this.tagName, null);
-					var el=doc.createElement('el');
-					el.innerHTML=xml;
-					for(var i=0, child; child = el.childNodes[i] ;i++)
-						doc.appendChild(child.cloneNode(true));
-				}
-			}
-			this.XMLDocument = doc;
-			this.XMLDocument.parseError={errorCode:0};
-			try{
-				this.documentElement = doc.documentElement||doc.firstChild;
-			}catch(e){
-				 if( this.__defineGetter__ ){
-					this.__defineGetter__( 'documentElement', function(){ return doc.documentElement||doc.firstChild; } )
-				}
-			}
-		
-		
-			return doc;
-		};
-		
-				// 194334, Y!Mail faking isSameNode
-		if(!Node.prototype.isSameNode)
-			Node.prototype.isSameNode = function(n){
-				return n===this;
-			}
-		
-				// 194334, Y!Mail making sure addRule doesn't throw x-doc security errors
-		if(!CSSStyleSheet.prototype.addRule )
-			CSSStyleSheet.prototype.addRule = function( selector, css ){
-				try{
-					this.insertRule(selector+" { "+css+" }",this.cssRules.length);
-				}catch(ex){}
-			};
-		
-				// 194334, Y!Mail DOCTYPE in serialized XML causes 500 response
-		var XMLHttpSend = XMLHttpRequest.prototype.send;
-		XMLHttpRequest.prototype.send = function(postData){
-			return XMLHttpSend.call(this, postData&&postData.documentElement?postData.documentElement:postData);
-		};
-		
-				// 194334, Y!Mail workaround for reading Node.xml property
-		var serializer=document.implementation.createLSSerializer();
-		var writeToString=serializer.writeToString;
-		Node.prototype.bjs_getXMLMarkup = function(){ writeToString.call=call; return writeToString.call(serializer,this); };
-		opera.addEventListener('BeforeScript', function(e){
-			replace.call=call;
-			// workaround for getting the documentElement.xml  markup and
-			// contact information not shown. caused by if(elm.xml) clause in function that reads attribute values
-			e.element.text=replace.call(e.element.text, /documentElement\.xml/g, "documentElement.bjs_getXMLMarkup()" );
-			e.element.text=replace.call(e.element.text, /if\((\w{1,3})\.xml\)/g, "if($1.bjs_getXMLMarkup())" );
-		}, false);
-				// 194334, Y!Mail button attribute "action" is a URL in WF2
-		opera.addEventListener('BeforeScript', function(e){
-			replace.call=call;	e.element.text=replace.call(e.element.text, /\.(action\b)/g, ".js$1" );
-		}, false);
-		
-				// 194334, Y!Mail To: / CC: autocomplete fails because boundingLeft is not supported
-		HTMLInputElement.prototype.createTextRange=HTMLTextAreaElement.prototype.createTextRange=null;
-		
-		
-				// 194334, Y!Mail preventing drag from selecting text
-		if( self==top )
-			opera.addEventListener('BeforeEventListener.mousedown',function(e){
-					try{
-						indexOf.call = preventDefault.call = call;
-						if( indexOf.call(e.event.target.parentNode.parentNode.className, 'messageRow')>-1)
-							preventDefault.call(e.event);
-					}catch(e){}
-			},false);
-		
-		document.addEventListener('mousemove',function(e){
-			if( e.target.getAttribute('unselectable')=='on' )
-				e.target.ownerDocument.defaultView.getSelection().removeAllRanges();
-		},false);
-		
-				// 194334, Y!Mail various display errors
-		addCssToDocument(
-			//remove uneeded vertical scrooling
-			'html{height:100%!important}'+
-			// add event dialog is borked
-			'td.content>div.calendarEventEditor{width:370px!important}'+
-			'td.content>div.calendarEventEditor div.accordianPaneHeader {width:380px!important}'+
-			'td.content>div.calendarEventEditor div.accordianPaneBody {width:380px!important}'+
-			//block child of button misplace text
-			'button *{display:inline!important}'+
-			//table header resizer is a white square
-			'div.contTableResizerHotspot,div.msgTableResizerHotspot{background-color:transparent!important}'+
-			'#msgMsgTableResizer.paneDivider.horizGrabbie{margin-left:-1px!important}'+
-			//ellipsis misused
-			'span.accordianPaneHeaderSummary[id="paneheader:evtReminder_Span"]{content:"Send 1 remainder to email.";}'
-		);
-				// 194334, Y!Mail faking oncontextmenu support
-		fakeOncontextmenu(false, 500)
-				// 244992, Y!Mail beta attachment form .action
-		opera.addEventListener( 'BeforeEvent.change', function(e){
-			var elm=e.event.target;
-			if(elm && elm.form && elm.form.jsaction){elm.form.action=elm.form.jsaction;elm.form.jsaction=null;}
-		 }, false );
-				// 246021, Y!Mail: ensure cloneNode copies clip styling
-		Node.prototype.cloneNode=(function(c){
-			return function(deep){var n=c.call(this, deep);if(this.style&&this.style.clip)n.style.clip=this.style.clip; return n;} 
-		})(Node.prototype.cloneNode);
-		
-				// 194334, Y!Mail remove selectSingleNode and selectNodes
-		/* because Yahoo mail is better at emulating proprietary IE functions than we are.. */
-		Node.prototype.selectSingleNode=undefined;
-		Node.prototype.selectNodes=undefined;
-				// 366564, Define document on iframe.contentWindow even while it is loading
-		HTMLIFrameElement.prototype.__defineGetter__('contentWindow', function(){
-			if( ! this.contentDocument ){
-				return { document:{} };
-			}
-			return this.contentDocument.defaultView;
-		}); 
-				// 247940, Node interface constants not inherited by individual nodes
-		Node.prototype.ELEMENT_NODE=1;
-		Node.prototype.ATTRIBUTE_NODE=2;
-		Node.prototype.TEXT_NODE=3;
-		Node.prototype.CDATA_SECTION_NODE=4;
-		Node.prototype.ENTITY_REFERENCE_NODE=5;
-		Node.prototype.ENTITY_NODE=6;
-		Node.prototype.PROCESSING_INSTRUCTION_NODE=7;
-		Node.prototype.COMMENT_NODE=8;
-		Node.prototype.DOCUMENT_NODE=9;
-		Node.prototype.DOCUMENT_TYPE_NODE=10;
-		Node.prototype.DOCUMENT_FRAGMENT_NODE=11;
-		Node.prototype.NOTATION_NODE=12;
-				// 234353, too small TEXTEARAs in compose form, shrink to fit containers and descendants with percentage width
-		//compose table
-		
-		addCssToDocument( 'table.messageHeaderTable.compHeaderTable>tbody>tr>td:first-child+td{width:1000px!important}');
-				// 241691, Y!Mail doesn't load if identifying as IE
-		navigator.userAgent = navigator.userAgent.replace( /MSIE/, '' );
-				// 229475, YMail: make autocomplete menus work in compose screen
-		opera.addEventListener('BeforeEvent.blur',function(e){
-			evaluate.call=preventDefault.call=call;
-			if(! (e.event.target instanceof Node) ) return;
-			if( evaluate.call(document, 'ancestor::table[contains(@class,"messageHeaderTable") and contains(@class,"compHeaderTable")]',  e.event.target, null, XPathResult.BOOLEAN_TYPE ,null).booleanValue )
-				preventDefault.call(e);
-		},false);
-				// 257475, Curly quotes must be escaped in RegExp input
-		window.RegExp = (function( original ){ return function(s,o){ if(typeof s=='string')s=s.replace(/\{(?!\d)/, '\\{'); return original.call( window, s, o ); }; })(window.RegExp)
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t get past "new features" screen due to redirect\nRemember to create documentElement properties ...). See browser.js for details');
 	} else if(hostname.indexOf('.t-online.de')>-1){			// 225374,  video problems on T-online.de
 		if(hostname.indexOf('onunterhaltung')>-1){
 					//Fix browser detection
@@ -1088,12 +882,255 @@ function removeClosingHTMLComments(){
 		window.external=window.external||{};
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( video problems on T-online.de\n video problems on T-online.de, VOD section\n video problems on T-on...). See browser.js for details');
+	} else if(hostname.indexOf('.tom.com')>-1){			// PATCH-63, document.write() overwrites document on tom.com
+		avoidDocumentWriteAbuse(/^<script src="http:\/\/price\.bitauto\.com\/.*/);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (document.write() overwrites document on tom.com). See browser.js for details');
 	} else if(hostname.indexOf('.ulead.') >-1){			// 142757, Ulead.com old Milonic menu
 		 fixMilonicMenu('mmenu.js');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ulead.com old Milonic menu). See browser.js for details');
-	} else if(hostname.indexOf('.yahoo.')>-1&&hostname.indexOf('mail')==-1){			// 101146, Yahoo ISP portal blocks Opera users
-		addPreprocessHandler( /d\.location\.href = ".*?\/browser_upgrade\.html";/g, '');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo ISP portal blocks Opera users). See browser.js for details');
+	} else if(hostname.indexOf('.yahoo.')>-1){			// 0, Yahoo!
+		/* Yahoo! */
+	
+	
+		if(hostname.indexOf("rec.feeds.yahoo.")==0){			// 194334, Make "add feeds" dialog work in Y!Mail beta
+			navigator.product='Gecko';
+			addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
+		}
+		if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
+			location.href='/dc/launch?sysreq=ignore';
+			
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail work around browser blocking). See browser.js for details');
+		}
+		if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/dc/')==0){			// 290495, can't get past "new features" screen due to redirect
+			document.addEventListener( 'DOMContentLoaded', function(){
+				for( var link_count=0,element;element=document.links[ link_count ]; link_count++ ){
+					if( element.getAttribute('href')=='/dc/launch?consentLW=1' )element.setAttribute('href', '/dc/launch?consentLW=1&sysreq=ignore');
+				}
+			} ,false );
+			
+					// 315686, Remember to create documentElement properties on XML nodes
+			addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
+			
+					// 321384, createElement in XML document should put un-prefixed nodes in null namespace
+			var docCreateElement = Document.prototype.createElement;
+			if( window.XMLDocument ){
+				XMLDocument.prototype.createElement = function(n){ return n.indexOf(':')==-1 ? this.createElementNS(null, n) : docCreateElement.call(this,n); }
+			}else{
+				Document.prototype.createElement = function(n){ return n.indexOf(':')==-1 ? this.createElementNS(null, n) : docCreateElement.call(this,n); }
+			}
+					// 327060, Fake documentElement property better on XML nodes
+			Element.prototype.valueOf = function() {
+				if (this.__fakeDocumentElement == true) {
+					this.documentElement = null;
+					delete this.__fakeDocumentElement;
+				}
+				if (!this.documentElement && this.XMLDocument) {
+					this.documentElement = this.XMLDocument.documentElement;
+					this.__fakeDocumentElement = true;
+				}
+				return this;
+			};
+			opera.addEventListener('BeforeScript', function(e) {
+				replace.call=call;
+				e.element.text = replace.call(e.element.text, /\.documentElement(?=[\s\W]*)/g, '.valueOf().documentElement');
+			}, false);
+					// 327060, Fix the keyboard shortcut column of menu items in Merlin
+			addCssToDocument('div.yuimenu li.hashelptext em.helptext { float: right } ');
+					// 327060, Shadow on dialogs is messed up, so fix it
+			addCssToDocument('.dialogFooterCenter { font-size: 0; line-height: 0 } ');
+					// 327060, The hidden <input type="file"> for the "Attach" button not hidden in Merlin on Mac OS X
+			addCssToDocument('.transparent_attach_btn { padding: 0 !important; background-color: white !important; clip: rect(0 0 0 0) !important; z-index: 1 !important } ' +
+							// Make sure all the buttons are above the <input type="file">...
+							'#messageToolbar > table { position: relative; z-index: 102 } ' +
+							// ...except for the "Attach" button
+							'#messageToolbar #btnTbl_Attach { z-index: 0 !important }');
+					// 194334, Y!Mail uses XMLDocument without detecting it
+			window.XMLDocument = window.XMLDocument||Document;
+			
+					// 194334, Y!Mail faking getters and setters
+			// --- workaround for defineGetter and defineSetter used in Gecko library ---
+			//this must be defined to get the showModalDialog implementation
+			/*if( !window.Window ){ window.Window=function(){}; window.Window.prototype=window; }*/
+			//faking getters and setters
+			var ifaces = ['Node','CSSStyleDeclaration','CSSStyleSheet','Event'/*,'Window'*/];
+			for(var idx=0, iface; (iface = ifaces[idx]) && (iface = window[iface]) && (iface = iface.prototype); idx++)
+				iface.__defineGetter__ = iface.__defineSetter__ = function(){};
+			
+					// 194334, Y!Mail faking IE's loadXML method
+			HTMLElement.prototype.loadXML = function (xml) {
+				if (this.tagName != "XML") {return;}
+				if ( !xml ) {
+					var doc = document.implementation.createDocument("", "", null);
+					doc.appendChild(doc.createElement(this.id));
+				} else {
+					try{
+						var doc = (new DOMParser()).parseFromString(xml.replace(/\n/g, "&#10;"), "text/xml");
+					}catch(e){
+						//DOMParser could not parse fragment, probably because of missing single root element. Workaround time..
+						var doc=document.implementation.createDocument('', this.tagName, null);
+						var el=doc.createElement('el');
+						el.innerHTML=xml;
+						for(var i=0, child; child = el.childNodes[i] ;i++)
+							doc.appendChild(child.cloneNode(true));
+					}
+				}
+				this.XMLDocument = doc;
+				this.XMLDocument.parseError={errorCode:0};
+				try{
+					this.documentElement = doc.documentElement||doc.firstChild;
+				}catch(e){
+					 if( this.__defineGetter__ ){
+						this.__defineGetter__( 'documentElement', function(){ return doc.documentElement||doc.firstChild; } )
+					}
+				}
+			
+			
+				return doc;
+			};
+			
+					// 194334, Y!Mail faking isSameNode
+			if(!Node.prototype.isSameNode)
+				Node.prototype.isSameNode = function(n){
+					return n===this;
+				}
+			
+					// 194334, Y!Mail making sure addRule doesn't throw x-doc security errors
+			if(!CSSStyleSheet.prototype.addRule )
+				CSSStyleSheet.prototype.addRule = function( selector, css ){
+					try{
+						this.insertRule(selector+" { "+css+" }",this.cssRules.length);
+					}catch(ex){}
+				};
+			
+					// 194334, Y!Mail DOCTYPE in serialized XML causes 500 response
+			var XMLHttpSend = XMLHttpRequest.prototype.send;
+			XMLHttpRequest.prototype.send = function(postData){
+				return XMLHttpSend.call(this, postData&&postData.documentElement?postData.documentElement:postData);
+			};
+			
+					// 194334, Y!Mail workaround for reading Node.xml property
+			var serializer=document.implementation.createLSSerializer();
+			var writeToString=serializer.writeToString;
+			Node.prototype.bjs_getXMLMarkup = function(){ writeToString.call=call; return writeToString.call(serializer,this); };
+			opera.addEventListener('BeforeScript', function(e){
+				replace.call=call;
+				// workaround for getting the documentElement.xml  markup and
+				// contact information not shown. caused by if(elm.xml) clause in function that reads attribute values
+				e.element.text=replace.call(e.element.text, /documentElement\.xml/g, "documentElement.bjs_getXMLMarkup()" );
+				e.element.text=replace.call(e.element.text, /if\((\w{1,3})\.xml\)/g, "if($1.bjs_getXMLMarkup())" );
+			}, false);
+					// 194334, Y!Mail button attribute "action" is a URL in WF2
+			opera.addEventListener('BeforeScript', function(e){
+				replace.call=call;	e.element.text=replace.call(e.element.text, /\.(action\b)/g, ".js$1" );
+			}, false);
+			
+					// 194334, Y!Mail To: / CC: autocomplete fails because boundingLeft is not supported
+			HTMLInputElement.prototype.createTextRange=HTMLTextAreaElement.prototype.createTextRange=null;
+			
+			
+					// 194334, Y!Mail preventing drag from selecting text
+			if( self==top )
+				opera.addEventListener('BeforeEventListener.mousedown',function(e){
+						try{
+							indexOf.call = preventDefault.call = call;
+							if( indexOf.call(e.event.target.parentNode.parentNode.className, 'messageRow')>-1)
+								preventDefault.call(e.event);
+						}catch(e){}
+				},false);
+			
+			document.addEventListener('mousemove',function(e){
+				if( e.target.getAttribute('unselectable')=='on' )
+					e.target.ownerDocument.defaultView.getSelection().removeAllRanges();
+			},false);
+			
+					// 194334, Y!Mail various display errors
+			addCssToDocument(
+				//remove uneeded vertical scrooling
+				'html{height:100%!important}'+
+				// add event dialog is borked
+				'td.content>div.calendarEventEditor{width:370px!important}'+
+				'td.content>div.calendarEventEditor div.accordianPaneHeader {width:380px!important}'+
+				'td.content>div.calendarEventEditor div.accordianPaneBody {width:380px!important}'+
+				//block child of button misplace text
+				'button *{display:inline!important}'+
+				//table header resizer is a white square
+				'div.contTableResizerHotspot,div.msgTableResizerHotspot{background-color:transparent!important}'+
+				'#msgMsgTableResizer.paneDivider.horizGrabbie{margin-left:-1px!important}'+
+				//ellipsis misused
+				'span.accordianPaneHeaderSummary[id="paneheader:evtReminder_Span"]{content:"Send 1 remainder to email.";}'
+			);
+					// 194334, Y!Mail faking oncontextmenu support
+			fakeOncontextmenu(false, 500)
+					// 244992, Y!Mail beta attachment form .action
+			opera.addEventListener( 'BeforeEvent.change', function(e){
+				var elm=e.event.target;
+				if(elm && elm.form && elm.form.jsaction){elm.form.action=elm.form.jsaction;elm.form.jsaction=null;}
+			 }, false );
+					// 246021, Y!Mail: ensure cloneNode copies clip styling
+			Node.prototype.cloneNode=(function(c){
+				return function(deep){var n=c.call(this, deep);if(this.style&&this.style.clip)n.style.clip=this.style.clip; return n;} 
+			})(Node.prototype.cloneNode);
+			
+					// 194334, Y!Mail remove selectSingleNode and selectNodes
+			/* because Yahoo mail is better at emulating proprietary IE functions than we are.. */
+			Node.prototype.selectSingleNode=undefined;
+			Node.prototype.selectNodes=undefined;
+					// 366564, Define document on iframe.contentWindow even while it is loading
+			HTMLIFrameElement.prototype.__defineGetter__('contentWindow', function(){
+				if( ! this.contentDocument ){
+					return { document:{} };
+				}
+				return this.contentDocument.defaultView;
+			}); 
+					// 247940, Node interface constants not inherited by individual nodes
+			Node.prototype.ELEMENT_NODE=1;
+			Node.prototype.ATTRIBUTE_NODE=2;
+			Node.prototype.TEXT_NODE=3;
+			Node.prototype.CDATA_SECTION_NODE=4;
+			Node.prototype.ENTITY_REFERENCE_NODE=5;
+			Node.prototype.ENTITY_NODE=6;
+			Node.prototype.PROCESSING_INSTRUCTION_NODE=7;
+			Node.prototype.COMMENT_NODE=8;
+			Node.prototype.DOCUMENT_NODE=9;
+			Node.prototype.DOCUMENT_TYPE_NODE=10;
+			Node.prototype.DOCUMENT_FRAGMENT_NODE=11;
+			Node.prototype.NOTATION_NODE=12;
+					// 234353, too small TEXTEARAs in compose form, shrink to fit containers and descendants with percentage width
+			//compose table
+			
+			addCssToDocument( 'table.messageHeaderTable.compHeaderTable>tbody>tr>td:first-child+td{width:1000px!important}');
+					// 229475, YMail: make autocomplete menus work in compose screen
+			opera.addEventListener('BeforeEvent.blur',function(e){
+				evaluate.call=preventDefault.call=call;
+				if(! (e.event.target instanceof Node) ) return;
+				if( evaluate.call(document, 'ancestor::table[contains(@class,"messageHeaderTable") and contains(@class,"compHeaderTable")]',  e.event.target, null, XPathResult.BOOLEAN_TYPE ,null).booleanValue )
+					preventDefault.call(e);
+			},false);
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t get past "new features" screen due to redirect\nRemember to create documentElement properties ...). See browser.js for details');
+		}
+		if(hostname.indexOf('auctions.yahoo.co.jp')>-1&&pathname.indexOf('/jp/show/submit')>-1){			// PATCH-104, Yahoo! Japan Auction sell item disclaimer buttons not shown
+			opera.defineMagicFunction('auction_tos',function(oRealFunc,oThis){
+				var value=oRealFunc.apply(oThis, arguments.slice(2));
+				div=document.getElementById('auc_insert_form');
+				if(div){
+					div.insertBefore(document.createElement('form'),div.firstChild);
+					div.firstChild.appendChild(document.getElementById('auc_insertion_ok'));
+					div.firstChild.appendChild(document.getElementById('auc_insertion_cancel'));
+				}
+				return value;
+			},false);
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo! Japan Auction sell item disclaimer buttons not shown). See browser.js for details');
+		}
+		if(hostname.indexOf('mail')==-1){			// 101146, Yahoo ISP portal blocks Opera users
+			addPreprocessHandler( /d\.location\.href = ".*?\/browser_upgrade\.html";/g, '');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo ISP portal blocks Opera users). See browser.js for details');
+		}
+		if(pathname.indexOf('/dc/')==0){			// 257475, Curly quotes must be escaped in RegExp input
+			window.RegExp = (function( original ){ return function(s,o){ if(typeof s=='string')s=s.replace(/\{(?!\d)/, '\\{'); return original.call( window, s, o ); }; })(window.RegExp)
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Curly quotes must be escaped in RegExp input). See browser.js for details');
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo!). See browser.js for details');
 	} else if(hostname.indexOf('able.co.jp')>-1){			// 253081,  able.co.jp uses capturing event listeners
 		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
 		preventEventCapture( HTMLSelectElement.prototype, 'change' );
@@ -1103,16 +1140,23 @@ function removeClosingHTMLComments(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Text on Apple store locator page is misaligned and overlapping). See browser.js for details');
 	} else if(hostname.indexOf('att.com')!=-1){			// PATCH-36, ATT / Bellsouth browser sniffing
 		opera.defineMagicVariable( 'isDHTML', function(){return true;}, null );
+		opera.defineMagicFunction('checkBrowser', function(){});
+		navigator.appName='Microsoft Internet Explorer';
+		navigator.appVersion='MSIE'+navigator.appVersion;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ATT / Bellsouth browser sniffing). See browser.js for details');
 	} else if(hostname.indexOf('barnesandnoble.com')>-1){			// 195961, Barnes&Noble uses "required" attributes on elements that aren't required
 		window.addEventListener('load', function(){var nodes=document.evaluate('//input[@required]', document.body,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null),node=null,i=0; while(node=nodes.snapshotItem(i)){ node.removeAttribute('required'); i++; }},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Barnes&Noble uses "required" attributes on elements that aren\'t required). See browser.js for details');
-	} else if(hostname.indexOf('bbs.dzart.net')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on bbs.dzart.net
-		opera.defineMagicFunction('announcementScroll', function(){});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on bbs.dzart.net). See browser.js for details');
 	} else if(hostname.indexOf('bbs.kafan.cn')!= -1){			// 361525, Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn
 		opera.defineMagicFunction('parsetag',function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn). See browser.js for details');
+	} else if(hostname.indexOf('bcbssc.com')>-1){			// PATCH-93, Blue Cross SC looks up named elements with getElementById()
+		(function(gEBI) { 
+		  document.getElementById = function(idOrName) { 
+		    return gEBI.call(document, arguments) || document.getElementsByName(idOrName)[0] || null; 
+		  }; 
+		})(document.getElementById);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blue Cross SC looks up named elements with getElementById()). See browser.js for details');
 	} else if(hostname.indexOf('belastingdienst.nl')!=-1){			// 257787,  enabling an alternate stylesheet while it is still loading is ignored
 		opera.defineMagicFunction( 'SwitchStyleSheet', function( fn, th ){
 			var args=arguments.slice(2);
@@ -1142,9 +1186,6 @@ function removeClosingHTMLComments(){
 		opera.defineMagicFunction('isCtrlKeyPressed', function(f, t, e){ return e.ctrlKey&&!e.altKey;  });
 		opera.defineMagicVariable( 'IE_KEYSET', function(){ return true; },null );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blogger: browser detection prevents WYSIWYG editing\nBlogger: Should distinguish AltGr and Ctrl). See browser.js for details');
-	} else if(hostname.indexOf('bloglines.com')>-1){			// 248295, Bloglines, designMode case sensitivity issue
-		addPreprocessHandler( 'designMode != "On"', 'designMode != "on"', true, function(t){indexOf.call=call;return indexOf.call(t.text, 'kevinroth.com/rte/demo.htm')>-1;} );
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Bloglines, designMode case sensitivity issue). See browser.js for details');
 	} else if(hostname.indexOf('bnz.co.nz')>-1){			// 142015, bnz.co.nz use getYear when they should use getFullYear
 		Date.prototype.getYear = Date.prototype.getFullYear;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bnz.co.nz use getYear when they should use getFullYear). See browser.js for details');
@@ -1183,18 +1224,7 @@ function removeClosingHTMLComments(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Cheaptickets new Function() issue workaround). See browser.js for details');
 	} else if(hostname.indexOf('chosun.com')>-1){			// 279130, Morningplus.chosun.com misplaced content
 		addCssToDocument('#scroll_image{ position: relative }');
-				// 209929, chosun.com scrollarea fix
-		addCssToDocument('#nscrollarea, #nscrolltxt{display: inline !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Morningplus.chosun.com misplaced content\nchosun.com scrollarea fix). See browser.js for details');
-	} else if(hostname.indexOf('clubenjoy.com')>-1){			// OTW-2067, Working around browser blocking on pruna.com/clubenjoy.com
-		opera.addEventListener('BeforeExternalScript', function(e){
-		    match.call=preventDefault.call=call;
-		    if(match.call(e.element.src, /etc\/common\/js\/chkbrowser\.js/)){preventDefault.call(e);}
-		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around browser blocking on pruna.com/clubenjoy.com). See browser.js for details');
-	} else if(hostname.indexOf('cnet.com')>-1){			// CORE-19950, CNet polls misrendered due to lack of default margin on form elements
-		addCssToDocument('input[type="radio"]{margin: 3px 3px 0px 5px; padding:0} input[type="checkbox"]{margin: 3px 3px 3px 4px; padding:0}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (CNet polls misrendered due to lack of default margin on form elements). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Morningplus.chosun.com misplaced content). See browser.js for details');
 	} else if(hostname.indexOf('continental.com')>-1){			// 263594, Continental.com document.activeElement fix enables airport choice popup
 		opera.addEventListener('BeforeEventListener.click', function(e){if(e.event.target && e.event.target.tagName=='A')document.activeElement=e.event.target; }, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Continental.com document.activeElement fix enables airport choice popup). See browser.js for details');
@@ -1229,6 +1259,11 @@ function removeClosingHTMLComments(){
 			document.addEventListener('load', function(){ fn.apply(th, args ); }, false );
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( enabling an alternate stylesheet while it is still loading is ignored). See browser.js for details');
+	} else if(hostname.indexOf('enter.nifmail.jp') > -1){			// OTW-4878, Nifmail web mail bypass browser blocking
+		opera.defineMagicFunction('checkBrowser',function(){
+			return 1;
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nifmail web mail bypass browser blocking). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
@@ -1236,11 +1271,6 @@ function removeClosingHTMLComments(){
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( BlueCross browser sniffing prevents insurance search). See browser.js for details');
-	} else if(hostname.indexOf('globaltv.com')!=-1){			// OTW-4356, Work around browser sniffing to make videos appear
-		navigator.product='Gecko';
-		window.find=function(){};
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around browser sniffing to make videos appear). See browser.js for details');
 	} else if(hostname.indexOf('icicidirect.com')>-1){			// 204803, styling INPUT with text-transform can confuse users
 		addCssToDocument('input{text-transform: none !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (styling INPUT with text-transform can confuse users). See browser.js for details');
@@ -1295,26 +1325,13 @@ function removeClosingHTMLComments(){
 				preventDefault.call(e);
 			}
 		}, false );
-				// 196536, GMail: browser blocking prevents chat feature from appearing
-		try{
-		if( top.location.search.indexOf('ui=1')!=-1 ){
-			if(top.location.search.indexOf('auth')>-1){
-			    addPreprocessHandler( 'disablechatbrowsercheck', 'auth' );
-			}else if(top==self&&!window.opener&&location.search.indexOf('disablechatbrowsercheck')==-1&&location.search.indexOf('ui=html')==-1&&pathname.indexOf('.html')==-1){
-			    opera.addEventListener( 'AfterScript', function(e){
-				if(top.frames.length>0){
-					top.location.search+=(top.location.search)?'&disablechatbrowsercheck=1':'?disablechatbrowsercheck=1';
-			    }}, false);
-			}
-		}
-		}catch(e){}
 				// 214487, GMail: prevent navigation menu on the left in RTL interface
 		document.addEventListener( 'DOMContentLoaded', function(){ 
 		if(document.body.dir=='rtl' && document.getElementById('nav')){
 		document.getElementById('nav').style.right=0; 
 		}
 		}, false )
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: browser blocking prevents chat feature from appear...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (GMail deletes messages on End key presses\nGMail: prevent navigation menu on the left in RTL interfa...). See browser.js for details');
 	} else if(hostname.indexOf('mail.live.com')!=-1){			// 334613, Fake getters/setters support
 		if( pathname.indexOf('Light.aspx')>-1 && ! Object.prototype.__defineGetter__ ){
 		    Object.prototype.__defineGetter__ = Object.prototype.__defineSetter__ = function(){};
@@ -1325,39 +1342,21 @@ function removeClosingHTMLComments(){
 				location.href = decodeURIComponent(location.search.match( /targetUrl=([^&]*)/ )[1]);
 			}
 		}
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake getters/setters support\nWork around browser warning). See browser.js for details');
+				// PATCH-120, Fake oncontextmenu support on Hotmail
+		fakeOncontextmenu(false, 300);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake getters/setters support\nWork around browser warning\nFake oncontextmenu support on Hotmail). See browser.js for details');
 	} else if(hostname.indexOf('makemytrip.com')>-1){			// 206463, MakeMyTrip search fails
 		document.all=null;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MakeMyTrip search fails). See browser.js for details');
+	} else if(hostname.indexOf('maps.bing.com')!=-1){			// 305279, Loading Atlas libraries depends on immediate load events for scripts
+		fixScriptOnloadBehaviour(Element.prototype.appendChild);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Loading Atlas libraries depends on immediate load events for scripts). See browser.js for details');
 	} else if(hostname.indexOf('maps.google.')>-1){			// DSK-237211, XMLHttpRequests sometimes get stuck if script was in cache
 		XMLHttpRequest.prototype.open=(function(open){return function(){
 			open.apply(this,arguments);
 			this.setRequestHeader('X-anti-caching', Math.random());
 		}})(XMLHttpRequest.prototype.open);
-				// DSK-237211, Google maps eval callback
-		addPreprocessHandler( /callback\(req.responseText\)/, 'if(callback==window.eval)eval( req.responseText );else callback(req.responseText);' );
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (XMLHttpRequests sometimes get stuck if script was in cache\nGoogle maps eval callback). See browser.js for details');
-	} else if(hostname.indexOf('maps.live.com')!=-1){			// 165620, scrollTop, scrollLeft bug on inline elements such as BUTTON makes menus appear at left edge of screen
-		HTMLButtonElement.prototype.getBoundingClientRect=function(){
-			var top=0,left=0,right=0,bottom=0, el=this, hasBug=false;
-			while(el){
-				hasBug = el.currentStyle.display=='inline' && el.scrollLeft == el.offsetLeft;
-				top+=el.offsetTop;
-				left+=el.offsetLeft;
-				if( ! hasBug ){ top-=el.scrollTop; left-=el.scrollLeft; }
-				el=el.offsetParent;
-			}
-			right=left+this.offsetWidth;
-			bottom=top+this.offsetHeight;
-			return { top:top, left:left, right:right, bottom:bottom };
-		}
-				// 305279, Map is too narrow
-		addCssToDocument('#msve_mapContainer{width: 95%!important}');
-				// 305279, Loading Atlas libraries depends on immediate load events for scripts
-		fixScriptOnloadBehaviour(Element.prototype.appendChild);
-				// 165310, Fake oncontextmenu support
-		fakeOncontextmenu(true,false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (scrollTop, scrollLeft bug on inline elements such as BUTTON makes menus appear at left edge of scree...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (XMLHttpRequests sometimes get stuck if script was in cache). See browser.js for details');
 	} else if(hostname.indexOf('maps.ubiest.com')>-1){			// 256721, Ubiest.com uses CSS filters if document.all exists
 		document.all=null;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ubiest.com uses CSS filters if document.all exists). See browser.js for details');
@@ -1385,6 +1384,9 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('nasdaq.com')>-1){			// PATCH-23, Fix Nasdaq overlapping content
 		addCssToDocument('#content{clear: none !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix Nasdaq overlapping content). See browser.js for details');
+	} else if(hostname.indexOf('nba.com')>-1){			// PATCH-89, load event not triggered when expected in video section
+		opera.defineMagicVariable('is_ie', function(o){ return false; }, null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (load event not triggered when expected in video section). See browser.js for details');
 	} else if(hostname.indexOf('nbc4.tv')>-1){			// 215526, NBC4.tv uses capturing load events
 		preventEventCapture(window, 'load');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC4.tv uses capturing load events). See browser.js for details');
@@ -1398,7 +1400,7 @@ function removeClosingHTMLComments(){
 		addCssToDocument('#home{position:relative!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (news.msn.co.kr navigation bar is offset from the page). See browser.js for details');
 	} else if(hostname.indexOf('nick.com')>-1||hostname.indexOf('nickjr.com')>-1){			// 82209, Nick.com flash detection fix
-		document.all=null;
+		document.all=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nick.com flash detection fix). See browser.js for details');
 	} else if(hostname.indexOf('nrg.co.il')>-1){			// 244416,  NRG.co.il saving articles does not work
 		addPreprocessHandler('document.getElementById("launcher").innerHTML="";', '');
@@ -1441,6 +1443,13 @@ function removeClosingHTMLComments(){
 			}
 		})(window.setTimeout);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue). See browser.js for details');
+	} else if(hostname.indexOf('pluginfree.com') > -1){			// PATCH-105, DNP Pluginfree Viewer fallback to Netscape version for Opera
+		opera.defineMagicFunction('sort',function(rf,rt){
+			var res;
+			return (res=rf.apply(rt,arguments.slice(2)))?res:"nn";
+		},false);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DNP Pluginfree Viewer fallback to Netscape version for Opera). See browser.js for details');
 	} else if(hostname.indexOf('pogo.com')>-1){			// 305697,  Java detection fails on pogo.com
 		if(navigator.javaEnabled()){
 			var javaVersion = java.lang.System.getProperty('java.version');
@@ -1465,6 +1474,18 @@ function removeClosingHTMLComments(){
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Rabobank cancels t keypress). See browser.js for details');
+	} else if(hostname.indexOf('rent.toyota.co.jp')>-1){			// PATCH-127, Set window.open's default URL to about:blank on rent.toyota.co.jp
+		window.opera.defineMagicFunction('open',function(oRealFunc,oThis,strUrl,strWindowName,strWindowFeatures){
+			if (!strUrl.length) arguments[2]='about:blank';
+			return oRealFunc.apply(oThis,arguments.slice(2));
+		});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Set window.open\'s default URL to about:blank on rent.toyota.co.jp). See browser.js for details');
+	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
+		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (SEB bank prevents typing certain keys). See browser.js for details');
+	} else if(hostname.indexOf('sfc.jp')>-1){			// PATCH-75, noscript content shows on sfc.jp
+		addCssToDocument('noscript{display:none !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (noscript content shows on sfc.jp). See browser.js for details');
 	} else if(hostname.indexOf('sfile.ydy.com')!= -1){			// 361539, Avoid manipulating broken Discuz! markup on sfile.ydy.com
 		opera.defineMagicFunction('announcementScroll', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid manipulating broken Discuz! markup on sfile.ydy.com). See browser.js for details');
@@ -1486,6 +1507,9 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
+	} else if(hostname.indexOf('taobao.com')!=-1){			// PATCH-96, Fix Taobao search layout overlap issue
+		addCssToDocument('#ListSubCategory{height:auto !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix Taobao search layout overlap issue). See browser.js for details');
 	} else if(hostname.indexOf('tdwaterhouse.ca')>-1&&location.protocol=='https:'){			// 147840, tdwaterhouse.ca login fails - cross-domain access on https disallows setting location
 		document.domain='tdwaterhouse.ca';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tdwaterhouse.ca login fails - cross-domain access on https disallows setting location). See browser.js for details');
@@ -1574,12 +1598,12 @@ function removeClosingHTMLComments(){
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
+	} else if(href.indexOf('bing.com/maps/')!=-1){			// 165310, Fake oncontextmenu support
+		fakeOncontextmenu(true,false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fake oncontextmenu support). See browser.js for details');
 	} else if(location.hostname.indexOf('.legolandholidays.dk')>-1){			// PATCH-73, Fix to show relative positioned table contents
 		document.addEventListener('DOMContentLoaded', function(){document.evaluate('//td[@height=900]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.position='absolute';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
-	} else if(location.hostname.indexOf('sfc.jp')>-1){			// PATCH-75, noscript content shows on sfc.jp
-		addCssToDocument('noscript{display:none !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (noscript content shows on sfc.jp). See browser.js for details');
 	} else if(pathname.indexOf('wp-admin')>-1){			// 261699, Wordpress Admin prev/next link styling makes them unclickable
 		addCssToDocument('.navigation{display:inline !important;} .navigation div{display:block !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Wordpress Admin prev/next link styling makes them unclickable). See browser.js for details');
