@@ -1,4 +1,4 @@
-// SKc1u/0ilBnbY0YejBu0cLNjnRCTDxMKCywv/HKXm6pW0iYqUBCZ62rs+8Hci6+UNbmVQPw4hKbUFWXn4d4lIg0o4U7aHERLmWuESZZC4v5RQUripK5BRhUC1tQfjvKVO/5MeXHPrJA28Kmsugy5TawW2V+psjH8EkxfFj8ZrQx0xj/TrbzQggedw51LVE/+csbh9E3wWQTV73WmYSIG4YVpmdNjKY56Ynbk8LbekdAOmH1CQPFolbSfVTbYkeVdLIPss+iUOHb54n6/48bqZoflYQ4SEbrq2NLF2GKsskhMdVjfDVJADqWw7xYwL28PFP3Hk3Ha+WZtWLulfUuwsA==
+// vwgXUHjg6/nzXdxEStJHnRPfcm/V+XH5twDPcOX2LG4pGSit6OZvOOI++9Sc9qhUuMuI8l0qaqC1OrIRhJ3GWbB0Np1bUb/AG7HaCIfpQECNcOdnQnkstqD/j2G9I39+H3Tj4bv3PSg8JsgWlq4piX783H32SO94dBAJUKxkvIRtfF97C1bKN3JnkASLC6T2/CzQjOET62woIpfW5qi2/GQopMMBrDbM0CvvxHIixGsnGk40FF+uOAl4DBmxgXXKSjjBopOgckpp0SRFGGgm/RvrcCW/PreRfdvy60O5fEKy+AqCOmecuttPTakMiKB/b+prWYcCPbxyA8rvsyH1Kw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, September 4, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, September 15, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -733,14 +733,7 @@ function ignoreCancellationOfCertainKeyEvents(type, list){
 			opera.postError('Warning: overriding built-in "required" attribute validation on page. See browser.js for details.');
 		}
 	},true);
-}	function preventEventCapture(object,eventName){ // Opera supports capturing events but many sites do it by mistake
-		var ael=object.addEventListener;
-		object.addEventListener=function(type, func, cap){
-			if(type==eventName)cap=false;
-			ael.call( this, type, func, cap);
-		}
-	}
-function removeClosingHTMLComments(){
+}function removeClosingHTMLComments(){
     opera.addEventListener( 'BeforeScript', function(e){ replace.call=call; e.element.text=replace.call( e.element.text, /\r\n\s*-->\s*\r\n/, '' ); }, false );
 }
 function solveEventOrderBugs(){
@@ -1136,9 +1129,7 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('.dfdsseaways.')>-1){			// PATCH-46, DFDS calendar is 1900 years in the future
 		Date.prototype.getYear = function(){ return this.getFullYear()-1900; }
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DFDS calendar is 1900 years in the future). See browser.js for details');
-	} else if(hostname.indexOf('.ebay.')>-1){			// 228707, eBay: speed up back+forward navigation
-		opera.setOverrideHistoryNavigationMode('fast');
-				// PATCH-133, ebay.fr hangs, Opera doesn't support option node passed to SELECT.remove()
+	} else if(hostname.indexOf('.ebay.')>-1){			// PATCH-133, ebay.fr hangs, Opera doesn't support option node passed to SELECT.remove()
 		HTMLSelectElement.prototype.remove=function(child){
 			if ( typeof child === 'number' && this.options[child] ){
 				child=this.options[child];
@@ -1147,7 +1138,7 @@ function solveEventOrderBugs(){
 			}
 			Element.prototype.removeChild.call( this, child );
 		};
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay: speed up back+forward navigation\nebay.fr hangs, Opera doesn\'t support option node passed to S...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ebay.fr hangs, Opera doesn\'t support option node passed to SELECT.remove()). See browser.js for details');
 	} else if(hostname.indexOf('.ems.com.cn')>-1){			// PATCH-24, Menus on ems.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on ems.com.cn disappear too quickly). See browser.js for details');
@@ -1366,10 +1357,6 @@ function solveEventOrderBugs(){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo ISP portal blocks Opera users). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo!). See browser.js for details');
-	} else if(hostname.indexOf('able.co.jp')>-1){			// 253081,  able.co.jp uses capturing event listeners
-		preventEventCapture( HTMLAnchorElement.prototype, 'click' );
-		preventEventCapture( HTMLSelectElement.prototype, 'change' );
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( able.co.jp uses capturing event listeners). See browser.js for details');
 	} else if(hostname.indexOf('allabout.co.jp')!=-1){			// DSK-227082, Works around script scheduling bug on AllAbout
 		fixJQueryScriptSchedulingTrouble();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Works around script scheduling bug on AllAbout). See browser.js for details');
@@ -1820,11 +1807,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-633, Enable alt-click to show context menu in map
 		fakeOncontextmenu(false, true);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable alt-click to show context menu in map). See browser.js for details');
-	} else if(hostname.indexOf('marktplaats.nl')!=-1){			// PATCH-3, Can't add article to favourites because setting link.search has no effect
-		HTMLAnchorElement.prototype.__defineGetter__('search', function(){return this.href.match(/\?.*/)||'';});
-		HTMLAnchorElement.prototype.__defineSetter__('search', function(v){
-			this.href+=v;});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Can\'t add article to favourites because setting link.search has no effect). See browser.js for details');
 	} else if(hostname.indexOf('mb.softbank.jp')!=-1){			// PATCH-22, Softbank shop uses reserved variable name parent
 		(function(){var the_parent;
 			opera.defineMagicVariable('parent', function(){return the_parent;}, function(o){the_parent=o;});
@@ -1919,6 +1901,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('photobucket.com')>-1){			// PATCH-113, Photobucket menus disappear too quickly
 		window.setTimeout=(function(sT){return function(f,t){if(t==0)t=100;sT.call(this,f,t)}})(window.setTimeout);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Photobucket menus disappear too quickly). See browser.js for details');
+	} else if(hostname.indexOf('picasaweb.google')!=-1){			// PATCH-146, upload button disappears due to overflow statement
+		addCssToDocument('.goog-button-base-pos{overflow:inherit !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (upload button disappears due to overflow statement). See browser.js for details');
 	} else if(hostname.indexOf('pluginfree.com') > -1){			// PATCH-105, DNP Pluginfree Viewer fallback to Netscape version for Opera
 		opera.defineMagicFunction('sort',function(rf,rt){
 			var res;
