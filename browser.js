@@ -1,4 +1,4 @@
-// DRrYUxAVzoD11JSTsC7jBE0sSNi6MKf62fCN00CAhxNfz/Eguacov48VzzuQxjmc0Jv40fzckUl1Z9M5o1IAlQGZzZRkuAZjwaEofUh7GKUgs9mvceEOkz2tUe+sTCjqpoyxkpjPkYwBj+5HbFoWU9IFM0/n0Ne8S/LAIm0CKrXBiSL2phXWBi98kynj+jj6y132HZD9zr2TXV2LeAHSk5XuGB9SVoQZKhWe2j0qaIaUXd69IBZmB1tFd844xvp0tM++ppKVG6DAW7uNGlLXWM+pFkZG/gRMyBPrc2RZmF2UMbiiaXgB2QppagS+ePPjepSgcCFBXKhAMGDed0zRtw==
+// p6ytGGpV6DntDdi9mAqFy5WMm6lx5O2hPC8XmRPYz+Dckc532NLRHX9HIw+hKz5oouA3MMSAeIsiBVtPw9GWWHSgQyvNPeBZrjJ5frIAGdC8eo+rffKnhmqcwidKUGKWG8pGkbihq1pMsqdOv4Mqkb1b3LePfqUj44fFUD1UYQxfe3bgtoiz6MU50ersiairO3Z6yqVAsHpMrG/jN4YfukHwUfzR3otxpvfsOvNsg4cWemKcct/QW9/hxMnSiO5eoECAajjdVbhxUJU0h3uXUnOKdxxNJB+9QIO64IRnhrAOnDBiVLv8lpkNtS/F3Kt7n8MzE3Qo4OaNrn4Qo22XlQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, September 15, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, September 22, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1287,6 +1287,14 @@ function solveEventOrderBugs(){
 			addPreprocessHandler( /d\.location\.href = ".*?\/browser_upgrade\.html";/g, '');
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo ISP portal blocks Opera users). See browser.js for details');
 		}
+		if(hostname.indexOf('mail.yahoo')>-1){			// DSK-263826, Keyboard navigation of autocomplete menu fails
+			opera.addEventListener('BeforeEvent.keypress', function(e){
+				if( e.event.keyCode>36 && e.event.keyCode<41 ){
+					e.event.charCode=0;
+				}
+			}, false);
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Keyboard navigation of autocomplete menu fails). See browser.js for details');
+		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo!). See browser.js for details');
 	} else if(hostname.indexOf('aegeanair.com')>-1){			// PATCH-136, aegeanair recursive click patch
 		HTMLAnchorElement.prototype.click=(function(click){
@@ -1310,6 +1318,19 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('apple.viamichelin.com')>-1){			// 288490, Text on Apple store locator page is misaligned and overlapping
 		addCssToDocument('center table{text-align: left} div#poilist table td img+img{ display: block;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Text on Apple store locator page is misaligned and overlapping). See browser.js for details');
+	} else if(hostname.indexOf('athome.co.jp') > -1){			// PATCH-147, athome.co.jp Animated menu doesn't appear
+		opera.defineMagicFunction('showMenu',function(oRealFunc,oThis,menu,tab,scroll){
+			try{var tgt=$("SELECT_TAB_" + menu);
+			if (tgt&&(tgt.innerHTML==unescape('%0D%0A'))) { tgt.innerHTML=unescape('%0A'); }}catch(e){}
+			oRealFunc.apply(oThis,arguments.slice(2));
+		},false);
+		
+				// PATCH-147, athome.co.jp Hide warning messages because of Browser UA
+		opera.defineMagicFunction('checkTargetBrowser',function(){});
+		opera.defineMagicFunction('checkTargetCookie',function(){});
+				// PATCH-147, athome.co.jp font-size fix
+		addCssToDocument('body {font-size:x-small !important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (athome.co.jp Animated menu doesn\'t appear\nathome.co.jp Hide warning messages because of Browser UA\...). See browser.js for details');
 	} else if(hostname.indexOf('att.com')!=-1){			// PATCH-36, ATT / Bellsouth browser sniffing
 		opera.defineMagicVariable( 'isDHTML', function(){return true;}, null );
 		opera.defineMagicFunction('checkBrowser', function(){});
@@ -1513,9 +1534,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('kr.msn.com')!=-1){			// 349584, head layout broken on kr.msn.com
 		addCssToDocument('li:after, ul:after{display:none!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (head layout broken on kr.msn.com). See browser.js for details');
-	} else if(hostname.indexOf('kubuntu.org')!=-1){			// PATCH-47, Nested z-index hides content
-		addCssToDocument('.sb, .sbi, .sb *, .sbi * {z-index:auto !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nested z-index hides content). See browser.js for details');
 	} else if(hostname.indexOf('lgmobile.com')!=-1 ){			// 331748,  LG Mobile Flash does not load as expected because of missing type attribute
 		document.addEventListener( 'DOMContentLoaded', function(e){
 			for( var elements=document.getElementsByTagName('object'),element,i=0; element=elements[i]; i++){
