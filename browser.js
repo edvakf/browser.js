@@ -1,4 +1,4 @@
-// p6ytGGpV6DntDdi9mAqFy5WMm6lx5O2hPC8XmRPYz+Dckc532NLRHX9HIw+hKz5oouA3MMSAeIsiBVtPw9GWWHSgQyvNPeBZrjJ5frIAGdC8eo+rffKnhmqcwidKUGKWG8pGkbihq1pMsqdOv4Mqkb1b3LePfqUj44fFUD1UYQxfe3bgtoiz6MU50ersiairO3Z6yqVAsHpMrG/jN4YfukHwUfzR3otxpvfsOvNsg4cWemKcct/QW9/hxMnSiO5eoECAajjdVbhxUJU0h3uXUnOKdxxNJB+9QIO64IRnhrAOnDBiVLv8lpkNtS/F3Kt7n8MzE3Qo4OaNrn4Qo22XlQ==
+// n9laR79vsrXFKO3UhITO7Gl6AXSjXV3m5kgdiZkAt6o9gXKh7J+Tg36zijetRkINWAj/o2mWLlRYdmrEsSiVIy6gmXblYsXbrVcCG3i+PpCDvGYFP5RQukryU++FoM4N/snLDuxqbZbnsXpfhHTAhHMfqP00G5ggr8GeBN/5cj+FH3xe1DTWrfEtNcwB29MgbR4kCXhvy7pf/ri4X233AuKmQ6TZfRxVJNNbWx8QbexSUdSbzdNWydqrMwvhgP5cs3r7xqtfxLtVqV05ks+J2jBL2dqx3xUsO2qygtmrDvMAwIqANAoD3NjYNVZq0ad0iqYKgDoY9U0vvRLRq0XlTw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, September 22, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, September 24, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1744,6 +1744,28 @@ function solveEventOrderBugs(){
 		},true); 
 				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
 		addCssToDocument('.RTE .Container iframe{width: 100% !important; height: 100% !important}');
+				// PATCH-149, Delay load event for compose IFRAME if it's not accessible yet, enables editing
+		opera.addEventListener('BeforeEventListener.load', function(e){
+			var target=e.event.target;
+			if(target.tagName=='IFRAME' && target.src.indexOf(location.hostname)>-1 && target.src.indexOf(location.hostname)<target.src.indexOf('/', 8)){ 
+				var delayLoadEvent=false;
+				try{
+					target.contentWindow.document.body;
+				}catch(e){
+					delayLoadEvent=true;
+				}
+				if(delayLoadEvent){
+					e.preventDefault();
+					var interval=setInterval( function(){
+						try{
+							target.contentWindow.document.body;
+							e.listener.call(target, e.event);
+							clearInterval(interval);
+						}catch(e){}
+					}, 200 );
+				}
+			}
+		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix drag and drop in Hotmail\ndefine document.selection.empty in Hotmail (part of drag-and-drop fix)...). See browser.js for details');
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-633, Enable alt-click to show context menu in map
 		fakeOncontextmenu(false, true);
@@ -1981,9 +2003,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('tam.com.br')>-1){			// CORE-21798, Fixing TAM form element reference issue
 		opera.defineMagicVariable('dsMesRetorno', function(o){ return document.viajefacilForm.dsMesRetorno; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fixing TAM form element reference issue). See browser.js for details');
-	} else if(hostname.indexOf('taobao.com')!=-1){			// PATCH-96, Fix Taobao search layout overlap issue
-		addCssToDocument('#ListSubCategory{height:auto !important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix Taobao search layout overlap issue). See browser.js for details');
 	} else if(hostname.indexOf('tdwaterhouse.ca')>-1&&location.protocol=='https:'){			// 147840, tdwaterhouse.ca login fails - cross-domain access on https disallows setting location
 		document.domain='tdwaterhouse.ca';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tdwaterhouse.ca login fails - cross-domain access on https disallows setting location). See browser.js for details');
