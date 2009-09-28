@@ -1,4 +1,4 @@
-// n9laR79vsrXFKO3UhITO7Gl6AXSjXV3m5kgdiZkAt6o9gXKh7J+Tg36zijetRkINWAj/o2mWLlRYdmrEsSiVIy6gmXblYsXbrVcCG3i+PpCDvGYFP5RQukryU++FoM4N/snLDuxqbZbnsXpfhHTAhHMfqP00G5ggr8GeBN/5cj+FH3xe1DTWrfEtNcwB29MgbR4kCXhvy7pf/ri4X233AuKmQ6TZfRxVJNNbWx8QbexSUdSbzdNWydqrMwvhgP5cs3r7xqtfxLtVqV05ks+J2jBL2dqx3xUsO2qygtmrDvMAwIqANAoD3NjYNVZq0ad0iqYKgDoY9U0vvRLRq0XlTw==
+// tYbsY7KFBLW4qTdLSJsxK+Fs+ZVG5gizDq38jW7nJmqdSnM5n22enZwxBqueaVU9cdsfSvoib52InFEq0hqwLeu62DWcGTToJH/RJj/56FGO5q+MYpb14dZj4kTYilj+p14di4Aruh8luuQr9KfSOa4AXaZW3cJvtxFKigFD9QJ2zOrkInIQlHYdhXE6IlmI3hDRxYr7gAIsXGQJcrrMgZN2JHKLAdfrbj8fcUPNSs/n9pFtnmAtWrDEeZbeGFPxL0Dq6x7sXrdY4Jq619IbS3iO335MxT6n8HeQhw0VK8vWGkegEOxMxB3q5KO4JXH2BGNWH9dn3LD49thTn9EtqQ==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, September 24, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, September 28, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -2024,6 +2024,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('tistory.com')!=-1){			// 347990, two login buttons on tistory.com
 		addCssToDocument('#memberbox .btn-login {text-indent:-100px;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (two login buttons on tistory.com). See browser.js for details');
+	} else if(hostname.indexOf('towerrecords.co.jp') > -1){			// PATCH-150, towerrecords.co.jp drop-down menu hover fix
+		addCssToDocument('.tableHeaderArea {z-index:auto !important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (towerrecords.co.jp drop-down menu hover fix). See browser.js for details');
 	} else if(hostname.indexOf('tuenti.com')!=-1){			// DSK-243723, Problems submitting messages and comments on tuenti.com
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
@@ -2031,6 +2034,10 @@ function solveEventOrderBugs(){
 				// PATCH-134, Videos not shown
 		navigator.userAgent += ' [NOT firefox/3]';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nVideos not shown). See browser.js for details');
+	} else if(hostname.indexOf('tvguide.or.jp') > -1){			// PATCH-151, tvguide.or.jp cookie manager fix
+		window.opera.defineMagicVariable('_BROWSER_IS_OPERA',function(){return false;},null);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tvguide.or.jp cookie manager fix). See browser.js for details');
 	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
 		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
