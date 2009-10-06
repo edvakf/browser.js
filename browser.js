@@ -1,4 +1,4 @@
-// tYbsY7KFBLW4qTdLSJsxK+Fs+ZVG5gizDq38jW7nJmqdSnM5n22enZwxBqueaVU9cdsfSvoib52InFEq0hqwLeu62DWcGTToJH/RJj/56FGO5q+MYpb14dZj4kTYilj+p14di4Aruh8luuQr9KfSOa4AXaZW3cJvtxFKigFD9QJ2zOrkInIQlHYdhXE6IlmI3hDRxYr7gAIsXGQJcrrMgZN2JHKLAdfrbj8fcUPNSs/n9pFtnmAtWrDEeZbeGFPxL0Dq6x7sXrdY4Jq619IbS3iO335MxT6n8HeQhw0VK8vWGkegEOxMxB3q5KO4JXH2BGNWH9dn3LD49thTn9EtqQ==
+// c/f7l2bEdbT65o3XJWc9TtG+86ad4qvxASV3KjSUZtFNB4oSSDLrXvLB1wY/hm4KX0hAJx4BoYjoMpVUFFPD8mEM2ggFo34xaoCEunZ3vr8zUr5z9mZGbqp2cqEYj54sQHLdVY6RJexxaLKjZf8lLqNwxfhXeDSeZNpvqhHDZ4tMGqB5xPQH3zxWHYLhuutfvx7AWTDkHmXhkXgaWJ70SoAwR67gEpAgcgAmtqTk9r+8HANE7BNVoKCOHEODyPPA4tGbFC2dn+mk+b3f08AShl33m4DLE8Pbl7ON2DLqxMVCv2wueY1YR78PueyRPfNWkGG6qJcIELmsM4F2A0iXEw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, September 28, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, October 5, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -979,13 +979,7 @@ function solveEventOrderBugs(){
 	},false);
 
 
-	if( hostname.indexOf('.saab.')>-1 ){			// 145261,  sniffing on saab.com and saab.de excludes Opera
-		opera.defineMagicVariable('isNAV6', function(){return true;}, null);
-		opera.defineMagicVariable('isOPERA', function(){return false;}, null);
-		opera.defineMagicVariable('isMAC', function(){return false;}, null);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( sniffing on saab.com and saab.de excludes Opera). See browser.js for details');
-	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
+	if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
 		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
@@ -1054,10 +1048,7 @@ function solveEventOrderBugs(){
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL popup slideshow does not load because of script execution timing issue). See browser.js for details');
 		}
-		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17732, All lower case dojotype attributes break XPath query for dojoType
-			addPreprocessHandler(/dojotype=/g, 'dojoType=');
-			
-					// CORE-17733, Send button does not appear
+		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17733, Send button does not appear
 			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
 					// CORE-18580, Converting RGB to Hex confuses "high contrast mode" detection
 			if(CSSStyleDeclaration&&CSSStyleDeclaration.prototype&&CSSStyleDeclaration.prototype.__defineGetter__){	
@@ -1067,7 +1058,7 @@ function solveEventOrderBugs(){
 					return (color=='#1f293b') ? 'rgb(31,41,59)'  : color;
 				});
 			}
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (All lower case dojotype attributes break XPath query for dojoType\nSend button does not appear\nConv...). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Send button does not appear\nConverting RGB to Hex confuses "high contrast mode" detection). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
@@ -1744,6 +1735,8 @@ function solveEventOrderBugs(){
 		},true); 
 				// DSK-235885, Adding editor area styling that is missing due to browser sniffing
 		addCssToDocument('.RTE .Container iframe{width: 100% !important; height: 100% !important}');
+				// PATCH-135, Fixes removing contacts from To field by clicking small X icon
+		addCssToDocument('.ContactPicker_AutoComplete img{position:static!important;}');
 				// PATCH-149, Delay load event for compose IFRAME if it's not accessible yet, enables editing
 		opera.addEventListener('BeforeEventListener.load', function(e){
 			var target=e.event.target;
@@ -1997,6 +1990,9 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('status.renren.com') > -1){			// PATCH-101, Allow the comments to be visible
 		addCssToDocument('ul#status-list li{overflow:visible;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Allow the comments to be visible). See browser.js for details');
+	} else if(hostname.indexOf('stylenanda.co.kr')>-1){			// PATCH-156, Clicks blocked on stylenanda.co.kr
+		opera.defineMagicFunction('click', function (oFun, oThis){ return true; } );
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Clicks blocked on stylenanda.co.kr). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
@@ -2038,9 +2034,6 @@ function solveEventOrderBugs(){
 		window.opera.defineMagicVariable('_BROWSER_IS_OPERA',function(){return false;},null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tvguide.or.jp cookie manager fix). See browser.js for details');
-	} else if(hostname.indexOf('unicaja.es')!=-1){			// DSK-221158, unicaja.es cannot use reserved frame reference words as variables
-		addPreprocessHandler(/\s+top\s*(=|\+)/g, ' _top $1')
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (unicaja.es cannot use reserved frame reference words as variables). See browser.js for details');
 	} else if(hostname.indexOf('us.etrade.com')!=-1 ){			// OTW-3340, Working around E*Trade site's security policy violation
 		opera.defineMagicFunction('GoToETURL', function(oF,oT,urlPath,thirdParty){
 			try{
@@ -2086,9 +2079,6 @@ function solveEventOrderBugs(){
 				// 327825, New mail UI on Walla requires IE-style event capture
 		emulateIECapturingEvents();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nNew mail UI on Wa...). See browser.js for details');
-	} else if(hostname.indexOf('walmart.com')!=-1){			// 279084, Walmart hides "find in store" popup unintentionally
-		addCssToDocument('#overlay{display: block!important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Walmart hides "find in store" popup unintentionally). See browser.js for details');
 	} else if(hostname.indexOf('weather.com')>-1){			// PATCH-44, fix disappearing menu on weather.com
 		solveEventOrderBugs();
 				// CORE-15756, Fix mouse event order of sign in link
@@ -2116,6 +2106,9 @@ function solveEventOrderBugs(){
 		
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
+	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
+		addCssToDocument('body{display:block!important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
 	} else if(hostname.indexOf('youtube.com')>-1){			// CORE-21796, Fix bad painting of dropdown menus
 		addCssToDocument( '.yt-menubutton, .yt-menulink { display: inline-block !important; } ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix bad painting of dropdown menus). See browser.js for details');
