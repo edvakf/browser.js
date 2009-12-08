@@ -1,4 +1,4 @@
-// gCsQCm9FVv24Fi7F29XX+xsXL9T+xKoyVaTZ9+SUM8mZy8cWrDPY1UlLCaT1e3k4bM5XGtwNzc6A7cVAFiPLfidZ7aBU3zPm7NM9JxlRi207MX/Im0Y82mvuxBrka4nwpJ/ZYFdberysWuZZx+YOVjokTBemjyQPnmwgvLPoGCXDnyZj2NZuSR8x5JTggZ3w6SB+7oQnmPECfO2QBCf1pYLtIR+NBx1gP0QCqEpQgRDPjLRd3EHiH7O5GCN/luvZ7JbH0Nhsj/hYdK/FoRPMsMFKAiLTWzCfEi+md2CI/0AagacpZHY6g72AbhpLMhAe0FboOZYW91y4sIknA3tC5w==
+// wPaWBBtzJ6ZhhV4ytNduNm2/jdKiqtH4graArd6vkqkNuImInb3PRk6Iw3JiKrFJEmeCxMg4yhJfwjxmyhYtqgAOg/OHHQGhkOa0NPrvviToTm7xlxaAH9wTOJCia9YWR/Fn7GhD8QIWEoF/xP7spItS2g27sXVqYna0qE1SlO05d1JTAXoAU7rR0yG2nj/EPxZAhm3yfRo5JudNirsX0kbSBdzKeCzcIvXBiILHa1Vr0rIgOwiFa7GuBEeXwzpHfZfudcTkt5Ti7rzntuy3wYuUa71cgk0pHXtRx1VSw5aU6VJ6VZU79QqWQTbAjrdOnW15xJU4hluIX+BgjCq0Fw==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, November 23, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, December 8, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1035,10 +1035,12 @@ function solveEventOrderBugs(){
 		);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (cang.baidu.com for Baidu SouCang can\'t display saved items). See browser.js for details');
-	} else if(hostname.indexOf("tianya.cn") > -1 ){			// PATCH-99, Fix missing scrollbars and misplaced text.
+	} else if(hostname.indexOf("tianya.cn") > -1){			// CORE-25405, missing </object> tag issue
 		addCssToDocument('.wmfcCSS{ table-layout:auto !important;} .wrapper{height:auto !important}');
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix missing scrollbars and misplaced text.). See browser.js for details');
+		if(pathname.indexOf("focus/index.shtml")>-1){
+		addPreprocessHandler("html += ' pluginspage=\"http://www.macromedia.com/go/getflashplayer\" />';","html += ' pluginspage=\"http://www.macromedia.com/go/getflashplayer\" /></object>';",true,function(t){indexOf.call = call;return ((indexOf.call(t.text,"document.getElementById(\"focus_headline_pic\").innerHTML=html")>-1) && (indexOf.call(t.text,"</object>") == -1))});}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (missing </object> tag issue). See browser.js for details');
 	} else if(hostname.indexOf('.aaa.com')>-1){			// PATCH-38, Sniffing on aaa.com prevents zip code search
 		opera.defineMagicVariable('NS6', function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sniffing on aaa.com prevents zip code search). See browser.js for details');
@@ -1347,6 +1349,22 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('apple.viamichelin.com')>-1){			// 288490, Text on Apple store locator page is misaligned and overlapping
 		addCssToDocument('center table{text-align: left} div#poilist table td img+img{ display: block;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Text on Apple store locator page is misaligned and overlapping). See browser.js for details');
+	} else if(hostname.indexOf('asahi.com')>-1){			// PATCH-185, Asahi.com never stops loading
+		var docFragment=document.createDocumentFragment();
+		var loadingComplete=false;
+		
+		opera.addEventListener('BeforeScript',function(e) {
+			if ((!loadingComplete)&&(e.element.text.indexOf('contentsLoader.load(') > -1)) {
+				docFragment.appendChild(e.element.cloneNode(true));
+				e.preventDefault();
+			}
+		},false);
+		
+		window.addEventListener('DOMContentLoaded',function(e) {
+			loadingComplete = true;
+			document.body.appendChild(docFragment);
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Asahi.com never stops loading). See browser.js for details');
 	} else if(hostname.indexOf('athome.co.jp') > -1){			// PATCH-147, athome.co.jp Animated menu doesn't appear
 		opera.defineMagicFunction('showMenu',function(oRealFunc,oThis,menu,tab,scroll){
 			try{var tgt=$("SELECT_TAB_" + menu);
@@ -1369,9 +1387,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('barnesandnoble.com')>-1){			// 195961, Barnes&Noble uses "required" attributes on elements that aren't required
 		window.addEventListener('load', function(){var nodes=document.evaluate('//input[@required]', document.body,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null),node=null,i=0; while(node=nodes.snapshotItem(i)){ node.removeAttribute('required'); i++; }},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Barnes&Noble uses "required" attributes on elements that aren\'t required). See browser.js for details');
-	} else if(hostname.indexOf('bbs.kafan.cn')!= -1){			// 361525, Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn
-		opera.defineMagicFunction('parsetag',function(){});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Setting innerHTML to badly nested markup breaks forum layout on bbs.kafan.cn). See browser.js for details');
 	} else if(hostname.indexOf('bbs.pcpop.com') > -1){			// PATCH-102, Page loads blank due to misnested forms
 		addCssToDocument(' #wrapper {width: auto !important} ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Page loads blank due to misnested forms). See browser.js for details');
@@ -1788,12 +1803,27 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('maps.google.')>-1){			// CORE-633, Enable click-and-hold to show context menu in map
 		fakeOncontextmenu(true, 500);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable click-and-hold to show context menu in map). See browser.js for details');
-	} else if(hostname.indexOf('mb.softbank.jp')!=-1){			// PATCH-22, Softbank shop uses reserved variable name parent
+	} else if(hostname.indexOf('mb.softbank.jp')!=-1){			// DSK-267630, My SoftBank login redirection fix
+		if( (location.protocol.indexOf('https:') != -1) && (location.pathname.indexOf('/scripts/japanese/mysoftbank/login.jsp') != -1) ) {
+			document.addEventListener('DOMContentLoaded',function() {
+				var els=document.getElementsByTagName('meta');
+				for (var i=0; i<els.length; i++) {
+					if (els[i].getAttribute('http-equiv') == 'Refresh'){
+						document.write('');
+						var timestamp = new Date().getTime();
+						var url = els[i].getAttribute('content').match(/.*URL=([^;]*)/)[1];
+						location.href = location.protocol+'//'+location.hostname+url+((url.indexOf('?') != -1)?'&':'?')+timestamp;
+					}
+				}
+			},false);
+		}
+		
+				// PATCH-22, Softbank shop uses reserved variable name parent
 		(function(){var the_parent;
 			opera.defineMagicVariable('parent', function(){return the_parent;}, function(o){the_parent=o;});
 		})();
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Softbank shop uses reserved variable name parent). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (My SoftBank login redirection fix\nSoftbank shop uses reserved variable name parent). See browser.js for details');
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
@@ -1991,47 +2021,19 @@ function solveEventOrderBugs(){
 		CSSStyleDeclaration.prototype.__defineGetter__('filter', function(){});
 		CSSStyleDeclaration.prototype.__defineSetter__('filter', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sogou.com uses window.MouseEvent\nhide SVG\'s style.filter property from script on map.sogou.com beca...). See browser.js for details');
-	} else if(hostname.indexOf('spaces.live.com')!=-1){			// 311225, Overriding spaces.live.com browser sniffing
-		opera.addEventListener(
-			'BeforeScript',
-			function(){ window.opera=undefined; },
-			false
-		);
-		
-		opera.addEventListener(
-			'AfterScript',
-			function(e){
-				var ok=false;
-				if( typeof attachOperaCompatibility == 'function' ){
-					attachOperaCompatibility(window);
-					ok=true;
-				}else if( typeof $Browser !='undefined' && typeof $Browser.attachOperaCompatibility == 'function' ){
-					$Browser.attachOperaCompatibility(window);
-				}
-				if(ok){
-					opera.removeEventListener( 'AfterScript', arguments.callee, false );
-					
-				}
-			},
-			false
-		);
-		
-				// 311225, Make Range.prototype.insertNode automatically import nodes from other documents
+	} else if(hostname.indexOf('spaces.live.com')!=-1){			// 311225, Make Range.prototype.insertNode automatically import nodes from other documents
 		var rangeInsertNode = Range.prototype.insertNode;
 		Range.prototype.insertNode = function(n){
 			if(this.startContainer && this.startContainer.ownerDocument && n.ownerDocument != this.startContainer.ownerDocument )n=this.startContainer.ownerDocument.importNode(n, true);
 			return rangeInsertNode.call(this,n);
 		}
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Overriding spaces.live.com browser sniffing\nMake Range.prototype.insertNode automatically import no...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Range.prototype.insertNode automatically import nodes from other documents). See browser.js for details');
 	} else if(hostname.indexOf('status.renren.com') > -1){			// PATCH-101, Allow the comments to be visible
 		addCssToDocument('ul#status-list li{overflow:visible;}')
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Allow the comments to be visible). See browser.js for details');
 	} else if(hostname.indexOf('stylenanda.co.kr')>-1){			// PATCH-156, Clicks blocked on stylenanda.co.kr
 		opera.defineMagicFunction('click', function (oFun, oThis){ return true; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Clicks blocked on stylenanda.co.kr). See browser.js for details');
-	} else if(hostname.indexOf('syndication.vmma.be')>-1){			// PATCH-180, Working around browser sniffing
-		opera.defineMagicVariable('BrowserDetect', function(o){ o.browser="Opera10"; return o; }, null);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around browser sniffing). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
@@ -2056,6 +2058,13 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('tistory.com')!=-1){			// 347990, two login buttons on tistory.com
 		addCssToDocument('#memberbox .btn-login {text-indent:-100px;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (two login buttons on tistory.com). See browser.js for details');
+	} else if(hostname.indexOf('tokyo.jp')>-1){			// PATCH-186, tokyo.jp enable maps
+		if (location.pathname.indexOf('citymap')>-1) {
+			window.opera.defineMagicFunction('chkBrowser',function(){
+				return true;
+			},false);
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tokyo.jp enable maps). See browser.js for details');
 	} else if(hostname.indexOf('towerrecords.co.jp') > -1){			// PATCH-150, towerrecords.co.jp drop-down menu hover fix
 		addCssToDocument('.tableHeaderArea {z-index:auto !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (towerrecords.co.jp drop-down menu hover fix). See browser.js for details');
@@ -2142,11 +2151,13 @@ function solveEventOrderBugs(){
 		
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
-	} else if(hostname.indexOf('www.google')>-1){			// PATCH-174, Make sure stock details are shown correctly
-		if(location.pathname.indexOf('/finance')==0){
-			addCssToDocument('#snap-panel .key{ min-width: 80px} #snap-panel .val{ min-width: 100px }');
-		}
+	} else if(hostname.indexOf('www.google')>-1 && pathname.indexOf('/finance')==0){			// PATCH-183, Make sure stock details are shown correctly
+		window.addEventListener('load', function(){try{google.finance.renderMarketData();}catch(e){}}, false);
+		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure stock details are shown correctly). See browser.js for details');
+	} else if(hostname.indexOf('www.hongen.com') >-1){			// PATCH-187, make links clickable
+		addCssToDocument('#SL_ScrBox_1{display:none !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (make links clickable). See browser.js for details');
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
