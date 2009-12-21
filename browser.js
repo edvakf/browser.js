@@ -1,4 +1,4 @@
-// B7b7S9I590JIzSw4vWi3t8YLLIat9KClYazh+VKNFFM+dPnLwcQls5m1VgQIbc0HAW/yPW8R59lDTuKoSVmpU321z47GAgpUBJHru9pj9qXjMb5LHYU8A+m8LNxTmGC4jdY3rGU0H6i8NlKVqGFpmMWC8J95dSoS5tpN7IdCYdgrFr6Y4XxWZSufqrGh9G7DWKXRuHo09gE5pS2dDRjoQp9He7NWHsvDHll8h1zQMDoWsYWdHr62n2h70kBwrMlJjqAhIajfYN1I1h74VrLNSMK16l4MaLlKBKvFRspRKaOBTbqZVN1Q4etObkzIdcOF2AJF5Bu+eq/c9KIgiihW5g==
+// AbJVvXwJ94SvrM73C9ctbqQLDcE88Z7iA6RkoKLyJ9JLt5lienNlMyuArBQs/3ofGuqRC6JnElN8JSLbYs68OE+kVDqv+EdMXquNcs1zve6XBa1QFvdrwRbAdrHZ5QgqI0vYDYqD2a1KBjPR91dSx9mP76ISwu9syGPM8pTEP6Esqf6DyHDHtkgRMw6eIqADpd7nLa04Uj4YVLmpB1FvPqqwEGO118nijVBH4UI54SndiOj9orL6lLzTD1swbQtyRGgk/TdzwyXIcOeMDi04DLcOZxy/gfHaouEHlGS96EgwiP7vb0WDj/Si8NzhAQEdpRxLsvtTbf6pMxTFtM+xrg==
 /**
 ** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, December 8, 2009 ';
+	var bjsversion=' Opera  9.60, Desktop, December 21, 2009 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -65,6 +65,7 @@
 	var opera_version = parseFloat.call(window,opera.version());
 
 	// Utility functions
+
 	function addCssToDocument(cssText, doc, mediaType){
 		getElementsByTagName.call=addEventListener.call=createElement.call=createTextNode.call=insertBefore.call=setAttribute.call=appendChild.call=version.call=call;
 		doc = doc||document;
@@ -94,6 +95,7 @@
 		styles.firstChild.nodeValue += cssText+"\n";
 		return true;
 	}
+
 	function addPreprocessHandler( search, replacement, onceonly, conditional ){
 		// adding event handler for script pre-processing if required
 		opera.addEventListener('BeforeScript', 
@@ -107,6 +109,7 @@
 			}
 		, false);
 	}
+
 function avoidDocumentWriteAbuse(contentRegexp){
 	var dw=document.write;
 	contentRegexp = contentRegexp || /(^<img .*?width=("|)1("|)\s+height=("|)1("|)\s+border=("|)0("|)\s+alt="".*?>$|^\[object Object\]$)/i;
@@ -117,7 +120,8 @@ function avoidDocumentWriteAbuse(contentRegexp){
 			dw.apply(document, arguments);
 		}
 	};
-}function avoidMagicBodyCreation(){
+}
+function avoidMagicBodyCreation(){
 	document.createElement=(function(createElement){
 		var tmpDoc = document.implementation.createDocument('http://www.w3.org/1999/xhtml/', 'html', null);
 		return function(tagName){
@@ -129,7 +133,8 @@ function avoidDocumentWriteAbuse(contentRegexp){
 			}
 		}
 	})(document.createElement);
-}function emulateIECapturingEvents(){
+}
+function emulateIECapturingEvents(){
 	// An implementation of IE5 mouse event capturing
 	var capturingEventsTable =
 			{'mousedown':'',
@@ -370,11 +375,13 @@ function avoidDocumentWriteAbuse(contentRegexp){
 		originalEvent.target.dispatchEvent(fakeEvent);
 		commonAncestor.removeEventListener('mouseleave', listener, false);
 	}, false);
-}	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
+}
+	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
 		var filterObj={apply:function(){}, play:function(){}, Apply:function(){}, Play:function(){}}; // some of the common functions
 		HTMLElement.prototype.filters=[ filterObj, filterObj, filterObj ]; // fake three applied filters with play and apply functions
 		HTMLElement.prototype.filters['blendTrans']=filterObj; // we also fake a named blendTrans filter
 	}
+
 function fakeOncontextmenu( useAltClick, clickAndHold ){
 
 	if ( 'oncontextmenu' in document.createElement('foo') )
@@ -500,6 +507,7 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 	}
 	
 };
+
 	function fixCoolmenus(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
@@ -516,6 +524,7 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 		addPreprocessHandler(  'this.win.document.body.appendChild(oNS)',  'try{this.win.document.body.appendChild(oNS)}catch(e){oNS=this.win.document.body.appendChild(this.win.document.importNode(oNS, true))}' );
 		addPreprocessHandler(  'oNS.appendChild(oNS2)',  'try{oNS.appendChild(oNS2);}catch(e){oNS2=oNS.appendChild(oNS.document.importNode(oNS2, true));}' );
 	}
+
 	function fixHVMenu(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=match.call=call;
@@ -534,7 +543,8 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 			navigator.userAgent+=' opera 7'; 
 			shouldRestore = true;
 		}
-	}	function fixHierMenus(){
+	}
+	function fixHierMenus(){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
 	      // HM_IsMenu must be true to make the menu appear
@@ -544,6 +554,7 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 		defineMagicVariable.call(opera, 'HM_BrowserString', function(){ return 'DOM'}, function(){ return 'DOM' });
 		if(HTMLBodyElement.prototype.__defineGetter__)HTMLBodyElement.prototype.__defineGetter__('clientHeight', function(){return this.ownerDocument.documentElement.clientHeight;}); // PATCH-33
 	}
+
 function fixIFrameSSIscriptII(name, iFrameId){
 	if(name)opera.defineMagicFunction(name, function (a,b,frameid){
 		frameid = frameid|| iFrameId;
@@ -556,7 +567,8 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
-}function fixJQueryScriptSchedulingTrouble(){
+}
+function fixJQueryScriptSchedulingTrouble(){
 	var scriptQueue = [];
 	Element.prototype.appendChild = (function(ac){
 		return function(child, fromQueue){
@@ -613,6 +625,7 @@ function fixIFrameSSIscriptII(name, iFrameId){
 		}
 	})(Element.prototype.replaceChild)
 }
+
 function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
 	if(fixed)return; fixed=true;
@@ -630,7 +643,8 @@ function fixLiknoAllWebMenus(ev){
 		}
 		removeEventListener.call(opera, 'BeforeScript', arguments.callee, false );
 	}
-}	function fixMilonicMenu(name){ 	// gotcha: must be called with script.src as argument
+}
+	function fixMilonicMenu(name){ 	// gotcha: must be called with script.src as argument
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=defineMagicFunction.call=addEventListener.call=call;
 	      // "opera" or "opra" true will cause no menu or garbled (Opera 6 pixel* -  compat)
@@ -650,6 +664,7 @@ function fixLiknoAllWebMenus(ev){
 			opera.defineMagicVariable('scrollX', function(){ return document.body.scrollLeft;}, null);
 		}
 	}
+
 function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu functions must be called with an appropriate string argument
 	match.call=addEventListener.call=defineMagicVariable.call=indexOf.call=call;
 	// OpenCube menu
@@ -696,6 +711,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		defineMagicVariable.call(opera, 'ns5', function(val){ return true }, function(val){ return true });
 	}
 }
+
 	function fixSoThinkMenus(){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=addEventListener.call=call;
@@ -704,6 +720,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		defineMagicVariable.call(opera, 'nNN6',function(){return true;},null);
 		addEventListener.call(window, 'load', function(e){ if(window.st_onload)st_onload(e); }, false );//PATCH-55
 	}
+
 	function fixTransmenus(){
 		// Fixing bugs in menu script from http://www.youngpup.net/2004/transmenus/ 
 		// Credits xErath and Andrew Gregory
@@ -720,6 +737,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 			}
 		}, false);
 	}
+
 	function fixUDM(name){
 		if(fixed){return;}fixed=true;
 		defineMagicVariable.call=call;
@@ -731,6 +749,7 @@ function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu fu
 		// Better fake missing support for DOM2Style then..
 		defineMagicVariable.call(opera, 'um', function(o){ o.ss=false; return o; }, null);
     }
+
 function ignoreCancellationOfCertainKeyEvents(type, list){
 	opera.addEventListener( 'BeforeEventListener.'+type, function(e){
 		preventDefault.call=call;
@@ -738,7 +757,8 @@ function ignoreCancellationOfCertainKeyEvents(type, list){
 			preventDefault.call(e);
 		}
 	},false );
-}function ignoreRequiredAttributes(){
+}
+function ignoreRequiredAttributes(){
 	document.addEventListener('invalid', function(e){
 		if( e.target.validity.valueMissing){
 			e.target.removeAttribute('required');
@@ -746,9 +766,11 @@ function ignoreCancellationOfCertainKeyEvents(type, list){
 			opera.postError('Warning: overriding built-in "required" attribute validation on page. See browser.js for details.');
 		}
 	},true);
-}function removeClosingHTMLComments(){
+}
+function removeClosingHTMLComments(){
     opera.addEventListener( 'BeforeScript', function(e){ replace.call=call; e.element.text=replace.call( e.element.text, /\r\n\s*-->\s*\r\n/, '' ); }, false );
 }
+
 function solveEventOrderBugs(){
 	var delayedMouseMoveEvents=[];
 	var delayedMouseOutEvents=[];
@@ -793,7 +815,8 @@ function solveEventOrderBugs(){
 			ev.target.dispatchEvent(ev);
 		}
 	}
-};function workAroundBug343019(){
+};
+function workAroundBug343019(){
 	document.addEventListener('DOMContentLoaded', function(){
 		for( var frms=document.getElementsByTagName('form'),i=0,frm; frm=frms[i];i++ ){
 			if(!frm.action)return;
@@ -1039,9 +1062,12 @@ function solveEventOrderBugs(){
 			Event.prototype.__defineGetter__('layerX',function(){ return this.offsetX; });
 			Event.prototype.__defineGetter__('layerY',function(){ return this.offsetY; });
 			
-		}else if(name.indexOf('expapi/authentication')!=-1){
-			// Rosenzu ASP Map Service, PATCH-122
+		}else if((name.indexOf('expapi/authentication')!=-1)||(name.indexOf('rosen/authentication')!=-1)){
+			// Rosenzu ASP Map Service map, PATCH-122
 			opera.defineMagicFunction('_ch',function(){return true;});
+		}else if((name.indexOf('expapi/suggest')!=-1)||(name.indexOf('rosen/suggest')!=-1)){
+			// Rosenzu ASP Map Service suggestions, PATCH-122
+			opera.defineMagicFunction('checkBrowser',function(){return true;});
 		}else if(name.indexOf('http://ebook.webcatalog.jp/engine/java/7net/common/sCommonLib.js')!=-1){ 
 			// Netfly TrueEBook, PATCH-125
 			opera.defineMagicFunction('funcGetBrowser',function(){return 2;}); 
@@ -1049,7 +1075,15 @@ function solveEventOrderBugs(){
 	},false);
 
 
-	if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
+	if(((hostname.indexOf('expedia.com')>-1)||(hostname.indexOf('expediaweb.com')>-1))){			// CORE-26201, Expedia fix car rental list
+		if (location.pathname.indexOf('/pub/agent.dll')>-1) {
+			window.opera.defineMagicFunction('writeCarRow2', function (oRealFunc, oThis, str) {
+				str = str.replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+				return result = oRealFunc.apply(oThis, arguments.slice(2));
+			});
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Expedia fix car rental list). See browser.js for details');
+	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
 		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
@@ -1422,9 +1456,7 @@ function solveEventOrderBugs(){
 				// PATCH-147, athome.co.jp Hide warning messages because of Browser UA
 		opera.defineMagicFunction('checkTargetBrowser',function(){});
 		opera.defineMagicFunction('checkTargetCookie',function(){});
-				// PATCH-147, athome.co.jp font-size fix
-		addCssToDocument('body {font-size:x-small !important;}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (athome.co.jp Animated menu doesn\'t appear\nathome.co.jp Hide warning messages because of Browser UA\...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (athome.co.jp Animated menu doesn\'t appear\nathome.co.jp Hide warning messages because of Browser UA). See browser.js for details');
 	} else if(hostname.indexOf('att.com')!=-1){			// PATCH-36, ATT / Bellsouth browser sniffing
 		opera.defineMagicVariable( 'isDHTML', function(){return true;}, null );
 		opera.defineMagicFunction('checkBrowser', function(){});
@@ -1476,10 +1508,6 @@ function solveEventOrderBugs(){
 	} else if(hostname.indexOf('britishairways.')!=-1){			// 206810, Prevent britishairways.com from reloading the page on resize
 		opera.defineMagicFunction('resizeHandler', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent britishairways.com from reloading the page on resize). See browser.js for details');
-	} else if(hostname.indexOf('buienradar.nl')>-1||hostname.indexOf('.meteox.')>-1){			// PATCH-126, Fix positioning after clicking map on buienradar.nl
-		Event.prototype.__defineGetter__('offsetX', function(){return undefined;});
-		Event.prototype.__defineGetter__('offsetY', function(){return undefined;});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix positioning after clicking map on buienradar.nl). See browser.js for details');
 	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// 346825, Caja Madrid hides login form by CSS mistake
 		addCssToDocument('body:last-child .clearfix {content:normal!important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
@@ -1647,6 +1675,8 @@ function solveEventOrderBugs(){
 				sel.removeAllRanges();
 			}
 		};
+				// PATCH-192, Closing already closed documents from timeout can hang ES execution
+		opera.defineMagicVariable('_dapUtils', function(obj){ obj.is_ff_closeIfrm=false; return obj; }, null);
 				// CORE-17447, Mispositioned sprites due to missing CSS
 		addCssToDocument('.c_is { display: inline-block }');
 				// CORE-17445, Detecting style.filter causes missing opacity effects
@@ -1713,13 +1743,6 @@ function solveEventOrderBugs(){
 		navigator.userAgent = 'Opera/' + opera.version() + ' (' +
 				stuff.join(';') + ') Presto/' +
 				(parseFloat(opera.version()) < 10 ? '2.1' : '2.2');
-				// CORE-17499, Correct browser detection cookie
-		if (/Firefox\=1/.test(document.cookie)) {
-			var isMac = /Mac OS X/.test(navigator.userAgent);
-			document.cookie = 'BrowserSense=Win=' + Number(!isMac) + '&Mac=' + Number(isMac) + '&Downlevel=0&WinIEOnly=0&Firefox=0&Opera=1&OperaVersion=' + opera.version() + '&Safari=0;path=/;domain=live.com';
-			document.cookie = 'BS=Win=' + Number(!isMac) + '&Mac=' + Number(isMac) + '&Downlevel=0&WinIEOnly=0&Firefox=0&Opera=1&OperaVersion=' + opera.version() + '&Safari=0;path=/;domain=live.com';
-		}
-		
 				// CORE-17498, Ensure a font with bold/italic variants is default for editor on Mac
 		if (/Mac OS X/.test(navigator.userAgent)) {
 			addCssToDocument('html .EditArea, html .ExternalClass  { font-family: Verdana }');
