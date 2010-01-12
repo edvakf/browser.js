@@ -1,6 +1,6 @@
-// rc1Ag/Ta0B7KxllYzi9bnnoWJe+vb2rayjuRpyiwgYCzWm8Y0afLfsxYpnkL2Cxrd+jFTBRXZd2AMTl1hOyCYsuaieFyrjtia14vf9f5okONNf1hVMc97ubMeDZNI8tnamIysejl5Z3dw+zOS6m9S2aKGi7fkz8Yc3XMZNHrG7OtvXvQ2S0pcN80stKnzIi8QKV+u8vYyxyOxAMcDvtUTNQyz7+ww4V8F3KT1IDpdKDaMfKrkIIqa0kyL0/4sxqpwAiPhtXsEXX7sgyWGSO8mGjHvbxp9FN1B2AbDUexfAwqvaE6sTlmMdAeOwmB7x9zr7a41zyHS0CgBqyPaF5L6w==
+// Bvc2gDb1DbkD35QZYjnsIWXA/3mUnx6f1hSLQrhBri0+zhxyuwGhw7jzSn/h8243WOExfLDEBvAgNe8ybBcsESS8es9loe+alC0uMVzXk3suB05YlL+ZM9GZb1eig2GCZ+ZjEcHFd/mbrwEG69mlPfPmErIItbbmIq5sK22+Ffps5mW6+HzcV+w3X19WcHYih1ImG3i18GVCNFDUjvWkMFheLB3yT7HwV70UcI4wqTkHOIcWwykjWNu21RzLSDl4V9+JqAPhpaCd7N497GkvBK2N7m3YPIsSLGw5ObgrLLeYw47Xyyr++4lctieHiREikNL1ES0ZgvdeLZMKFO4Oxg==
 /**
-** Copyright (C) 2000-2009 Opera Software AS.  All rights reserved.
+** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
 ** This file is part of the Opera web browser.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, December 21, 2009 ';
+	var bjsversion=' Opera  10.00, Desktop, January 11, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1141,6 +1141,16 @@ function workAroundBug343019(){
 			Element.prototype.removeChild.call( this, child );
 		};
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ebay.fr hangs, Opera doesn\'t support option node passed to SELECT.remove()). See browser.js for details');
+	} else if(hostname.indexOf('.ebaydesc.com')>-1){			// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions
+		if(self!=top)opera.addEventListener( 'BeforeScript', function(e){
+			if(document.body){ 
+				document.body.__defineGetter__('offsetHeight', function(){
+					return document.documentElement.offsetHeight;
+				});
+				opera.removeEventListener('BeforeScript', arguments.callee, false);
+			}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid IFRAME resize causing lots of empty space on auctions). See browser.js for details');
 	} else if(hostname.indexOf('.ems.com.cn')>-1){			// PATCH-24, Menus on ems.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on ems.com.cn disappear too quickly). See browser.js for details');
@@ -1244,8 +1254,6 @@ function workAroundBug343019(){
 					// 315686, Remember to create documentElement properties on XML nodes
 			addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
 			
-					// CORE-17537, Y!Mail search results show overlapping text due to vertical-align for table contents different from Firefox
-			addCssToDocument('tbody, thead, tfoot, table > tr { vertical-align: middle } tr, th, td { vertical-align: inherit }');
 					// CORE-17539, Y!Mail spell check fix
 			document.__defineGetter__('designMode', function() {
 				return this.documentElement.contentEditable ? 'on' : 'off';
@@ -1360,6 +1368,16 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('adf.ly')==0){			// PATCH-171, Avoid bug that breaks frameset on adf.ly
 		avoidMagicBodyCreation();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid bug that breaks frameset on adf.ly). See browser.js for details');
+	} else if(hostname.indexOf('allrecipes.com')>-1){			// PATCH-196, remove byte order marks (BOMs) that should not occur in the middle of JavaScript files
+		opera.addEventListener('BeforeScript', function(e){
+			replace.call=indexOf.call=call;
+			e.element.text=replace.call(e.element.text, /\u00ef\u00bb\u00bf/g, '' );
+			/*if(e.element.src&&indexOf.call(e.element.src, 's_code.js')>-1){
+				e.element.text=e.element.text.replace( /Opera/g, '0pera' );
+			}*/
+		}, false);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (remove byte order marks (BOMs) that should not occur in the middle of JavaScript files). See browser.js for details');
 	} else if(hostname.indexOf('amazon.com.cn')>-1){			// PATCH-25, Menus on amazon.com.cn disappear too quickly
 		solveEventOrderBugs();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Menus on amazon.com.cn disappear too quickly). See browser.js for details');
@@ -1388,17 +1406,10 @@ function workAroundBug343019(){
 			document.body.appendChild(docFragment);
 		},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Asahi.com never stops loading). See browser.js for details');
-	} else if(hostname.indexOf('athome.co.jp') > -1){			// PATCH-147, athome.co.jp Animated menu doesn't appear
-		opera.defineMagicFunction('showMenu',function(oRealFunc,oThis,menu,tab,scroll){
-			try{var tgt=$("SELECT_TAB_" + menu);
-			if (tgt&&(tgt.innerHTML==unescape('%0D%0A'))) { tgt.innerHTML=unescape('%0A'); }}catch(e){}
-			oRealFunc.apply(oThis,arguments.slice(2));
-		},false);
-		
-				// PATCH-147, athome.co.jp Hide warning messages because of Browser UA
+	} else if(hostname.indexOf('athome.co.jp') > -1){			// PATCH-147, athome.co.jp Hide warning messages because of Browser UA
 		opera.defineMagicFunction('checkTargetBrowser',function(){});
 		opera.defineMagicFunction('checkTargetCookie',function(){});
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (athome.co.jp Animated menu doesn\'t appear\nathome.co.jp Hide warning messages because of Browser UA). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (athome.co.jp Hide warning messages because of Browser UA). See browser.js for details');
 	} else if(hostname.indexOf('att.com')!=-1){			// PATCH-36, ATT / Bellsouth browser sniffing
 		opera.defineMagicVariable( 'isDHTML', function(){return true;}, null );
 		opera.defineMagicFunction('checkBrowser', function(){});
