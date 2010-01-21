@@ -1,4 +1,4 @@
-// Bvc2gDb1DbkD35QZYjnsIWXA/3mUnx6f1hSLQrhBri0+zhxyuwGhw7jzSn/h8243WOExfLDEBvAgNe8ybBcsESS8es9loe+alC0uMVzXk3suB05YlL+ZM9GZb1eig2GCZ+ZjEcHFd/mbrwEG69mlPfPmErIItbbmIq5sK22+Ffps5mW6+HzcV+w3X19WcHYih1ImG3i18GVCNFDUjvWkMFheLB3yT7HwV70UcI4wqTkHOIcWwykjWNu21RzLSDl4V9+JqAPhpaCd7N497GkvBK2N7m3YPIsSLGw5ObgrLLeYw47Xyyr++4lctieHiREikNL1ES0ZgvdeLZMKFO4Oxg==
+// ibjwJzYJLpY3OpWUs1V8tt0/VU2LGdYxjWDsFEQSwqJ3cuzN6gXp0qyoQ7MVdTAF9aVJTo3pUhRHqeC/FcnkwvSikbgnaOsf3VfPSIfwAmOUjMs23lSaDBtKNDEFC6a0ClNvP9HeuNBKZf0pzThLwXtAXaUBw8m84Qwyqtmen6CV+6SVYTq6BkLj+Mcgn72+T/Sjh194JCP2i9gYq8rOCZ39pJ4m2I5FTyeFDnn4aygSxtdDIGN6f6O1LC0SUP329CPHFswbEsAslYqG47ADcDOwd7Oeg/UfSdAh3Ex74JCU/SKozQpKS381xMR57yHGHdSCcQnuBuwhMGv9q0I0AA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, January 11, 2010 ';
+	var bjsversion=' Opera  10.00, Desktop, January 21, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1141,7 +1141,7 @@ function workAroundBug343019(){
 			Element.prototype.removeChild.call( this, child );
 		};
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ebay.fr hangs, Opera doesn\'t support option node passed to SELECT.remove()). See browser.js for details');
-	} else if(hostname.indexOf('.ebaydesc.com')>-1){			// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions
+	} else if(hostname.indexOf('.ebaydesc.')>-1){			// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions
 		if(self!=top)opera.addEventListener( 'BeforeScript', function(e){
 			if(document.body){ 
 				document.body.__defineGetter__('offsetHeight', function(){
@@ -1253,6 +1253,19 @@ function workAroundBug343019(){
 			HTMLButtonElement.prototype.__defineGetter__('action', function(){return this._action});
 					// 315686, Remember to create documentElement properties on XML nodes
 			addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
+			
+					// PATCH-198, Y!Mail chat enter fix
+			opera.addEventListener('BeforeEventListener.load', function(e){
+				if(e.event.target.tagName==='IFRAME' && /imcBody/.test(e.event.target.className)){
+					e.event.target.contentDocument.__defineGetter__('body', function(){return this.documentElement;});
+					e.event.target.contentDocument.__defineGetter__('designMode', function(){
+						return this.documentElement.contentEditable ? 'on' : 'off';
+					});
+					e.event.target.contentDocument.__defineSetter__('designMode', function(v){
+						this.documentElement.contentEditable = (v == 'on');
+					});
+				}
+			},false);
 			
 					// CORE-17539, Y!Mail spell check fix
 			document.__defineGetter__('designMode', function() {
@@ -2088,6 +2101,16 @@ function workAroundBug343019(){
 			},false);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tokyo.jp enable maps). See browser.js for details');
+	} else if(hostname.indexOf('toshiba.co.jp')>-1){			// CORE-21628, Toshiba Digital Doors hung script
+		if (pathname.indexOf('/digital/')>-1) {
+			Document.prototype.getElementById=function(id){
+				var res=getElementById.call(this,id);	
+				if (id=='topmovie' && res) return res.parentNode;
+				return res;
+			}
+			addCssToDocument('#topmovie { visibility: visible !important }');
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Toshiba Digital Doors hung script). See browser.js for details');
 	} else if(hostname.indexOf('towerrecords.co.jp') > -1){			// PATCH-150, towerrecords.co.jp drop-down menu hover fix
 		addCssToDocument('.tableHeaderArea {z-index:auto !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (towerrecords.co.jp drop-down menu hover fix). See browser.js for details');
@@ -2184,9 +2207,9 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
-	} else if(hostname.indexOf('youtube.com')>-1){			// CORE-21796, Fix bad painting of dropdown menus
-		addCssToDocument( '.yt-menubutton, .yt-menulink { display: inline-block !important; } ');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix bad painting of dropdown menus). See browser.js for details');
+	} else if(hostname.indexOf('www.pchome.net')>-1){			// PATCH-194, fix the broken layout caused by wrong margin
+		addCssToDocument('.main .side{margin-left:5px;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (fix the broken layout caused by wrong margin). See browser.js for details');
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
