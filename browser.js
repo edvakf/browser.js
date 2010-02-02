@@ -1,4 +1,4 @@
-// kY37vRcBZlKKj5Rv1/fFiN79i62QdqRIjJC4zVTdIf6RafMYj879LjjrWswzmtpDErE0V8Q3jABhL/x/U1IthqXTPMFVG/z9huwjTH5i0feFJ/FyEU37eaNnFGMB2nfXy9kLPID32VS4i7rvOhm9+MAgxRWwqRrVlh1StljqxGu5+JZUcr7ryhp7JZJK2+dILBGbwEWMNMuyusaG96jGTTGC8oHlIx5+T80cyu9lENO32DewskuPYOrXqwnAtM7/+A5v6yGoGVZeIR008IBd+mOFDmLBHxvfEr9wUmNzRvaNCrCoGirGNVeajjssspgCJjvXATG6DEmsiFV/QMKbUg==
+// u69ueG8FxdP4FOX3BEbJH3wHzs+fKhCQtqxeJiAJwXiz9WXWaxkrcd9L2Jui6F6g310cWruNkP+SaBb39NmAdH4jEFjLhP6fUwGS8z3rhe1Lgvv/jYjMKiVCCi1qaxzeo4Vg2p9Cb4qAuUXce5ZwfoBWf7rWJmQru7fSSnntOk5pFK7idoQO7nZXmman4Yxdn4i3eBoekVpc5ys+EXpdX+CSf8Z/LxjskG4/ay9nT9NMTKfzbCv6J7wNb56jPkm7V9DwJsL2ZymlT37idvTWO61fNW4lC/FzofQad1UnY1x63wc3TLohZSEa/lrJLdmNZVeUZJWZW32PX7g6I7QD3w==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  9.60, Desktop, January 21, 2010 ';
+	var bjsversion=' Opera  9.60, Desktop, February 1, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -2243,15 +2243,12 @@ function workAroundBug343019(){
 		document['all']=null;
 		addCssToDocument('#flashcontent{height:550px!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC.com video problems). See browser.js for details');
-	} else if(hostname.indexOf('walla.co.il')!=-1){			// 184398,  Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793
-		addCssToDocument(' .btn-t,.btn-r, .btn{display:inline !important;} .wp-0-b{width:auto !important}table {table-layout: auto !important}.w2b + table { width: 100%;}');
-		
-				// 327825, New mail UI on Walla requires IE-style event capture
+	} else if(hostname.indexOf('walla.co.il')!=-1){			// 327825, New mail UI on Walla requires IE-style event capture
 		emulateIECapturingEvents();
 				// 205887, Walla workaround for white-space issue
 		addCssToDocument('button.w2 {white-space: nowrap;}');
 		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nNew mail UI on Wa...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (New mail UI on Walla requires IE-style event capture\nWalla workaround for white-space issue). See browser.js for details');
 	} else if(hostname.indexOf('weather.com')>-1){			// PATCH-44, fix disappearing menu on weather.com
 		solveEventOrderBugs();
 				// CORE-15756, Fix mouse event order of sign in link
