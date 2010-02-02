@@ -1,4 +1,4 @@
-// ibjwJzYJLpY3OpWUs1V8tt0/VU2LGdYxjWDsFEQSwqJ3cuzN6gXp0qyoQ7MVdTAF9aVJTo3pUhRHqeC/FcnkwvSikbgnaOsf3VfPSIfwAmOUjMs23lSaDBtKNDEFC6a0ClNvP9HeuNBKZf0pzThLwXtAXaUBw8m84Qwyqtmen6CV+6SVYTq6BkLj+Mcgn72+T/Sjh194JCP2i9gYq8rOCZ39pJ4m2I5FTyeFDnn4aygSxtdDIGN6f6O1LC0SUP329CPHFswbEsAslYqG47ADcDOwd7Oeg/UfSdAh3Ex74JCU/SKozQpKS381xMR57yHGHdSCcQnuBuwhMGv9q0I0AA==
+// g3pN/G0DbdJ9e+xdO15lBvuk+2vYXpyLsqyduX0K7/IAqZ6aJ7mnYgpGirpQvRkEfPgHT+cR96ybVcTluyZ50RbaMZ0+F5YEJxW7hkXRzMOp5A8HnLoYcL7X5hbrFIXjLPp7UWWIJfKqWXZCN9wlgT901SAHzq0TtLO8qOsQN1Z86HcuclDlQxtHmWsvBHKK2AhhriZmI3HpbWbOCwZn2xkGuRtx/jvbbHSDiR4cVD8vvkn7DFpnwhJq2WihK7Mb6/9Lhn3KCv3bLGh70T+1tEeUJqVGYX8nWpElreROhahErL0lHBKgp637tIGxiscvSUuJHscqg+C0pD7zZe0Dlw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, January 21, 2010 ';
+	var bjsversion=' Opera  10.00, Desktop, February 1, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -2164,12 +2164,9 @@ function workAroundBug343019(){
 		document['all']=null;
 		addCssToDocument('#flashcontent{height:550px!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (NBC.com video problems). See browser.js for details');
-	} else if(hostname.indexOf('walla.co.il')!=-1){			// 184398,  Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793
-		addCssToDocument(' .btn-t,.btn-r, .btn{display:inline !important;} .wp-0-b{width:auto !important}table {table-layout: auto !important}.w2b + table { width: 100%;}');
-		
-				// 327825, New mail UI on Walla requires IE-style event capture
+	} else if(hostname.indexOf('walla.co.il')!=-1){			// 327825, New mail UI on Walla requires IE-style event capture
 		emulateIECapturingEvents();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Walla.co.il odd CSS styling causes display problems. Bugs 184398, 184399, 206793\nNew mail UI on Wa...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (New mail UI on Walla requires IE-style event capture). See browser.js for details');
 	} else if(hostname.indexOf('weather.com')>-1){			// PATCH-44, fix disappearing menu on weather.com
 		solveEventOrderBugs();
 				// CORE-15756, Fix mouse event order of sign in link
