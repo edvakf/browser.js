@@ -1,4 +1,4 @@
-// EPRU3Pvs+APFxZlX9s5fS4XTjYT0nNJqJ8o6Ugk1sprFybASUd3uQ7EJgdw4NbNLWn9ZPQDXPa0wIKJPgPrcTr7WieXNckWrW23pjh6sQmo+tVIbhBEj0CqRay3Xo5kIRYf2hEC6kmK1SEBFtKU/ci/tzoJBdqhKCNbQ19saqeQrxTjkarAZKK12JQXV+wUmfOhVqbvE8LzZ8jC/GYDuCgIuyiia1UCZCwnrwyXsBzOp8MyrqkNEK0kfu4qFgG8KMRUIb3juSxrgKmUZX07YiYe7MxDLy1+8jNhBWN2VZgKxm0jNltcl8mvHlWO0bhBKjhaV7ylMyLKlaYsxQcc2qQ==
+// hdydu34H4RMUVNLl6R4lTeOd8L+Jg9XH+Nv8v1PVE9ncEJNbo2FKRrQvwNqLmd2WiOL3Pr/LDSbe/HhX3/N4UaBzCoPzI+Hqrt2ZG4s5dd3AV4rwuh/B138zI8nAexOnZ2o2P0c36MyGI5sd9+eo8HLXweARhy/c8kXFB9tF9ggSSX96NChnqapEnqo+pyeHjj8CcCwStYoe3B0cfZH1uUOZuG/i5NfneeDhTes5yqYyyhy+YXYWtnoBRBYaMuFq6+tEvBZQMkwXWtyO+srodzhli5k5UtxY6eqRvcuzE/4zdAb9Ihg8btNxQsXgM/IWeifEtyVY5sq2NKWPor8b/A==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.00, Desktop, February 10, 2010 ';
+	var bjsversion=' Opera  10.00, Desktop, March 1, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -2041,6 +2041,10 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('siren24.com')!=-1){			// SEOUL-609, ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script
 		navigator.appName = 'Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script). See browser.js for details');
+	} else if(hostname.indexOf('social.microsoft.com')>-1){			// PATCH-203, Microsoft forums editor hangs
+		addPreprocessHandler(/(if\(tinymce\.relaxedDomain\)t\.iframeHTML\+='<script\s*type="text\/javascript">document\.domain\s*=\s*"'\+tinymce\.relaxedDomain\+'";<\/script>';|ed\.setupIframe\(\);)/g, '', true, function(el){return(el.src && indexOf.call(el.src, 'tiny_mce.js')>-1) });
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Microsoft forums editor hangs). See browser.js for details');
 	} else if(hostname.indexOf('sogou.com')>-1){			// PATCH-72, Sogou.com uses window.MouseEvent
 		window.MouseEvent=Event;
 				// PATCH-69, hide SVG's style.filter property from script on map.sogou.com because it thinks we are IE
@@ -2206,9 +2210,6 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
-	} else if(hostname.indexOf('www.pchome.net')>-1){			// PATCH-194, fix the broken layout caused by wrong margin
-		addCssToDocument('.main .side{margin-left:5px;}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (fix the broken layout caused by wrong margin). See browser.js for details');
 	} else if(hostname.indexOf('zdnet.com.com')>-1 ){			// 146580, ZDnet video site plays non-existing files if browser is Opera
 		navigator.userAgent=navigator.userAgent.replace(/Opera/, 'MSIE 6.0');	
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ZDnet video site plays non-existing files if browser is Opera). See browser.js for details');
@@ -2250,6 +2251,7 @@ function workAroundBug343019(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
+				if(!(typeof doSubmitEmptyData==='function'))return;
 				var original_function = doSubmitEmptyData;
 				doSubmitEmptyData = function( command, parameter_1, parameter_2, parameter_3, formSetup ){
 					var form = viewDocument.forms["emptyForm"], node;
