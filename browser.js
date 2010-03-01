@@ -1,4 +1,4 @@
-// Cs88AksPeA1SA66+d/kjcwhFVeLakZLVhiW8B+6uMl70UMGS+QRiT3etyRY7zENeZLx6BBG2HYYdsSp5+0OpQnTfiUNbsn8qpnUGseoSpDqL0WhUTcrT1vyj26fqh2+D9JYJCCDbCPe98nCcXIsNDPhFb3feImHGyrNd2vW65hULX39zo5CO0Io4BYSTWFqsmTrjLwbuXrlULxu4B1jrTP9nUH4I/pyAyiJMOS5pn1zZu9PNj9bdQNkxcBr5G2XecjBFvcmCvv8CKUUiQJykwhK3hfYgafJFi2AYzAexBtbhs4X1ihf/kusFtiLlJhG8HHeo6Yv+9v9stic/GAk08w==
+// X2u2/2Fr+G49gXvCXP1EB8n8PxE7lKU0qYXjlFpPvV+omtH4OvikC8r4Ifqv0mdyIBH3izTOf7j2dap34J53vZQOzzvf5oFfoI1ahV0lKdGDZIXCRP9MbYRVIDlM4+pD+HBS06Y/C1ygyronM6a+k4DK8b61oDmMzhBWrFCqPfxpGaBaYf6ZI7anyS8WxIj/GE6EcTirLUbIP6/COeAMcac5EUy6E+UJcRnnc5Uddi0AHwY2aogbT3VQYgyz96l+jynsee+DM28TmG+fMdKbv27dOKz1d4cpofNY+rtbkYO95gEMoIvMYlr4Tr/qsBlA8ycLBzXr8ErcYWiMV7LV7g==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,7 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.50, Desktop, February 10, 2010 ';
+	var bjsversion=' Opera  10.50, Desktop, March 1, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1239,6 +1239,9 @@ function workAroundBug343019(){
 		  }; 
 		})(document.getElementById);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blue Cross SC looks up named elements with getElementById()). See browser.js for details');
+	} else if(hostname.indexOf('bild.de')>-1){			// PATCH-205, Fix image gallery navigation
+		addCssToDocument('.bdeFotoGalNavForw a:hover, .bdeFotoGalNavBack a:hover{background:inherit !important;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix image gallery navigation). See browser.js for details');
 	} else if(hostname.indexOf('bioware.com')>-1){			// 239590, bioware.com uses outdated HierMenus
 		fixHierMenus();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bioware.com uses outdated HierMenus). See browser.js for details');
@@ -1261,7 +1264,9 @@ function workAroundBug343019(){
 				// 187226, Blogger: Should distinguish AltGr and Ctrl
 		opera.defineMagicFunction('isCtrlKeyPressed', function(f, t, e){ return e.ctrlKey&&!e.altKey;  });
 		opera.defineMagicVariable( 'IE_KEYSET', function(){ return true; },null );
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blogger: browser detection prevents WYSIWYG editing\nBlogger: Should distinguish AltGr and Ctrl). See browser.js for details');
+				// PATCH-206, Don't override native click() method and expect to submit forms by calling click() on a button..
+		HTMLInputElement.prototype.click=HTMLButtonElement.prototype.click=HTMLElement.prototype.click;
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blogger: browser detection prevents WYSIWYG editing\nBlogger: Should distinguish AltGr and Ctrl\nDon...). See browser.js for details');
 	} else if(hostname.indexOf('bookryanair.com')>-1){			// 319803, Make Opera's built-in WF2 validation ignore required attributes on bookryanair.com
 		ignoreRequiredAttributes();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Opera\'s built-in WF2 validation ignore required attributes on bookryanair.com). See browser.js for details');
@@ -1742,6 +1747,10 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('siren24.com')!=-1){			// SEOUL-609, ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script
 		navigator.appName = 'Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script). See browser.js for details');
+	} else if(hostname.indexOf('social.microsoft.com')>-1){			// PATCH-203, Microsoft forums editor hangs
+		addPreprocessHandler(/if\(tinymce\.relaxedDomain\)t\.iframeHTML\+='<script\s*type="text\/javascript">document\.domain\s*=\s*"'\+tinymce\.relaxedDomain\+'";<\/script>';/, '', true, function(el){return(el.src && indexOf.call(el.src, 'tiny_mce.js')>-1) });
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Microsoft forums editor hangs). See browser.js for details');
 	} else if(hostname.indexOf('sogou.com')>-1){			// PATCH-72, Sogou.com uses window.MouseEvent
 		window.MouseEvent=Event;
 				// PATCH-69, hide SVG's style.filter property from script on map.sogou.com because it thinks we are IE
@@ -1920,6 +1929,7 @@ function workAroundBug343019(){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
+				if(!(typeof doSubmitEmptyData==='function'))return;
 				var original_function = doSubmitEmptyData;
 				doSubmitEmptyData = function( command, parameter_1, parameter_2, parameter_3, formSetup ){
 					var form = viewDocument.forms["emptyForm"], node;
