@@ -1,4 +1,4 @@
-// X2u2/2Fr+G49gXvCXP1EB8n8PxE7lKU0qYXjlFpPvV+omtH4OvikC8r4Ifqv0mdyIBH3izTOf7j2dap34J53vZQOzzvf5oFfoI1ahV0lKdGDZIXCRP9MbYRVIDlM4+pD+HBS06Y/C1ygyronM6a+k4DK8b61oDmMzhBWrFCqPfxpGaBaYf6ZI7anyS8WxIj/GE6EcTirLUbIP6/COeAMcac5EUy6E+UJcRnnc5Uddi0AHwY2aogbT3VQYgyz96l+jynsee+DM28TmG+fMdKbv27dOKz1d4cpofNY+rtbkYO95gEMoIvMYlr4Tr/qsBlA8ycLBzXr8ErcYWiMV7LV7g==
+// NEx7U3KcuwnaCYbk6y0q2OQjgneiyLXZnLJ9lLPEZD0QL9q7dI/LjbByDLHD4xYzquXbZW51XqVevpSMfe8VbvgeII0JnwtNc56jIqpeDf9R9t9VEBBbUnedMqNknNwsRj0lfU+QmIRSN4bxbQqfNzsg2Y2qWCsYLVgKEc3TJqkZvLrv5QzQFzrACdujoJd6/9Bfxen1GAhR0fkRXMbopVc51PxRlGuEJWqgNHBaCcEjbSBl12fmjuAWxoimDWXLuUYJGp4i+SzxabhwHWleZqknFyCFfxJOn0lXWyLhrbXhMGUdORC792R6wNg5amjiJctBlp9ibDIQsfYGz7pGgg==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,7 +16,8 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	var bjsversion=' Opera  10.50, Desktop, March 1, 2010 ';
+	if(!opera || (opera&&opera._browserjsran))return opera&&opera._browserjsran=true;
+	var bjsversion=' Opera Desktop 10.50, March 3, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -543,7 +544,7 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 	}
 
 function fixIFrameSSIscriptII(name, iFrameId){
-	if(name)opera.defineMagicFunction(name, function (a,b,frameid){
+	if(typeof name==='string'&&!arguments.callee.name)opera.defineMagicFunction(name, function (a,b,frameid){
 		frameid = frameid|| iFrameId;
 		var currentfr=document.getElementById(frameid);
 		if (currentfr){
@@ -554,6 +555,7 @@ function fixIFrameSSIscriptII(name, iFrameId){
 			}
 		}
 	});
+	fixIFrameSSIscriptII[name]=1;//remember that we fixed this already
 }
 function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
@@ -595,6 +597,7 @@ function fixLiknoAllWebMenus(ev){
 	}
 
 function fixOpenCube(name){// IMPORTANT gotcha: the fixOpenCube and fixHVMenu functions must be called with an appropriate string argument
+	if(fixed)return;
 	match.call=addEventListener.call=defineMagicVariable.call=indexOf.call=call;
 	// OpenCube menu
 	window.vxml = window.vxml||{}; // to fix semi-opera-detection
@@ -1040,16 +1043,6 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('.dfdsseaways.')>-1){			// PATCH-46, DFDS calendar is 1900 years in the future
 		Date.prototype.getYear = function(){ return this.getFullYear()-1900; }
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DFDS calendar is 1900 years in the future). See browser.js for details');
-	} else if(hostname.indexOf('.ebaydesc.')>-1){			// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions
-		if(self!=top)opera.addEventListener( 'BeforeScript', function(e){
-			if(document.body){ 
-				document.body.__defineGetter__('offsetHeight', function(){
-					return document.documentElement.offsetHeight;
-				});
-				opera.removeEventListener('BeforeScript', arguments.callee, false);
-			}
-		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid IFRAME resize causing lots of empty space on auctions). See browser.js for details');
 	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/reader/view')>-1){			// PATCH-32, Google Reader wraps long feed titles
 		addCssToDocument(".scroll-tree .name { display: block;}");
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader wraps long feed titles). See browser.js for details');
@@ -1266,6 +1259,25 @@ function workAroundBug343019(){
 		opera.defineMagicVariable( 'IE_KEYSET', function(){ return true; },null );
 				// PATCH-206, Don't override native click() method and expect to submit forms by calling click() on a button..
 		HTMLInputElement.prototype.click=HTMLButtonElement.prototype.click=HTMLElement.prototype.click;
+				// PATCH-207, Spoofing as Mozilla to get rich text editor makes Blogger assume we support enableObjectResizing
+		(function(iframeInterface){
+			var nativeGetter=(document.createElement('iframe')).__lookupGetter__('contentDocument');
+			iframeInterface.__defineGetter__('contentDocument', function(){
+				var result=nativeGetter.call(this);
+				var nativeExecCommand=result.execCommand;
+				result.execCommand=function(){
+					try{
+						nativeExecCommand.apply(this, arguments);
+					}catch(e){
+						if(! (arguments[0] in {'enableObjectResizing':1,'enableInlineTableEditing':1})){
+							throw e;
+						}
+					}
+				};
+				return result;
+			});
+		})(HTMLIFrameElement.prototype);
+		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Blogger: browser detection prevents WYSIWYG editing\nBlogger: Should distinguish AltGr and Ctrl\nDon...). See browser.js for details');
 	} else if(hostname.indexOf('bookryanair.com')>-1){			// 319803, Make Opera's built-in WF2 validation ignore required attributes on bookryanair.com
 		ignoreRequiredAttributes();
@@ -1276,8 +1288,13 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('britishairways.')!=-1){			// 206810, Prevent britishairways.com from reloading the page on resize
 		opera.defineMagicFunction('resizeHandler', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent britishairways.com from reloading the page on resize). See browser.js for details');
-	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// 346825, Caja Madrid hides login form by CSS mistake
-		addCssToDocument('body:last-child .clearfix {content:normal!important;}');
+	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// PATCH-208, Caja Madrid hides login form by CSS mistake
+		document.addEventListener( 'DOMContentLoaded', function(){
+			for(var collection=document.getElementsByClassName('clearfix'), el; el=collection[0];){
+				el.className = el.className.replace(/clearfix/, '');
+			}
+		}, false );
+		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
 	} else if(hostname.indexOf('capitalone.com')>-1&&location.protocol=='https:'){			// 86032, CapitalOne login fails - cross-domain access on https disallows setting location
 		document.domain='capitalone.com';
@@ -1326,13 +1343,6 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('etour.co.jp') > -1){			// PATCH-152, etour.co.jp fix non-disappearing overlapping image
 		navigator.appName='Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (etour.co.jp fix non-disappearing overlapping image). See browser.js for details');
-	} else if(hostname.indexOf('facebook.com')!=-1){			// PATCH-164, re-target keydown events to make sure this object is window rather than document
-		opera.addEventListener('BeforeEventListener.keydown', function(e){
-			e.listener.call(window, e.event);
-			e.preventDefault();
-		},false);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (re-target keydown events to make sure this object is window rather than document). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
