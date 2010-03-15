@@ -1,4 +1,4 @@
-// NEx7U3KcuwnaCYbk6y0q2OQjgneiyLXZnLJ9lLPEZD0QL9q7dI/LjbByDLHD4xYzquXbZW51XqVevpSMfe8VbvgeII0JnwtNc56jIqpeDf9R9t9VEBBbUnedMqNknNwsRj0lfU+QmIRSN4bxbQqfNzsg2Y2qWCsYLVgKEc3TJqkZvLrv5QzQFzrACdujoJd6/9Bfxen1GAhR0fkRXMbopVc51PxRlGuEJWqgNHBaCcEjbSBl12fmjuAWxoimDWXLuUYJGp4i+SzxabhwHWleZqknFyCFfxJOn0lXWyLhrbXhMGUdORC792R6wNg5amjiJctBlp9ibDIQsfYGz7pGgg==
+// lQFdHCYH08NfzzxssHDQYIbp0ah02mwmfgioSEiaFy1t2dW0iCLX14au8GJQiKwJAzyLsrkm9SrqMS44viyPY7fqIf9FXksEqXILRmvja8HVSihp6uArOwwYF2FI3Z67A33c3rdTLnIkKNvTDU3cT0Ew/h4BdnvdOkQm4997es4XEI/asz8hRCKl2r4XqNKkLM6i28sDgjt+GKRDBymuUNBZ1zGpXsPRwFFOya7z+Afi75jJ4rdpvRSP1zGOAyvn8dSR6C61W11rXB1uMp2JpoJcioGR6xmwq9Bna0RblqK8cLV6AitbePqjw95WzXpwtEdXf3wDRuXmhoHC2JJl3A==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -16,8 +16,9 @@
 **/
 // Generic fixes (mostly)
 (function(opera){
-	if(!opera || (opera&&opera._browserjsran))return opera&&opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50, March 3, 2010 ';
+	if(!opera || (opera&&opera._browserjsran))return;
+	if(opera)opera._browserjsran=true;
+	var bjsversion=' Opera Desktop 10.50, March 15, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -721,6 +722,7 @@ function workAroundBug343019(){
 
 
 
+
 	// Sending an extra onreadystatechange causes some ad scripts to eat memory
 // The required attribute does not take the value false according to WebForms2 - remove "required=false" from form elements
 // Generic JS library patches
@@ -1052,6 +1054,16 @@ function workAroundBug343019(){
 	} else if(hostname.indexOf('.icicibank.')!=-1){			// 343019, ICICI online bank form action URLs are incorrectly decoded
 		workAroundBug343019();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ICICI online bank form action URLs are incorrectly decoded). See browser.js for details');
+	} else if(hostname.indexOf('.imdb.')>-1){			// PATCH-210, Unintended security violation prevents videos from playing at IMDB
+		(function(dw){
+			document.writeln=function(str){
+				if(str.indexOf('video-player-container')>-1){
+					str=str.replace(/http:\/\/i\.imdb\.com\/b\.gif/, 'about:blank');
+				}
+				dw.call(this,str);
+			}
+		})(document.writeln);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Unintended security violation prevents videos from playing at IMDB). See browser.js for details');
 	} else if(hostname.indexOf('.t-online.de')>-1){			// 225374,  video problems on T-online.de
 		if(hostname.indexOf('onunterhaltung')>-1){
 					//Fix browser detection
@@ -1332,6 +1344,36 @@ function workAroundBug343019(){
 				}
 			}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files). See browser.js for details');
+	} else if(hostname.indexOf('ebay')>-1){			// 0, eBay
+		/* eBay issues */
+	
+	
+		// Avoid IFRAME resize causing lots of empty space on auctions
+				// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions
+		function resizeIframesAndPassSizeOn(e){
+			if(e && e.type==='message' && e.origin.indexOf('ebaydesc')>-1){
+				for(var iframes=document.getElementsByTagName('iframe'),iframe,i=0;iframe=iframes[i];i++){
+					if(iframe.src.indexOf(e.origin)>-1){
+						iframe.style.height=(20+parseInt(e.data))+'px';
+					}
+				}
+			}
+			if(top!=self)parent.postMessage(document.documentElement.scrollHeight, '*');
+		}
+		window.addEventListener('message', resizeIframesAndPassSizeOn, false);
+		
+	
+	
+		if(hostname.indexOf('.ebaydesc.')>-1){			// PATCH-195, Avoid IFRAME resize causing lots of empty space on auctions (the IFRAME part)
+			window.addEventListener('load', function(){ 
+				setTimeout(function(){
+					if(top!=self)parent.postMessage(document.documentElement.scrollHeight, '*');
+				}, 100); 
+			}, false);
+			
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid IFRAME resize causing lots of empty space on auctions (the IFRAME part)). See browser.js for details');
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay). See browser.js for details');
 	} else if(hostname.indexOf('ent.sina.com.cn')>-1){			// PATCH-62, Wrapping content in NewStars section
 		addCssToDocument('.NewStars .NS_right{float:left}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Wrapping content in NewStars section). See browser.js for details');
