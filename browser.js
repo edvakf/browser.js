@@ -1,4 +1,4 @@
-// lQFdHCYH08NfzzxssHDQYIbp0ah02mwmfgioSEiaFy1t2dW0iCLX14au8GJQiKwJAzyLsrkm9SrqMS44viyPY7fqIf9FXksEqXILRmvja8HVSihp6uArOwwYF2FI3Z67A33c3rdTLnIkKNvTDU3cT0Ew/h4BdnvdOkQm4997es4XEI/asz8hRCKl2r4XqNKkLM6i28sDgjt+GKRDBymuUNBZ1zGpXsPRwFFOya7z+Afi75jJ4rdpvRSP1zGOAyvn8dSR6C61W11rXB1uMp2JpoJcioGR6xmwq9Bna0RblqK8cLV6AitbePqjw95WzXpwtEdXf3wDRuXmhoHC2JJl3A==
+// nz8f30JIj0tqT/ZHm8dJ3atFCuf3F4CQM5OIbqH5sUDVXLn0BSi9bAAbBFf067P4bt6joqpl4QGvkJBq6W/adZx3xEN3PtUMMYTZK5cPIoZuLH5y+7JrQeIau3vPX1MhjgM2PtSJgScq/LXlkRfH1HuYMiEClBuYP5RQxpsi51hveuJjz0DGU+yKUkx1VT1My05mMmD/M5p0D0WNs2ytcrLAyftqt4ly8elU1G8xMuM0DgJ6jc3mc4n9L/C5uHXC4qJqs0kW5eBvrked+/2EQPxPu28rmHbM0xqi09LaVll5qThcdVCj+8QNSL3RgqPNauzm7mkO6A7ucCxXfqPcJQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	if(opera)opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50, March 15, 2010 ';
+	var bjsversion=' Opera Desktop 10.50, March 16, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -523,7 +523,7 @@ function fakeOncontextmenu( useAltClick, clickAndHold ){
 		defineMagicVariable.call(opera, 'NavYes', function(){ return true }, null);
 		defineMagicVariable.call(opera, 'DomNav', function(){ return true }, null);
 		// if Opera >= 9.5, load events are sent to document and not to body - make sure script doesn't set body.onload
-		defineMagicVariable.call(opera, 'Trigger', function(){ return document; }, null);
+		defineMagicVariable.call(opera, 'Trigger', function(){ return window; }, null);
 		// Tell the script that CSS filters are not supported.
 		defineMagicVariable.call(opera, 'Fltr', function(){ return false; }, function(){ return });
 		// More recent versions look for 'opera 7' in navigator.userAgent and some do not use the variable names above
@@ -1140,6 +1140,24 @@ function workAroundBug343019(){
 					// 315686, Remember to create documentElement properties on XML nodes
 			addPreprocessHandler( 'oEl.XMLDocument=oNewDOM;', 'oEl.XMLDocument=oNewDOM;oEl.documentElement=oNewDOM.documentElement;' );
 			
+					// PATCH-198, Y!Mail chat enter fix
+			opera.addEventListener('BeforeEventListener.load', function(e){
+				if(e.event.target.tagName==='IFRAME' && /imcBody/.test(e.event.target.className)){
+					e.event.target.contentWindow.focus=function(){}// why this works I don't know either..
+					var execCom=e.event.target.contentDocument.execCommand;
+					e.event.target.contentDocument.execCommand=function(command){
+						if(command=='ForeColor')return;
+						execCom.apply(this,arguments);
+					};
+			
+					e.event.target.contentDocument.__defineGetter__('designMode', function(){
+						return this.body.contentEditable=='true' ? 'on' : 'off';
+					});
+					e.event.target.contentDocument.__defineSetter__('designMode', function(v){
+						this.body.contentEditable = (v == 'on');
+					});
+				}
+			},false);
 					// CORE-17539, Y!Mail spell check fix
 			document.__defineGetter__('designMode', function() {
 				return this.documentElement.contentEditable ? 'on' : 'off';
