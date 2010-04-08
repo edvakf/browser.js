@@ -1,4 +1,4 @@
-// a7mdA9pJyVoQJrJyzoSG33ClecKtBEZGl4iDacgofrHESIyIOb5JWUmyHYXESoAxZi28GUhubxjHdFbUPBifsU4Uy/dRUsM/JwzWJVVTumNGvDnCftc9xR9EkUp0BGdahdgCq5Br5No5elHS5wpunT46kO5MEgFi9ZoYvbHtzjvowJ8X3QdXA1MpoMkV2R/HlI2JqpgYi+ERhT67fjKYOLL7Vd+jvYFEfZNUGYsqmpRaAfq5NPf4uePUVWNMgZIDz9M6S/7zeY0HnhsNvclGTbO97eo5N0zrM+E/fB4U2Q3v6aRAKR4Y7miKPO4prExAHbxSoJvpP5oLLc71qrNe3Q==
+// M2pxZRwn3dgbQFQ0SmnyamLYzEZpXaf1ZOtDBEcjbSClZZjOT4hcYIrPfkGJtDLWvhEB2Miq82Ue/pALFtBrXB5LCf1jzBqn6N41ggu6pT3ndT563VblF7NTvpWx3Si7qOpqEDmNo/ulluvbWlFeJL7o7Rk7gGyubaSAp0AJa9BBzPZJlq9tOlTGpf6trYk8C1L24nep852Tlvjpajt9muUSDeqT9yz3Cmv3r8pF7bVKebN/Rfb19ydKZG18ITUrrb4+6UE7vkuD3w6nOWSp1unuwipAuYVVhz65+5FFB4e/6q7Pe/E10JsZi9fHeGDkG5dDKnBVvJAenyrYZRaIDQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	if(opera)opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, March 25, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 8, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -650,7 +650,8 @@ function setTinyMCEVersion(e){
 			// DSK-199930, no code in TinyMCE 2.x HTML source editor because it expects a different order of load events
 	opera.addEventListener('bjsOnTinyMCEScript', function(e){
 		if( e.element.src.indexOf('popup')>-1 && ( (tinyMCEVersionInfo&&tinyMCEVersionInfo.majorVersion<3&&tinyMCEVersionInfo.minorVersion<1.3)||!tinyMCEVersionInfo.majorVersion) ){
-			opera.defineMagicVariable('TinyMCEPopup', function(o){
+			var name=tinyMCEVersionInfo.minorVersion==0?'TinyMCEPopup':'TinyMCE_Popup';//sigh..
+			opera.defineMagicVariable(name, function(o){
 				o.prototype.resizeToInnerSize=function(){};
 				o.prototype.executeOnLoad=function(str){eval(str);}
 				return o;
@@ -1422,6 +1423,9 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
+	} else if(hostname.indexOf('nationalgeographic.com')>-1){			// PATCH-223, Work around layout bug that breaks navigation menu on nationalgeographic.com
+		addCssToDocument('ul#navigation_tophat_primary > li > h3 > a, ul#navigation_tophat_primary > li > ul > li > a {display: inline !important; }');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around layout bug that breaks navigation menu on nationalgeographic.com). See browser.js for details');
 	} else if(hostname.indexOf('nba.com')>-1){			// PATCH-89, load event not triggered when expected in video section
 		opera.defineMagicVariable('is_ie', function(o){ return false; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (load event not triggered when expected in video section). See browser.js for details');
@@ -1584,9 +1588,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('tdwaterhouse.ca')>-1&&location.protocol=='https:'){			// 147840, tdwaterhouse.ca login fails - cross-domain access on https disallows setting location
 		document.domain='tdwaterhouse.ca';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tdwaterhouse.ca login fails - cross-domain access on https disallows setting location). See browser.js for details');
-	} else if(hostname.indexOf('teletekst.nos.nl')>-1){			// DSK-118012, Teletext focus fix
-		window.focus = function () {event.preventDefault();};
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Teletext focus fix). See browser.js for details');
 	} else if(hostname.indexOf('tickets.com')!=-1){			// MGTRN-2289, Scripts are not allowed to use reserved identifier "top"
 		addPreprocessHandler( /top\(\)/g, '_top()' );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Scripts are not allowed to use reserved identifier "top"). See browser.js for details');
@@ -1718,6 +1719,15 @@ function setTinyMCEVersion(e){
 	} else if(href.indexOf('/sample_lr.html')>-1){			// PATCH-128, Sun Webmail fails to set document.domain due to browser sniffing
 		navigator.userAgent+=' Gecko';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sun Webmail fails to set document.domain due to browser sniffing). See browser.js for details');
+	} else if(href==='https://bugs.opera.com/wizard/'){			// PATCH-221, Include browser.js timestamp in bug reports
+		document.addEventListener('DOMContentLoaded', function(){
+			var frm;
+			if(document.getElementById('bug') instanceof HTMLFormElement){
+				frm=document.getElementById('bug');
+				if(frm.auto)frm.auto.value+='\n\nBrowser JavaScript: \n'+bjsversion;
+			}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
 				if(!(typeof doSubmitEmptyData==='function'))return;
