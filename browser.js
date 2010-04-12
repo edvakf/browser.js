@@ -1,4 +1,4 @@
-// M2pxZRwn3dgbQFQ0SmnyamLYzEZpXaf1ZOtDBEcjbSClZZjOT4hcYIrPfkGJtDLWvhEB2Miq82Ue/pALFtBrXB5LCf1jzBqn6N41ggu6pT3ndT563VblF7NTvpWx3Si7qOpqEDmNo/ulluvbWlFeJL7o7Rk7gGyubaSAp0AJa9BBzPZJlq9tOlTGpf6trYk8C1L24nep852Tlvjpajt9muUSDeqT9yz3Cmv3r8pF7bVKebN/Rfb19ydKZG18ITUrrb4+6UE7vkuD3w6nOWSp1unuwipAuYVVhz65+5FFB4e/6q7Pe/E10JsZi9fHeGDkG5dDKnBVvJAenyrYZRaIDQ==
+// TbXnGVFLEL8LHPYbvQMSJSZfFfro0Wr0x6lawHkQxpfefTfRiXB21Q70bCSi4IjbJgrlYnS7EhiUzbMhPupjOIBtbbDc3jwcgp2riqMen7j9PjAAv5MfCesh5rUvkAT9+4sO7avUcOKr30msgIT1AaeAo8G3QJVfc+CRvkXrANNsl2XLpP/FJKdJWkO1gHU7/03VX7bToegdTPumPIodomLsXZCChy6iTCri+2EE3uB3fAwgaFm7DC1AG/cLIHXOwZMEE12n3Ypir7sc9kXONhDYGNJEetyAHmGWGCEtBOEmp6V7a7QnggOeyVM7eAiGlE2QhQ4waC1dWxD3dh9egw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	if(opera)opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 8, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 12, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -609,6 +609,7 @@ function setTinyMCEVersion(e){
 // TinyMCE 2.x uses document.selection in Opera
 // no code in TinyMCE 2.x HTML source editor because it expects a different order of load events
 // Generic JS library patches
+// Prevent unsolicited access to Java's deploymenttoolkit
 // PDF security patch
 // Asia-region Generic Patches
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
@@ -776,6 +777,11 @@ function setTinyMCEVersion(e){
 			, false);
 		}
 	}, false);
+			// PATCH-230, Prevent unsolicited access to Java's deploymenttoolkit
+	HTMLObjectElement.prototype.__defineGetter__('launch', function(){} );
+	HTMLObjectElement.prototype.__defineGetter__('installJRE', function(){} );
+	HTMLEmbedElement.prototype.__defineGetter__('launch', function(){} );
+	HTMLEmbedElement.prototype.__defineGetter__('installJRE', function(){} );
 			// 246299, PDF security patch
 	opera.addEventListener('BeforeJavaScriptURL', function( e ){
 		unescape.call=toLowerCase.call=indexOf.call=preventDefault.call=call;
@@ -1011,6 +1017,24 @@ function setTinyMCEVersion(e){
 							'#messageToolbar > table { position: relative; z-index: 102 } ' +
 							// ...except for the "Attach" button
 							'#messageToolbar #btnTbl_Attach { z-index: 0 !important }');
+					// PATCH-225, Can not scroll to see all messages in inbox if list is taller than 32767px
+			document.addEventListener('DOMContentLoaded', function(e, img, addHeight){
+				if(img=document.getElementById('sbInner_24')){
+					addHeight=parseInt(img.style.height)-32767;
+					while(addHeight>0){
+						if(addHeight>32767){
+							var thisHeight=32767;
+						}else{
+							thisHeight=addHeight;
+						}
+						var tmp=img.cloneNode(true);
+						img.parentNode.appendChild(document.createElement('br'));
+						img.parentNode.appendChild(tmp).style.height=thisHeight+'px';
+						addHeight-=thisHeight;
+					}
+				}
+			}, false);
+			
 					// 353880, Y!Mail reversed mouse wheel scrolling
 			opera.addEventListener('BeforeEvent.mousewheel', function(e) {
 				var d = e.event.wheelDelta * -1;
@@ -1354,6 +1378,16 @@ function setTinyMCEVersion(e){
 			return result;
 		}
 		
+				// PATCH-227, quoting, forwarding not working due to race condition between timeout and IFRAME's load event
+		// cache value of <TEXTAREA style="display:none;" name="fMessageBody"> in case it gets overwritten..
+		var newMailSource='';
+		opera.addEventListener('AfterScript', function(){
+			if( document.getElementsByName('fMessageBody')[0] && newMailSource==='' ){
+				newMailSource=document.getElementsByName('fMessageBody')[0].value;
+				opera.removeEventListener('AfterScript', arguments.callee, false);
+			}
+		}, false);
+		
 				// PATCH-107, Fixes downloading attachments in Hotmail for O10.
 		HTMLAnchorElement.prototype.getAttribute= function(n){
 		if( n=='aNewWin' && getAttribute.call(this, 'aIdx')!=null )return 'true';
@@ -1379,10 +1413,10 @@ function setTinyMCEVersion(e){
 		 };
 				// PATCH-135, Fixes removing contacts from To field by clicking small X icon
 		addCssToDocument('.ContactPicker_AutoComplete img{position:static!important;}');
-				// PATCH-149, Delay load event for compose IFRAME if it's not accessible yet, enables editing
+				// PATCH-149, Delay load event for compose IFRAME if it's not accessible yet, enables editing - but make sure we initialize mail contents even when load event is delayed
 		opera.addEventListener('BeforeEventListener.load', function(e){
 			var target=e.event.target;
-			if(target.tagName=='IFRAME' && target.src.indexOf(location.hostname)>-1 && target.src.indexOf(location.hostname)<target.src.indexOf('/', 8)){ 
+			if(target.tagName=='IFRAME' && target.src.indexOf(location.hostname)>-1 && target.src.indexOf(location.hostname)<target.src.indexOf('/', 8)){
 				var delayLoadEvent=false;
 				try{
 					target.contentWindow.document.body;
@@ -1395,6 +1429,9 @@ function setTinyMCEVersion(e){
 						try{
 							target.contentWindow.document.body;
 							e.listener.call(target, e.event);
+							if( typeof newMailSource !='undefined' && newMailSource!='' && document.getElementsByName('fMessageBody')[0].value.match(/^[\r\n\s]*$/) && target.contentWindow.document.body.innerText.match(/^[\r\n\s]*$/) ){
+								target.contentWindow.document.body.innerHTML=newMailSource;
+							}
 							clearInterval(interval);
 						}catch(e){}
 					}, 200 );
@@ -1484,7 +1521,9 @@ function setTinyMCEVersion(e){
 				sTo.call( window, f, t );
 			}
 		})(window.setTimeout);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue). See browser.js for details');
+				// PATCH-229, Hidden form causes non-clickable button, prevents profile image selection
+		addCssToDocument('form{opacity:1!important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
 	} else if(hostname.indexOf('pb.yamada-denki.jp')>-1){			// OTW-5165, Show digital pamphlet from Yamada Denki
 		Element.prototype.attachEvent = null;
 		window.opera = null;
