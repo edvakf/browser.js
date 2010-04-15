@@ -1,4 +1,4 @@
-// TbXnGVFLEL8LHPYbvQMSJSZfFfro0Wr0x6lawHkQxpfefTfRiXB21Q70bCSi4IjbJgrlYnS7EhiUzbMhPupjOIBtbbDc3jwcgp2riqMen7j9PjAAv5MfCesh5rUvkAT9+4sO7avUcOKr30msgIT1AaeAo8G3QJVfc+CRvkXrANNsl2XLpP/FJKdJWkO1gHU7/03VX7bToegdTPumPIodomLsXZCChy6iTCri+2EE3uB3fAwgaFm7DC1AG/cLIHXOwZMEE12n3Ypir7sc9kXONhDYGNJEetyAHmGWGCEtBOEmp6V7a7QnggOeyVM7eAiGlE2QhQ4waC1dWxD3dh9egw==
+// N627PtI54xdU9fYicUQ4ToXLnymg9fw40LF3MaXpkAIzulcY+tL0/lHG+JjF43Q7gPRrn65yGqefwzW0/hH+98hgo3BF0b11cNCT2AIk49Bj1EJKBjV6/+6C1nUKSALC1FlvXnJmdDn0ny0sHL4tk8mTeWRZ5TtfBg8GNBoW2OqQ4RFfThMyamNCnuWfztEEzEWfi3FZOuHPV0dZTUhTBPIPkEm8R97Jia59JP+klIohJuXbtmiazC7kROJrlzEkgnMR6bvOv4qFCZ/n9GeSDQevQ9UUWgj3b2yb7v6PLt77yWAYqsQ/U1ix3ELyIlYCSjilVE9dX/ZEac1jiC+usA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -17,8 +17,8 @@
 // Generic fixes (mostly)
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
-	if(opera)opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 12, 2010 ';
+	opera._browserjsran=true;
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 15, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1235,6 +1235,9 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('fotki.com')>-1){			// PATCH-216, No scrollbars on some fotki.com pages
 		addCssToDocument('body,html{height:auto!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (No scrollbars on some fotki.com pages). See browser.js for details');
+	} else if(hostname.indexOf('fujifilm.ch')>-1){			// PATCH-220, Working around a bug that hides menu entries
+		addCssToDocument('#navigation ul#primary li ul.secondary_drop_down li {display: inline !important }');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around a bug that hides menu entries). See browser.js for details');
 	} else if(hostname.indexOf('geoaccess.com')!=-1){			// 318050,  BlueCross browser sniffing prevents insurance search
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
@@ -1579,9 +1582,6 @@ function setTinyMCEVersion(e){
 				}
 			});
 		})();
-				// OTW-4939, Salesforce runs into HTML5's data looking for window.data
-		HTMLSelectElement.prototype.__defineGetter__('data', function(){ return window.data; });
-		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Allow upload of workspace resources\nDownloading documents on salesforce.com runs into too strict an...). See browser.js for details');
 	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
 		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
@@ -1734,6 +1734,9 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
+	} else if(hostname.indexOf('youtube.com')>-1){			// PATCH-234, Flash detection fails due to magically obscure bug
+		addPreprocessHandler(/yt\.flash\.update\(swfConfig, forceUpdate\);/, '');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Flash detection fails due to magically obscure bug). See browser.js for details');
 	} else if(hostname=='my.tnt.com'){			// PATCH-48, force all images to load before printing TNT delivery sheet
 		opera.defineMagicFunction('printPageDirect',function (func,realThis) {
 			var total = document.images.length, loaded = 0, imgs = [];
@@ -1767,6 +1770,9 @@ function setTinyMCEVersion(e){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
+	} else if(pathname.indexOf( "domain1642l.html") > -1 && hostname.indexOf("mail.qq.com") > -1){			// PATCH-222, hangs when try to read iframe attributes
+		addPreprocessHandler("document.write(_oHeader.join(\"\"));","if(this.name!=\"sendmailFrame\")document.write(_oHeader.join(\"\"));",true);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (hangs when try to read iframe attributes). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
 				if(!(typeof doSubmitEmptyData==='function'))return;
