@@ -1,4 +1,4 @@
-// N627PtI54xdU9fYicUQ4ToXLnymg9fw40LF3MaXpkAIzulcY+tL0/lHG+JjF43Q7gPRrn65yGqefwzW0/hH+98hgo3BF0b11cNCT2AIk49Bj1EJKBjV6/+6C1nUKSALC1FlvXnJmdDn0ny0sHL4tk8mTeWRZ5TtfBg8GNBoW2OqQ4RFfThMyamNCnuWfztEEzEWfi3FZOuHPV0dZTUhTBPIPkEm8R97Jia59JP+klIohJuXbtmiazC7kROJrlzEkgnMR6bvOv4qFCZ/n9GeSDQevQ9UUWgj3b2yb7v6PLt77yWAYqsQ/U1ix3ELyIlYCSjilVE9dX/ZEac1jiC+usA==
+// haV9HiMLjPSHxorD2guSxW//ZfC2hw/XZs9ezNm/yjl4C3ll7KY7l79VNr2aJfIYxLhm8Com2NP5YRGcqSJSA8d+v0gotszUw+EoE0OKrPyrMxN+b/uoM5zSf7vuYkzhnxjMqSqHgjpdu7z0IPueBKk/FaSoYgTjUmeyJND9XZWo/0gGNCTAV8jz+yw+fIExEyqN09MtBjJEv2LsePgMENTMQL/gyQei9bQ5PykCw3KibIocgqZYKZ2wY0R9kzOl5rdJce0K9YCufWCVc1joJzR3HbFyABbBdTFHQDu13XS1bglAK96mKmw+l/EGklTW6kdO7ABUpycBvHeQtsDrcA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 15, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 16, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1734,9 +1734,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
-	} else if(hostname.indexOf('youtube.com')>-1){			// PATCH-234, Flash detection fails due to magically obscure bug
-		addPreprocessHandler(/yt\.flash\.update\(swfConfig, forceUpdate\);/, '');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Flash detection fails due to magically obscure bug). See browser.js for details');
 	} else if(hostname=='my.tnt.com'){			// PATCH-48, force all images to load before printing TNT delivery sheet
 		opera.defineMagicFunction('printPageDirect',function (func,realThis) {
 			var total = document.images.length, loaded = 0, imgs = [];
