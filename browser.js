@@ -1,4 +1,4 @@
-// HTpyBF9/P6NDifQqFq7GgKJMtyn2PGaod9ayB/fVOZaNuiA9yMBRy7R+Tjl0epaP5lJLwqUxY1SkhqPgS2R5f42wOGxqgXC45zFuLxDn2wIjptYNqqQ1mrHeip5t9KCEiLo/ovpikfC2b5tal0MxKRPgxq0K9YWWbdTM5pbLx/p4rfCnIk9jecSBAgzIbuGFqxMqbQLc0jIKgP/arHqVu7PCkJ4z69k2h0bgKIJ4g5rb9qseyHCTTMkKfmPBetHQh/UYtrS4lnVFdwSB2gx/FeYG+1sEQgBpBJ26qFnTtPMz76dT3+ZPQmcZ/KryFb5oKV2CnDExLIszOhrTR+eu3A==
+// VJrovo9F7MKHcsaTJ1bnfccM0LiLEYWHmHlGmDsHZKO8clEzY66cxThS9td13GitlPmtAgJrfQPT67eDa8WNhXkFxvc5e9lGEOMZGjyYSVFkrSVdaSYjf0SZcIEnIuvSd1R2FuHiCoQfobKjj5z8hkTWvClCbnbhq0oibFAXl7nGHmTEQlKOoTm4N/I+BBoEPpS/yg7J/oLEP+UJuddtnVjaNq2bqVW86+cFWkdSdc05nxABe3Azp4rPFl21g+JTPFb97X86C4AJbdm/XCqkyXwxQPXrfu5JwUpBC4wKh2qDRGVJttrSoXT/3LlVai1bkEv0+OYyvalQjkIPux78LA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, April 29, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, May 10, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1064,6 +1064,24 @@ function setTinyMCEVersion(e){
 		navigator.appName='Microsoft Internet Explorer';
 		navigator.appVersion='MSIE'+navigator.appVersion;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ATT / Bellsouth browser sniffing). See browser.js for details');
+	} else if(hostname.indexOf('bankhapoalim.co.il')>-1){			// PATCH-224, Opera forgets to send load event to nested FRAMESET, Bank Hapoalim blank after login
+		if(top==self){
+			window.addEventListener('load', function(e){
+				setTimeout(function(){
+				(function(win){
+					var col=win.document.getElementsByTagName('frameset');
+					if(col.length){
+						for(var i=0;i<col.length;i++){
+							var evt=document.createEvent('Event');
+							evt.initEvent('load', false, false);
+							col[i].dispatchEvent(evt);
+						}
+					}
+					for(var i=0;i<win.frames.length;i++)arguments.callee(win.frames[i]);
+				})(window);}, 100);
+			}, false);
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera forgets to send load event to nested FRAMESET, Bank Hapoalim blank after login). See browser.js for details');
 	} else if(hostname.indexOf('barnesandnoble.com')>-1){			// OTW-1909, Barnes&Noble uses "required" attributes on elements that aren't required
 		window.addEventListener('load', function(){var nodes=document.evaluate('//input[@required]', document.body,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null),node=null,i=0; while(node=nodes.snapshotItem(i)){ node.removeAttribute('required'); i++; }},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Barnes&Noble uses "required" attributes on elements that aren\'t required). See browser.js for details');
@@ -1686,6 +1704,12 @@ function setTinyMCEVersion(e){
 			addCssToDocument('#topmovie { visibility: visible !important }');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Toshiba Digital Doors hung script). See browser.js for details');
+	} else if(hostname.indexOf('toyota.com')>-1){			// PATCH-244, Make sure prototype.js doesn't overwrite Array concat because concat(undefined) will throw errors
+		(function(concat){
+			opera.addEventListener('AfterScript', function(){ Array.prototype.concat=concat; }, false);
+		})(Array.prototype.concat);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure prototype.js doesn\'t overwrite Array concat because concat(undefined) will throw errors). See browser.js for details');
 	} else if(hostname.indexOf('tuenti.com')!=-1){			// DSK-243723, Problems submitting messages and comments on tuenti.com
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
