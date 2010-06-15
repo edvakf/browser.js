@@ -1,4 +1,4 @@
-// qlEInjl0J8l0onO/WRJO0JjWwRvS5Im10QqhJX3ezMJ7xtABkzrn62DzCU+pl8PiN4naHZhEUjXbdevtA64o5SkAmQX0xiuIb0ukUdQs3r6V/R+fpyRhDWN1FhN/6Zpf46UvEmscHsZTm8PN6pcRKl7O2ZZTkhzQK0Pr0bzmvfaB86rV/4N9eVa4VWR12hvKcl6dvK7D0Y2Z/Wysolshux9SR/hLQJnSUb/pLwoHaumAjQBm+SOU5QUa7HGWkQMrkjh7N8uEyHdEeM28exzRGesqWlzb4IXy8Wv2KohttdpfiZ2GATuLxbbgKg6Ar/paDeEk8HykOrHi+0uaNaEYrw==
+// xJZhgch5RsLS0LlumFouI6bFFpAXNU6Fl8UOB00oR3+chjZv19iu/oPB5LgxQmf9HUjcHD+5eYPcoqf6ueRIzRYnLttpNMxUbFIef+j5gg0FFP2aPaI/rHA86+7YyA1WezvftYVBm/hnIqmmb6APUWm5brR/tqbedkfNC8UR/fMQecpPtDTnVzSDWYymoAkmAbT+YBs+3E5500xGE392J2GDEblZqGM6KDibXGgSlEHrmm1h2cVpUrvBY8aC+yWJLKGwBPbrLqJ6PEAzwQAJ02sRR6j4VbcMwmG2ahLy8lle5rMoyOpDYjSCwF9m+foWAM9h19Kc35R5eqeB5l5vNg==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, June 15, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.5.29, June 15, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1452,16 +1452,6 @@ function setTinyMCEVersion(e){
 			return result;
 		}
 		
-				// PATCH-227, quoting, forwarding not working due to race condition between timeout and IFRAME's load event
-		// cache value of <TEXTAREA style="display:none;" name="fMessageBody"> in case it gets overwritten..
-		var newMailSource='';
-		opera.addEventListener('AfterScript', function(){
-			if( document.getElementsByName('fMessageBody')[0] && newMailSource==='' ){
-				newMailSource=document.getElementsByName('fMessageBody')[0].value;
-				opera.removeEventListener('AfterScript', arguments.callee, false);
-			}
-		}, false);
-		
 				// PATCH-107, Fixes downloading attachments in Hotmail for O10.
 		HTMLAnchorElement.prototype.getAttribute= function(n){
 		if( n=='aNewWin' && getAttribute.call(this, 'aIdx')!=null )return 'true';
@@ -1487,31 +1477,6 @@ function setTinyMCEVersion(e){
 		 };
 				// PATCH-135, Fixes removing contacts from To field by clicking small X icon
 		addCssToDocument('.ContactPicker_AutoComplete img{position:static!important;}');
-				// PATCH-149, Delay load event for compose IFRAME if it's not accessible yet, enables editing - but make sure we initialize mail contents even when load event is delayed
-		opera.addEventListener('BeforeEventListener.load', function(e){
-			var target=e.event.target;
-			if(target.tagName=='IFRAME' && target.src.indexOf(location.hostname)>-1 && target.src.indexOf(location.hostname)<target.src.indexOf('/', 8)){
-				var delayLoadEvent=false;
-				try{
-					target.contentWindow.document.body;
-				}catch(e){
-					delayLoadEvent=true;
-				}
-				if(delayLoadEvent){
-					e.preventDefault();
-					var interval=setInterval( function(){
-						try{
-							target.contentWindow.document.body;
-							e.listener.call(target, e.event);
-							if( typeof newMailSource !='undefined' && newMailSource!='' && document.getElementsByName('fMessageBody')[0].value.match(/^[\r\n\s]*$/) && target.contentWindow.document.body.innerText.match(/^[\r\n\s]*$/) ){
-								target.contentWindow.document.body.innerHTML=newMailSource;
-							}
-							clearInterval(interval);
-						}catch(e){}
-					}, 200 );
-				}
-			}
-		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix drag and drop in Hotmail\nClosing already closed documents from timeout can hang ES execution\nM...). See browser.js for details');
 	} else if(hostname.indexOf('mail.ru')>-1){			// PATCH-216, No scrollbars on some mail.ru pages with many comments
 		addCssToDocument('body,html{height:auto!important}');
@@ -1615,9 +1580,6 @@ function setTinyMCEVersion(e){
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Show digital pamphlet from Yamada Denki). See browser.js for details');
-	} else if(hostname.indexOf('picasaweb.google')!=-1){			// PATCH-98, Hidden links and image details due to a CSS height property
-		addCssToDocument('.lhcl_hideoverflow{ height:auto!important }');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hidden links and image details due to a CSS height property). See browser.js for details');
 	} else if(hostname.indexOf('play.com')>-1){			// PATCH-250, Allow play.com searching with Enter
 		window.addEventListener('keypress',
 			function(evt){
