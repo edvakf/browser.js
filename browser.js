@@ -1,4 +1,4 @@
-// YR3ktYORSx+wv6bduNpLbBFUK3I76fM9swUiDjQuj03FtLPe41/KZhOHcsbHQEYEIedI7scI/7yd2vwo+y7z+rM/UP3z6zF3lpluly/bPGUA954lynF1abk7w4gkuC/zltgGUVwqMcqXsMPfOs7osLR8K0RXljyAnlSYGyCarG5jVruiHzl+s05j02sZK5DGfa9noESAceMmtIKXudBkvpimcn92j2klOVOgIIDFir1BJgK3G4gkRBzEjr6gOxJZe3DiMQ6OfQrPVT5vM5wxTvNrsaNWBpyCKjD3+uHdNinXTZMCuRgRnWFi2x8L64zGn5yOZLnURujKfO/xCpa/gw==
+// qlEInjl0J8l0onO/WRJO0JjWwRvS5Im10QqhJX3ezMJ7xtABkzrn62DzCU+pl8PiN4naHZhEUjXbdevtA64o5SkAmQX0xiuIb0ukUdQs3r6V/R+fpyRhDWN1FhN/6Zpf46UvEmscHsZTm8PN6pcRKl7O2ZZTkhzQK0Pr0bzmvfaB86rV/4N9eVa4VWR12hvKcl6dvK7D0Y2Z/Wysolshux9SR/hLQJnSUb/pLwoHaumAjQBm+SOU5QUa7HGWkQMrkjh7N8uEyHdEeM28exzRGesqWlzb4IXy8Wv2KohttdpfiZ2GATuLxbbgKg6Ar/paDeEk8HykOrHi+0uaNaEYrw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, May 28, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, June 15, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -423,19 +423,22 @@ function emulateIECapturingEvents(){
 		if(HTMLBodyElement.prototype.__defineGetter__)HTMLBodyElement.prototype.__defineGetter__('clientHeight', function(){return this.ownerDocument.documentElement.clientHeight;}); // PATCH-33
 	}
 
-function fixIFrameSSIscriptII(name, iFrameId){
-	if(typeof name==='string'&&!arguments.callee.name)opera.defineMagicFunction(name, function (a,b,frameid){
-		frameid = frameid|| iFrameId;
-		var currentfr=document.getElementById(frameid);
-		if (currentfr){
-			currentfr.height = currentfr.contentDocument.documentElement.scrollHeight;
-			if(!arguments.callee._listenerAdded){
-				currentfr.addEventListener("load", arguments.callee, false);
-				arguments.callee._listenerAdded=true;
+function fixIFrameSSIscriptII(funcName, iFrameId){
+	if(typeof funcName==='string'&&!arguments.callee[funcName]){
+		opera.defineMagicFunction(funcName, function (a,b,frameid){
+			frameid = frameid|| iFrameId;
+			var currentfr=document.getElementById(frameid);
+			if (currentfr){
+				currentfr.height = currentfr.contentDocument.documentElement.scrollHeight;
+				currentfr.style.display='block';
+				if(!arguments.callee._listenerAdded){
+					currentfr.addEventListener("load", arguments.callee, false);
+					arguments.callee._listenerAdded=true;
+				}
 			}
-		}
-	});
-	fixIFrameSSIscriptII[name]=1;//remember that we fixed this already
+		});
+		fixIFrameSSIscriptII[funcName]=1;//remember that we fixed this already
+	}
 }
 function fixLiknoAllWebMenus(ev){
 	indexOf.call=match.call=defineMagicVariable.call=postError.call=removeEventListener.call=appendChild.call=createElement.call=preventDefault.call=replace.call=call;
@@ -789,10 +792,10 @@ function setTinyMCEVersion(e){
 		}
 	}, false);
 			// PATCH-230, Prevent unsolicited access to Java's deploymenttoolkit
-	HTMLObjectElement.prototype.__defineGetter__('launch', function(){} );
-	HTMLObjectElement.prototype.__defineGetter__('installJRE', function(){} );
-	HTMLEmbedElement.prototype.__defineGetter__('launch', function(){} );
-	HTMLEmbedElement.prototype.__defineGetter__('installJRE', function(){} );
+	HTMLObjectElement.prototype.__defineGetter__('launch', function(){ opera.postError('browser.js prevented page from calling method launch on object'); } );
+	HTMLObjectElement.prototype.__defineGetter__('installJRE', function(){opera.postError('browser.js prevented page from calling method installJRE on object');} );
+	HTMLEmbedElement.prototype.__defineGetter__('launch', function(){opera.postError('browser.js prevented page from calling method launch on embed');} );
+	HTMLEmbedElement.prototype.__defineGetter__('installJRE', function(){opera.postError('browser.js prevented page from calling method installJRE on embed');} );
 			// PATCH-248, Jive forum software doesn't work in Opera
 	opera.defineMagicVariable('jive', null, function(obj){
 		navigator.userAgent='Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.9.2) Gecko/20100115 Firefox/3.6';
@@ -828,7 +831,17 @@ function setTinyMCEVersion(e){
 	},false);
 
 
-	if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
+	if((hostname.indexOf('docs.google.com')>-1)&&(pathname.indexOf('DocAction')>-1)&&(location.search.indexOf('action=updoc')>-1)){			// PATCH-256, Non-flash uploader on Google Docs
+		opera.addEventListener('BeforeEventListener.mousedown',
+		 function(e){
+		  if(e.event.target.type=='file'){
+		   e.preventDefault();
+		  }
+		 },false
+		);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Non-flash uploader on Google Docs). See browser.js for details');
+	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
 		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
 				document.getElementById('browserjs_active').style.display='';
@@ -1082,6 +1095,24 @@ function setTinyMCEVersion(e){
 		navigator.appName='Microsoft Internet Explorer';
 		navigator.appVersion='MSIE'+navigator.appVersion;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ATT / Bellsouth browser sniffing). See browser.js for details');
+	} else if(hostname.indexOf('bancochile.cl')>-1){			// PATCH-258, Opera forgets to send load event to nested FRAMESET, Banco de Chile blank after login
+		if(top==self){
+			window.addEventListener('load', function(e){
+				setTimeout(function(){
+				(function(win){
+					var col=win.document.getElementsByTagName('frameset');
+					if(col.length){
+						for(var i=0;i<col.length;i++){
+							var evt=document.createEvent('Event');
+							evt.initEvent('load', false, false);
+							col[i].dispatchEvent(evt);
+						}
+					}
+					for(var i=0;i<win.frames.length;i++)arguments.callee(win.frames[i]);
+				})(window);}, 100);
+			}, false);
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera forgets to send load event to nested FRAMESET, Banco de Chile blank after login). See browser.js for details');
 	} else if(hostname.indexOf('bankhapoalim.co.il')>-1){			// PATCH-224, Opera forgets to send load event to nested FRAMESET, Bank Hapoalim blank after login
 		if(top==self){
 			window.addEventListener('load', function(e){
@@ -1202,14 +1233,9 @@ function setTinyMCEVersion(e){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Iframe content height is too small and not expanded on danawa.com). See browser.js for details');
-	} else if(hostname.indexOf('deviantart.com')>-1){			// 282065,  deviantart.com prevents mousedown on file inputs, making it impossible to select files
-		opera.addEventListener('BeforeEventListener.mousedown', function(e){
-		func_toString.call=preventDefault.call=call;
-				if( func_toString.call(e.listener)=='function(){return false}' && e.event.target.tagName=='INPUT' ){
-					preventDefault.call(e);
-				}
-			}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( deviantart.com prevents mousedown on file inputs, making it impossible to select files). See browser.js for details');
+	} else if(hostname.indexOf('easycruit.com')>-1){			// PATCH-219, Fujitsu recruitment page on EasyCruit hides content due to browser sniffing
+		fixIFrameSSIscriptII('resizeIframe');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fujitsu recruitment page on EasyCruit hides content due to browser sniffing). See browser.js for details');
 	} else if(hostname.indexOf('ebay')>-1){			// 0, eBay
 		/* eBay issues */
 	
@@ -1493,12 +1519,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('maps.google.')>-1){			// PATCH-243, Avoid CPU spike when enabling Drag 'n' Zoom on maps.google.com
 		document.__defineGetter__('constructor',function(){return HTMLDocument;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid CPU spike when enabling Drag \'n\' Zoom on maps.google.com). See browser.js for details');
-	} else if(hostname.indexOf('mb.softbank.jp')!=-1){			// PATCH-22, Softbank shop uses reserved variable name parent
-		(function(){var the_parent;
-			opera.defineMagicVariable('parent', function(){return the_parent;}, function(o){the_parent=o;});
-		})();
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Softbank shop uses reserved variable name parent). See browser.js for details');
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
@@ -1672,6 +1692,9 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('siren24.com')!=-1){			// SEOUL-609, ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script
 		navigator.appName = 'Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script). See browser.js for details');
+	} else if(hostname.indexOf('skylark.co.jp')>-1){			// PATCH-257, Site navigation menu font-size patch
+		addCssToDocument('#navi3 ul li a {font-size: 12px !important;} ');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Site navigation menu font-size patch). See browser.js for details');
 	} else if(hostname.indexOf('social.')>-1&&hostname.indexOf('.microsoft.')>-1){			// PATCH-203, Microsoft forums editor hangs
 		addPreprocessHandler(/if\(tinymce\.relaxedDomain\)t\.iframeHTML\+='<script\s*type="text\/javascript">document\.domain\s*=\s*"'\+tinymce\.relaxedDomain\+'";<\/script>';/, '', true, function(el){return(el.src && indexOf.call(el.src, 'tiny_mce.js')>-1) });
 		
