@@ -1,4 +1,4 @@
-// JUy09nQ23rKrVvH9ekk79B42L3pszUwftgYXgh9EudunIK1Miarc/N1a4SgpEKmNhTfnH33e9DUMxK9d7XSsUC1Fsg3/A33JertzU1s/00FtkioOyrmaeDX6qLEPKPoTtb2+UpxTAafhvetv/4mbXq7ur8mJKQ2+ReKR9AvxFbhE+/YBzSbpMoFovVazwCXSkPFwjdRki2wsPQ6EJ3hvEmu6e21lSqftnB5m6u60ZSmq1RI06vSjYecoUVb/NiUHbpuGMhmzXYgYzPO2fR+aEwm9JLVfQCyLlQj/Hp0pDtAzD2LIie1V/UcL6sjSatqpEuV9ted0zwGjiwUHP0HN1A==
+// qtlKxRdIqZLfdihXDySENJnZmqKoca/0Do/cyd0z4+wMf/AD30FfNLuhqEZ3JY6D3fau1k0np9rVrOr01iKINKFKcpqfDSrbUuYXuq/KjUwooUJldoVhYKRKDEJoKPibIOqsqwER0VNdNJbk2w4yQhPzD3HlW+ClQcZTqCjnvoE3Zu331Y4TXu5BrnPs8Cmdpg0TpHrC6EDM5sjjQBNxIr5SX7Sn0lXQ73owr3fhbHifNjX1gpHK+GUfPySdY/o0WQN3nuOA8B346A/5UuFBYDSL7yC6SRvJdkADPAK+94BIJTj0hx2xBhIpMOCegdmF5dpvSbDuL6zSb/0JERL3CA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, August 6, 2010 ';
+	var bjsversion=' Opera Desktop 10.70 core 2.6.31, August 6, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1334,9 +1334,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( BlueCross browser sniffing prevents insurance search). See browser.js for details');
-	} else if(hostname.indexOf('google')>-1&&pathname.indexOf('/calendar')==0){			// PATCH-262, Layout regression squishes event detail edit screen on Google Calendar
-		addCssToDocument('#mothertable{table-layout:auto!important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Layout regression squishes event detail edit screen on Google Calendar). See browser.js for details');
 	} else if(hostname.indexOf('ibank.isb.ru')!=-1){			// 0, browser sniffing breaks ibank.isb.ru
 		navigator.__defineGetter__('family', function(){return 'gecko';})
 		navigator.__defineSetter__('family', function(){})
