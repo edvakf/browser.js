@@ -1,4 +1,4 @@
-// Mc+58WsqzAqwYE2rR1tyHSYPwzXQVcrNDG2c3cHxNB00aSPyd4qp6mZv/W/6szVJ/tdHF2Be3Hpv1n9nLUjg8O3CQyozt8fvT+Zpyab6nOb55IPzY92axD8zE9nrU4pYFEdozq2gq0dTqLpXTe5M0p9LR0PcJgiaE4GXDDtHkDNtbZtrgnP0DyD4EZeN1BnMS0m+LFJBigVbgEIHyUjuarppGhreFMP253EZ4b7+zL1YVFb/HP+8f8mGECytkxD1GgGs6xOsKbe8lxWjoxItoH04PGGKm/dIO1OqmsjsGxz5sjuRJZJ0zYVT2eK59e7papV9DYcgXbb1of2OxBTsbw==
+// hu+tJkqoMpqyiG3EQry+HybGvivvyII3siE0wECWGi1X1I2gFzmUAmIyWGqoUO2N9XDuKWHt0a36mb95zgtpW0Pg8L861oy75kT57U1+D9c0Gptqox2Cly/I3KRwtV3qrq6crqyp1UIFEW7gWmAoAtjqBKDkBuydU9bE85EiRE3U0duXYQeTa+a0P4XfkrRX8L/3hxocJzbtXXm+pVolRSGV+oMFtsiJ3kU7uGUF+b98RJdPCh8bJHLnQagSr/RroE5OFltfotpPEoIbn0XCG0i0JJBiqrcQW3zfXAlsAGIzjyZwN7gV/z4FrS1oTWuzg497H1cAAyBXyqsgMZcJeA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, August 25, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, September 14, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -406,6 +406,7 @@ function stopKeypressIfDownCancelled(stopKey){
 // Hide broken implementation of showModalDialog to make object detection reliable
 // PDF security patch
 // Prevent script scheduler hanging due to triple markup/script insertion into editor IFRAME
+// Disable sniffing in old HTMLArea editors
 // Asia-region Generic Patches
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
 	opera.addEventListener( 'BeforeEventListener.readystatechange', function(e){
@@ -489,7 +490,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Milonic fix). See browser.js for details.');
 			return;
 		
-	      }else if(  match.call(name, /menu(\d*_(com|build|var|program|compact)|e)\.js$/)  ){ 
+	      }else if(  match.call(name, /menu(\d*_(script|com|build|var|program|compact)|e)\.js$/)  ){ 
 			// HV menu
 			fixHVMenu(name);
 			postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (HVMenu fix). See browser.js for details.');
@@ -605,6 +606,13 @@ function stopKeypressIfDownCancelled(stopKey){
 		avoidSchedulerTripleScriptLockup();
 	}, false);
 	
+			// PATCH-298, Disable sniffing in old HTMLArea editors
+	document.addEventListener('DOMContentLoaded', function(e){
+		if(typeof HTMLArea!='undefined'){ 
+			HTMLArea.is_gecko = true; 
+			HTMLArea.checkSupportedBrowser = function(e) { return true; } 
+		}
+	}, false);
 			// PATCH-138, Asia-region Generic Patches
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
@@ -1053,6 +1061,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('britishairways.')!=-1){			// 206810, Prevent britishairways.com from reloading the page on resize
 		opera.defineMagicFunction('resizeHandler', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent britishairways.com from reloading the page on resize). See browser.js for details');
+	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// PATCH-208, Caja Madrid hides login form by CSS mistake
+		document.addEventListener( 'DOMContentLoaded', function(){
+			for(var collection=document.getElementsByClassName('clearfix'), el; el=collection[0];){
+				el.className = el.className.replace(/clearfix/, '');
+			}
+		}, false );
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
 	} else if(hostname.indexOf('cambrian.mb.ca')>-1){			// PATCH-285, Enable log-in button on Cambrian bank
 		navigator.userAgent='Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.9.2) Gecko/20100115 Firefox/3.6';
 		
@@ -1128,6 +1144,35 @@ function stopKeypressIfDownCancelled(stopKey){
 		addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||');
 				// PATCH-292, Avoid TinyMCE-triggered bug, make adding notes work again
 		avoidSchedulerTripleScriptLockup();
+				// PATCH-299, Make deleting @mentions work
+		(function(){
+		var storedRngInfo={};
+			opera.addEventListener('BeforeEvent.keydown', function(e){
+				var kc=e.event.keyCode;
+				if( kc==8 || kc==46 ){
+					var rng=window.getSelection().getRangeAt(0);
+					storedRngInfo.startContainer=rng.startContainer;
+					storedRngInfo.startOffset=rng.startOffset;
+					storedRngInfo.textLength=rng.startContainer.textContent.length;
+				}
+			}, false);
+			opera.addEventListener('AfterEvent.keyup', function(e){
+				var kc=e.event.keyCode;
+				if( kc==8 || kc==46 ){
+					var rng=window.getSelection().getRangeAt(0);
+					if(storedRngInfo.startContainer == rng.startContainer &&
+						storedRngInfo.startOffset==rng.startOffset &&
+						storedRngInfo.textLength == rng.startContainer.textContent.length ){ // user pressed Del or Backspace but it seems nothing happened..
+							if( kc==8 && rng.startOffset == 0 && rng.startContainer.previousSibling && rng.startContainer.previousSibling.contentEditable=='false' ){
+								rng.startContainer.previousSibling.parentNode.removeChild( rng.startContainer.previousSibling );
+							}else if( kc==46 && rng.startOffset == rng.startContainer.textContent.length && rng.startContainer.nextSibling && rng.startContainer.nextSibling.contentEditable == 'false' ){
+								rng.startContainer.nextSibling.parentNode.removeChild( rng.startContainer.nextSibling );
+							}
+		
+					}
+				}
+			}, false);
+		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nAvoid TinyMCE-trigg...). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
@@ -1428,7 +1473,7 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('pluginfree.com') > -1){			// PATCH-105, DNP Pluginfree Viewer fallback to Netscape version for Opera
 		opera.defineMagicFunction('sort',function(rf,rt){
 			var res;
-			return (res=rf.apply(rt,arguments.slice(2)))?res:"nn";
+			return (res=rf.apply(rt,slice.call(arguments, 2)))?res:"nn";
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DNP Pluginfree Viewer fallback to Netscape version for Opera). See browser.js for details');
@@ -1650,7 +1695,7 @@ function stopKeypressIfDownCancelled(stopKey){
 				imgs[i].onload = imgs[i].onerror = function () {
 					loaded++;
 					if( total == loaded ) {
-						func.apply(realThis, arguments.slice(2));
+						func.apply(realThis, slice.call(arguments, 2));
 					}
 				};
 				imgs[i].src = document.images[i].src;
@@ -1658,7 +1703,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			setTimeout(function () {
 				if( total > loaded ) {
 					loaded = total;
-					func.apply(realThis, arguments.slice(2));
+					func.apply(realThis, slice.call(arguments, 2));
 				}
 			},10000);
 		});
