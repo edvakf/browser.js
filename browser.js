@@ -1,4 +1,4 @@
-// OXGaKa4oRMu991BkSoBqqthT8x6j8L3y2DUiYXEySUBFYzMUGg09VmYuIeCmWEiaTfLmMTkUVdXLo9YMskl/UuB9jCW7sT1o6H2RXYZc1jc8gUUqDtewFUXbchRRIxn+Y/YQOSPwKVWVNBsL15HUanqtYshVr+c4CyIhTOFHmNDTeRWuSvXmRNQFMrP+qaGnoEuP6vJK8J0a3Xi+WXqU/Ixg0vJjNDwlOqCM9k+uDEQ92tUAckxoLfHQLcn6s0w8nAHR6KCKo2a4OwhgEljnBB61OcoaGSGT5QYpFqbN1EcmG0toY17xHrP5bolB8yYl82AswuG9IIRkZr1DLQDA6Q==
+// WoEdWInRXorswYc1+YJPLELRvQi+6QGrLykyDnIzcO3HGJwatJBrJEYAAdK27L/IDYogot2MvzSIlR3lIDTMAMNnbX44PQmkBT0KyZSiTqXpUihKAS/mjRibKdPkbJ3npKzOtv4kJTX5N3PVC29hGL5Yv+1x1XZG0K74EJyGcK7LitZRzHjNGlTY1e/kZC8KHaALpLsQb2ENmwgim059JhWe4GH56nX2m9hgly25lCkcb7mOvcAqUMEBvw89z86w26R2KjS5l/0rS/s/d+MI1TJZfAvxuwmjD1RGuXbre3RA8GPgvjCAa8GaPQN8WPWKFmMOPKmqgypUSKRIVqlyhA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, August 25, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, September 14, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -407,6 +407,7 @@ function stopKeypressIfDownCancelled(stopKey){
 // PDF security patch
 // Fix URLs with empty port number on form submit
 // Prevent script scheduler hanging due to triple markup/script insertion into editor IFRAME
+// Disable sniffing in old HTMLArea editors
 // Asia-region Generic Patches
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
 	opera.addEventListener( 'BeforeEventListener.readystatechange', function(e){
@@ -490,7 +491,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Milonic fix). See browser.js for details.');
 			return;
 		
-	      }else if(  match.call(name, /menu(\d*_(com|build|var|program|compact)|e)\.js$/)  ){ 
+	      }else if(  match.call(name, /menu(\d*_(script|com|build|var|program|compact)|e)\.js$/)  ){ 
 			// HV menu
 			fixHVMenu(name);
 			postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (HVMenu fix). See browser.js for details.');
@@ -615,6 +616,13 @@ function stopKeypressIfDownCancelled(stopKey){
 		avoidSchedulerTripleScriptLockup();
 	}, false);
 	
+			// PATCH-298, Disable sniffing in old HTMLArea editors
+	document.addEventListener('DOMContentLoaded', function(e){
+		if(typeof HTMLArea!='undefined'){ 
+			HTMLArea.is_gecko = true; 
+			HTMLArea.checkSupportedBrowser = function(e) { return true; } 
+		}
+	}, false);
 			// PATCH-138, Asia-region Generic Patches
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
@@ -1077,6 +1085,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('britishairways.')!=-1){			// 206810, Prevent britishairways.com from reloading the page on resize
 		opera.defineMagicFunction('resizeHandler', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent britishairways.com from reloading the page on resize). See browser.js for details');
+	} else if(hostname.indexOf('cajamadrid.es')!=-1){			// PATCH-208, Caja Madrid hides login form by CSS mistake
+		document.addEventListener( 'DOMContentLoaded', function(){
+			for(var collection=document.getElementsByClassName('clearfix'), el; el=collection[0];){
+				el.className = el.className.replace(/clearfix/, '');
+			}
+		}, false );
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
 	} else if(hostname.indexOf('cambrian.mb.ca')>-1){			// PATCH-285, Enable log-in button on Cambrian bank
 		navigator.userAgent='Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.9.2) Gecko/20100115 Firefox/3.6';
 		
@@ -1152,6 +1168,35 @@ function stopKeypressIfDownCancelled(stopKey){
 		addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||');
 				// PATCH-292, Avoid TinyMCE-triggered bug, make adding notes work again
 		avoidSchedulerTripleScriptLockup();
+				// PATCH-299, Make deleting @mentions work
+		(function(){
+		var storedRngInfo={};
+			opera.addEventListener('BeforeEvent.keydown', function(e){
+				var kc=e.event.keyCode;
+				if( kc==8 || kc==46 ){
+					var rng=window.getSelection().getRangeAt(0);
+					storedRngInfo.startContainer=rng.startContainer;
+					storedRngInfo.startOffset=rng.startOffset;
+					storedRngInfo.textLength=rng.startContainer.textContent.length;
+				}
+			}, false);
+			opera.addEventListener('AfterEvent.keyup', function(e){
+				var kc=e.event.keyCode;
+				if( kc==8 || kc==46 ){
+					var rng=window.getSelection().getRangeAt(0);
+					if(storedRngInfo.startContainer == rng.startContainer &&
+						storedRngInfo.startOffset==rng.startOffset &&
+						storedRngInfo.textLength == rng.startContainer.textContent.length ){ // user pressed Del or Backspace but it seems nothing happened..
+							if( kc==8 && rng.startOffset == 0 && rng.startContainer.previousSibling && rng.startContainer.previousSibling.contentEditable=='false' ){
+								rng.startContainer.previousSibling.parentNode.removeChild( rng.startContainer.previousSibling );
+							}else if( kc==46 && rng.startOffset == rng.startContainer.textContent.length && rng.startContainer.nextSibling && rng.startContainer.nextSibling.contentEditable == 'false' ){
+								rng.startContainer.nextSibling.parentNode.removeChild( rng.startContainer.nextSibling );
+							}
+		
+					}
+				}
+			}, false);
+		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nAvoid TinyMCE-trigg...). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
@@ -1374,7 +1419,7 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('pluginfree.com') > -1){			// PATCH-105, DNP Pluginfree Viewer fallback to Netscape version for Opera
 		opera.defineMagicFunction('sort',function(rf,rt){
 			var res;
-			return (res=rf.apply(rt,arguments.slice(2)))?res:"nn";
+			return (res=rf.apply(rt,slice.call(arguments, 2)))?res:"nn";
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (DNP Pluginfree Viewer fallback to Netscape version for Opera). See browser.js for details');
@@ -1576,6 +1621,12 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
+	} else if(hostname.indexOf('www.weather.com')>-1){			// PATCH-294, Hide extra button text on weather.com
+		document.addEventListener('DOMContentLoaded',
+		 function(){document.getElementById('twc-weather-search-submit-id').value=''},
+		 false
+		);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide extra button text on weather.com). See browser.js for details');
 	} else if(hostname=='my.tnt.com'){			// PATCH-48, force all images to load before printing TNT delivery sheet
 		opera.defineMagicFunction('printPageDirect',function (func,realThis) {
 			var total = document.images.length, loaded = 0, imgs = [];
@@ -1584,7 +1635,7 @@ function stopKeypressIfDownCancelled(stopKey){
 				imgs[i].onload = imgs[i].onerror = function () {
 					loaded++;
 					if( total == loaded ) {
-						func.apply(realThis, arguments.slice(2));
+						func.apply(realThis, slice.call(arguments, 2));
 					}
 				};
 				imgs[i].src = document.images[i].src;
@@ -1592,7 +1643,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			setTimeout(function () {
 				if( total > loaded ) {
 					loaded = total;
-					func.apply(realThis, arguments.slice(2));
+					func.apply(realThis, slice.call(arguments, 2));
 				}
 			},10000);
 		});
