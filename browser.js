@@ -1,4 +1,4 @@
-// dNE0gOmmAvIl6y7f+ReQMMWswVCfICjx8nU0Jbx/8Q7hoTvwXuAc0e+M0zdWVDCf3mK3V/8S4ojWAvqrvp83BzeIuEZNmoU3wtF05MMVzQUkXsaePrRXqamAitm03biuTD+kTmYr4r77cbP2H82JJO5uSUKY6LXSVxa/nniIrMvbXr6oR82LMYIkz32a/OgmNMtqIo9Ygf7laRfp4OKHFKch9pmBb2HWJycmNofasCBzZBjIvHRfv4QryPMS1m2H1DjaiJG+h4UaWMhmAWmcF+fRH04NaTnDwHqjYK6U8rgm0AKyJ2op29X++Li9gfoHBosCccKr/BxCCTwuvOxtoQ==
+// OGIo63JnaiPiU0FT/3jR83KcwzmII8uVNA35P3T86kqPY2adbbJb8pA4fr2qLAWKvdvRl0ULUMv1zXYXM0DNK6VvRN3YEMwkI0NXH+xBd8Qmxd17RSXz+FUX9oziZBuUDXZB6wKUR7G8dSY92ZDDLMVjOSzaMFcZ6HekSfS0w73TXWoYvYEH+Tqj5dumuYWU+yKKMzpmsHowlS0DRksI+yZ0wkB4HLcPwFVszPLmP/TxYG4Q7UR8koqiNqGXbreeI0t403pGBrIOYVNUvsEXGwX1UdUnmCoiS4XZvcqt5unK7ULtTERkUrq2V4jDHxyMOFSt8a3405vUSXIDdKlilA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.70 core 2.6.35, September 14, 2010 ';
+	var bjsversion=' Opera Desktop 10.70 core 2.6.35, September 21, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -600,12 +600,18 @@ function stopKeypressIfDownCancelled(stopKey){
 		}
 	}, false);
 			// PATCH-298, Disable sniffing in old HTMLArea editors
-	document.addEventListener('DOMContentLoaded', function(e){
-		if(typeof HTMLArea!='undefined'){ 
-			HTMLArea.is_gecko = true; 
-			HTMLArea.checkSupportedBrowser = function(e) { return true; } 
-		}
-	}, false);
+	opera.defineMagicVariable('HTMLArea', null, function(obj){
+		obj.__defineGetter__('is_gecko', function(){return true});
+		obj.__defineSetter__('is_gecko', function(){});
+		obj.__defineGetter__('checkSupportedBrowser', function(){return function(){return true;}});
+		obj.__defineSetter__('checkSupportedBrowser', function(){});
+		var onloadmethod;
+		obj.__defineSetter__('onload', function(func){ onloadmethod=func;});
+		obj.__defineGetter__('onload', function(){ return function(){ try{ onloadmethod.call(this);}catch(e){ var instance=this; setTimeout(function(){instance.onload();}, 150); }}});
+		opera.postError('Opera has modified the JavaScript on '+hostname+' (HTMLArea fix). See browser.js for details');
+		return obj;
+	});
+	
 			// PATCH-138, Asia-region Generic Patches
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
@@ -793,7 +799,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		addCssToDocument('.sssAccordionItem{overflow: hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Broken expanding sections on nhl.com). See browser.js for details');
 	} else if(hostname.indexOf('.t-online.de')>-1){			// 225374,  video problems on T-online.de
-		if(hostname.indexOf('onunterhaltung')>-1){
+		if(hostname.indexOf('unterhaltung')>-1){
 					//Fix browser detection
 					opera.defineMagicFunction( 'allResultsOK', function(){return true;} );
 					// Fix plugin detection
@@ -821,23 +827,24 @@ function stopKeypressIfDownCancelled(stopKey){
 						}
 					}, false);
 		}
-				// 231082,  video problems on T-online.de, VOD section
-				if( hostname.indexOf('vod')>-1 ){ // 231082
-					navigator.userAgent+=' Firefox';
-				}
-		
 				// 231082,  video problems on T-online.de, WMP license installation
 		if(href.indexOf('__license=delivered')>-1){
 			location.replace( location.href.replace( /__license=delivered/, '?license=delivered' ) );
 		}
 		
-				// 226414,  video problems on T-online.de, no window.external detection
-		window.external=window.external||{};
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( video problems on T-online.de\n video problems on T-online.de, VOD section\n video problems on T-on...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( video problems on T-online.de\n video problems on T-online.de, WMP license installation). See browser.js for details');
 	} else if(hostname.indexOf('.ulead.') >-1){			// DSK-130832, Ulead.com old Milonic menu
 		 fixMilonicMenu('mmenu.js');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Ulead.com old Milonic menu). See browser.js for details');
+	} else if(hostname.indexOf('.videoload.de')>-1){			// 231082,  video problems on T-online.de, VOD section
+				if( hostname.indexOf('vod')>-1 ){ // 231082
+					navigator.userAgent+=' Firefox';
+				}
+		
+				// 226414,  video problems on T-online.de, no window.external detection
+		window.external=window.external||{};
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( video problems on T-online.de, VOD section\n video problems on T-online.de, no window.external dete...). See browser.js for details');
 	} else if(hostname.indexOf('.yahoo.')>-1){			// 0, Yahoo!
 		/* Yahoo! */
 	
@@ -1077,8 +1084,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
 	} else if(hostname.indexOf('cambrian.mb.ca')>-1){			// PATCH-285, Enable log-in button on Cambrian bank
-		navigator.userAgent='Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:1.9.2) Gecko/20100115 Firefox/3.6';
-		
+		Element.prototype.__defineGetter__('all', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable log-in button on Cambrian bank). See browser.js for details');
 	} else if(hostname.indexOf('capitalone.com')>-1&&location.protocol=='https:'){			// 86032, CapitalOne login fails - cross-domain access on https disallows setting location
 		document.domain='capitalone.com';
@@ -1111,7 +1117,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Iframe content height is too small and not expanded on danawa.com). See browser.js for details');
 	} else if(hostname.indexOf('docs.google.com')>-1){			// PATCH-256, Non-flash uploader on Google Docs
-		if((pathname.indexOf('DocAction')>-1)&&(location.search.indexOf('action=updoc')>-1))opera.addEventListener('BeforeEventListener.mousedown',
+		opera.addEventListener('BeforeEventListener.mousedown',
 		 function(e){
 		  if(e.event.target.type=='file'){
 		   e.preventDefault();
@@ -1182,6 +1188,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
+	} else if(hostname.indexOf('freemail.hu')>-1){			// PATCH-301, Disable browser blocking on freemail.hu
+		opera.defineMagicVariable( 'BrowserDetect', function(o){
+			o.browser='Firefox';
+			o.version=3.0;
+			return o;
+		}, null );
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable browser blocking on freemail.hu). See browser.js for details');
 	} else if(hostname.indexOf('fujifilm.ch')>-1){			// PATCH-220, Working around a bug that hides menu entries
 		addCssToDocument('#navigation ul#primary li ul.secondary_drop_down li {display: inline !important }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around a bug that hides menu entries). See browser.js for details');
@@ -1308,15 +1322,12 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
 		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
-	} else if(hostname.indexOf('msnbc.com')>-1){			// PATCH-30, MSNBC sniffing hides Flash content
+	} else if(hostname.indexOf('msnbc.msn.com')>-1){			// PATCH-30, MSNBC sniffing hides Flash content
 		opera.defineMagicVariable('oSniff', function(o){return o;},function(){ window['oSniff'].nn=5; });
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSNBC sniffing hides Flash content). See browser.js for details');
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
-	} else if(hostname.indexOf('nbc.com')>-1){			// PATCH-236, Make NBC videos work
-		navigator.userAgent += " Chrome/5.0.375.9 Safari/533.4"
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make NBC videos work). See browser.js for details');
 	} else if(hostname.indexOf('news.msn.co.kr') >-1){			// 342895, news.msn.co.kr navigation bar is offset from the page
 		addCssToDocument('#home{position:relative!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (news.msn.co.kr navigation bar is offset from the page). See browser.js for details');
@@ -1490,9 +1501,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			return rangeInsertNode.call(this,n);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Range.prototype.insertNode automatically import nodes from other documents). See browser.js for details');
-	} else if(hostname.indexOf('stylenanda.co.kr')>-1){			// PATCH-156, Clicks blocked on stylenanda.co.kr
-		opera.defineMagicFunction('click', function (oFun, oThis){ return true; } );
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Clicks blocked on stylenanda.co.kr). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
