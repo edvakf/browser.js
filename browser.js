@@ -1,4 +1,4 @@
-// OGIo63JnaiPiU0FT/3jR83KcwzmII8uVNA35P3T86kqPY2adbbJb8pA4fr2qLAWKvdvRl0ULUMv1zXYXM0DNK6VvRN3YEMwkI0NXH+xBd8Qmxd17RSXz+FUX9oziZBuUDXZB6wKUR7G8dSY92ZDDLMVjOSzaMFcZ6HekSfS0w73TXWoYvYEH+Tqj5dumuYWU+yKKMzpmsHowlS0DRksI+yZ0wkB4HLcPwFVszPLmP/TxYG4Q7UR8koqiNqGXbreeI0t403pGBrIOYVNUvsEXGwX1UdUnmCoiS4XZvcqt5unK7ULtTERkUrq2V4jDHxyMOFSt8a3405vUSXIDdKlilA==
+// X3tOM9ISBViFOWpCqLUq9kzcj+dKF+UNsZeiBRe49jy8Sp+KjqKV1TUTqVazhN9Fw4QWEMySJp9ncnDp/cZOw8gHTp8pcEBhawbxapcPyiMU9/00A6H4WhMsH+nw04xCDY9ivi0CgDBChnt+EFnN2UOaXCy7p4R5twaDOdGGf8vDFUE9GH5EhF1z5DYjnDHS/zgfATHMArxJ/RHzHsPQojK4IQstQVlPONh1dUekchOJQTLvz975xw3xty9HKzfBsZqm62GshzjU00fojUw2L12cF3GjA9/EDsI+0t3uFQ9FiLYUnxDIgSHVNNfeoUoQuN8KD5ZK2U4qzWQ5IGBbIA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.70 core 2.6.35, September 21, 2010 ';
+	var bjsversion=' Opera Desktop 10.70 core 2.6.35, September 29, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -584,7 +584,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			// PATCH-261, Hide broken implementation of showModalDialog to make object detection reliable
 	delete showModalDialog;
 			// PATCH-272, Remove non-functional addEventListener from XHR objects
-	XMLHttpRequest.prototype.addEventListener=undefined;
+	delete XMLHttpRequest.prototype.addEventListener;
 			// 246299, PDF security patch
 	opera.addEventListener('BeforeJavaScriptURL', function( e ){
 		unescape.call=toLowerCase.call=indexOf.call=preventDefault.call=call;
@@ -1116,6 +1116,23 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Iframe content height is too small and not expanded on danawa.com). See browser.js for details');
+	} else if(hostname.indexOf('di.jal.co.jp')>-1){			// PATCH-237, Delay script execution on JAL map
+		var dw=document.write;
+		var MapViewer_dw;
+		document.write=function( s ){
+			if( String(s).indexOf('MapViewer') > -1 ){
+				dw.apply(document, ["<div id='MapViewer_holder'></div>"]);
+				MapViewer_dw = String(s);
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Delay script execution). See browser.js for details');
+			}else{
+				dw.apply(document, arguments);
+			}
+		};
+		
+		window.addEventListener('load',function(e){
+			document.getElementById('MapViewer_holder').outerHTML = MapViewer_dw;
+		},false)
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Delay script execution on JAL map). See browser.js for details');
 	} else if(hostname.indexOf('docs.google.com')>-1){			// PATCH-256, Non-flash uploader on Google Docs
 		opera.addEventListener('BeforeEventListener.mousedown',
 		 function(e){
@@ -1154,7 +1171,7 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('facebook.com')!=-1){			// PATCH-264, @mentions feature requires correct cancellation of enter keys
 		stopKeypressIfDownCancelled();
 				// PATCH-264, Enable @mentions
-		addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||');
+		addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||', true, function(el){return indexOf.call(el.text, 'this.suppressMentions=(ua.opera()')>-1; } );
 				// PATCH-299, Make deleting @mentions work
 		(function(){
 		var storedRngInfo={};
@@ -1185,6 +1202,15 @@ function stopKeypressIfDownCancelled(stopKey){
 			}, false);
 		})();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nMake deleting @ment...). See browser.js for details');
+	} else if(hostname.indexOf('fantasy.nfl.com')>-1){			// PATCH-303, Reporting different clientHeight and scrollHeight for TEXTAREA breaks commenting on nfl.com
+		HTMLTextAreaElement.prototype.__defineGetter__('clientHeight', function(){
+			if(this.scrollHeight>this.rows*parseInt(document.defaultView.getComputedStyle(this,null).getPropertyValue('font-size')) ){
+				return this.scrollHeight-1;
+			}
+			return this.scrollHeight;
+		});
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Reporting different clientHeight and scrollHeight for TEXTAREA breaks commenting on nfl.com). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
@@ -1322,9 +1348,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
 		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
-	} else if(hostname.indexOf('msnbc.msn.com')>-1){			// PATCH-30, MSNBC sniffing hides Flash content
-		opera.defineMagicVariable('oSniff', function(o){return o;},function(){ window['oSniff'].nn=5; });
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSNBC sniffing hides Flash content). See browser.js for details');
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
@@ -1419,6 +1442,13 @@ function stopKeypressIfDownCancelled(stopKey){
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Rabobank cancels t keypress). See browser.js for details');
+	} else if(hostname.indexOf('rediff.com')>-1){			// PATCH-269, Reposition invisible file input - Opera requires click on choose button, not text part of input
+		addCssToDocument('.fileclass{ position:absolute!important;right:0px !important }');
+				// PATCH-269, window.focus() does not focus a body with contentEditable set, cursor often disappears while writing mail
+		window.addEventListener('load', function(e,el){
+			if(el=document.getElementById('wysiwygmsgbody'))el.contentWindow.focus=function(){this.document.body.focus();}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Reposition invisible file input - Opera requires click on choose button, not text part of input\nwin...). See browser.js for details');
 	} else if(hostname.indexOf('salesforce.com')>-1){			// PATCH-176, Allow upload of workspace resources
 		HTMLIFrameElement.prototype.__defineSetter__('onreadystatechange', function(){});
 		
@@ -1504,6 +1534,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
+	} else if(hostname.indexOf('talkgadget.google.com')>-1){			// PATCH-304, avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)
+		stopKeypressIfDownCancelled();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)). See browser.js for details');
 	} else if(hostname.indexOf('tdwaterhouse.ca')>-1&&location.protocol=='https:'){			// 147840, tdwaterhouse.ca login fails - cross-domain access on https disallows setting location
 		document.domain='tdwaterhouse.ca';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tdwaterhouse.ca login fails - cross-domain access on https disallows setting location). See browser.js for details');
