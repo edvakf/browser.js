@@ -1,4 +1,4 @@
-// X3tOM9ISBViFOWpCqLUq9kzcj+dKF+UNsZeiBRe49jy8Sp+KjqKV1TUTqVazhN9Fw4QWEMySJp9ncnDp/cZOw8gHTp8pcEBhawbxapcPyiMU9/00A6H4WhMsH+nw04xCDY9ivi0CgDBChnt+EFnN2UOaXCy7p4R5twaDOdGGf8vDFUE9GH5EhF1z5DYjnDHS/zgfATHMArxJ/RHzHsPQojK4IQstQVlPONh1dUekchOJQTLvz975xw3xty9HKzfBsZqm62GshzjU00fojUw2L12cF3GjA9/EDsI+0t3uFQ9FiLYUnxDIgSHVNNfeoUoQuN8KD5ZK2U4qzWQ5IGBbIA==
+// WqNmCLP59hAFTmpCRAX6/IshITqxCHROwbLq3FXcK2xwymTjW2EIWsPLPufAHxI15u/MI20duEDC30o8kgaVM2jswGfLD93EHh5zHEdAG4DCVG71hCfcLtnkekkoXw7gbNwDjevtQU9mqwrc72TYQ1hLDaRFhgCSRP46CVejrOHOsWyLCihsIT+iLiNCDc91mPMS0zv3bQbzoDSIP5s+LJNUwDEThMVC5utR3X3bnV+J7hRTwVX9GeoM/nX4fkDyVvjf0kPqN6fm5dNxX5qR8Z+DR3vuC5o1rZPXGKX3+26eOkiBSvcBF4uKh2yzAF/tBsKdiS5Q144AbPm6fLcuzw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.70 core 2.6.35, September 29, 2010 ';
+	var bjsversion=' Opera Desktop 10.70 core 2.6.35, October 6, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -166,7 +166,7 @@ function enableRedefiningParent(){
 		defineMagicVariable.call(opera, 'NavYes', function(){ return true }, null);
 		defineMagicVariable.call(opera, 'DomNav', function(){ return true }, null);
 		// if Opera >= 9.5, load events are sent to document and not to body - make sure script doesn't set body.onload
-		defineMagicVariable.call(opera, 'Trigger', function(obj){if(obj===document) return window; return obj; }, null);
+		defineMagicVariable.call(opera, 'Trigger', function(obj){if(obj===document||obj===document.body) return window; return obj; }, null);
 		// Tell the script that CSS filters are not supported.
 		defineMagicVariable.call(opera, 'Fltr', function(){ return false; }, function(){ return });
 		// More recent versions look for 'opera 7' in navigator.userAgent and some do not use the variable names above
@@ -189,18 +189,21 @@ function enableRedefiningParent(){
 
 function fixIFrameSSIscriptII(funcName, iFrameId){
 	if(typeof funcName==='string'&&!arguments.callee[funcName]){
-		opera.defineMagicFunction(funcName, function (a,b,frameid){
+		var overrideFn = function (a,b,frameid){
 			frameid = frameid|| iFrameId;
 			var currentfr=document.getElementById(frameid);
 			if (currentfr){
-				currentfr.height = currentfr.contentDocument.documentElement.scrollHeight;
+				try{
+					currentfr.height = currentfr.contentDocument.documentElement.scrollHeight;
+				}catch(e){}
 				currentfr.style.display='block';
 				if(!arguments.callee._listenerAdded){
-					currentfr.addEventListener("load", arguments.callee, false);
+					currentfr.addEventListener("load", function(e){ overrideFn(0,0,e.target.id); }, false);
 					arguments.callee._listenerAdded=true;
 				}
 			}
-		});
+		}
+		opera.defineMagicFunction(funcName, overrideFn);
 		fixIFrameSSIscriptII[funcName]=1;//remember that we fixed this already
 	}
 }
@@ -1260,6 +1263,13 @@ function stopKeypressIfDownCancelled(stopKey){
 			if(e.event.target instanceof HTMLScriptElement)preventDefault.call(e);
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent readystatechange events on SCRIPT, causes double banners). See browser.js for details');
+	} else if(hostname.indexOf('lufthansa.com')>-1){			// PATCH-307, Prevent double values submitted from SELECT elements
+		window.addEventListener('load', function(){
+			var origin=document.getElementById('origin'),destination=document.getElementById('destination');
+			if(origin && origin.options && origin.options[0].value=='')origin.options[0].disabled=true;
+			if(destination && destination.options && destination.options[0].value=='')destination.options[0].disabled=true;
+		}, false); 
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent double values submitted from SELECT elements). See browser.js for details');
 	} else if(hostname.indexOf('mail.google.')>-1){			// PATCH-239, Avoid Flash content on mail.google.com due to crasher
 		if( navigator.userAgent.indexOf('PPC Mac')>-1){
 			opera.addEventListener('PluginInitialized', function(e){
