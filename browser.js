@@ -1,4 +1,4 @@
-// Fq6fE0qwMme3G65FctWTgBMRz6rkwbWTwG2NI9dLEYGI2GnGOGlXnFkyJOhyO8BfkHH1KRMGZciK04C2oC6mwN3KJOq6ooAnGCBMS8EhPvzZFZAbi5h2o4/o+Pr4a246j/qf7cfi25Qwm3pgb2ddhLgNQW9JqASm2oVsYQNigJtsL55WNptfJrScpnYsHAu/ic5oH5dyPNgSJ3ZsmUFNMnbRyhUP1wK4w7PC29pIvH40tz+wpyt5CmJtLfkJkYNXmJV0ly3aF5Xb2KGdX/7OPeugdDN1U3qVVU5McckhSYQw+FZX4BC0UsW7u6xSTFu8XMsnRJXB/Jrx+CsXN//J1g==
+// Q9YY6CNYSoJkG4JegeOnOfgtmgf98CI69lzy7cKmoxwKDwjpC9EwWNAVqa0u1nGQz1UBLJwI4lboesyeYpP2gzY9alzzDFDXPSA2NyRpoYznZ8Z+BWKwtT33y6AVlDK8we8GKbeH7iukl/5DP5chzqJQ9QjZ5QvLM7kxzUKxLrd9FpafHXij9u3iCZqgCprksxBwMcX5CQVGTRtPpUlYUNQJim/wbUTYH0gfRqKURN70te68Cmm8lurkeGI/Mw/pGBwxCrkbAtm9C9+a/lZD1vkEgQdV3+Yd4LO2KtJ4VUUeqOzEGQVSGXfFK+Lo52ZlfPwbxmao7dtx1VCBOgWXDA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, October 6, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, October 19, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -626,14 +626,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
 		if(!name){return;}
-		if(name.indexOf('http://api.e-map.ne.jp/jsapi.cgi?')!=-1){
+		if(name.indexOf('api.e-map.ne.jp/jsapi.cgi?')!=-1){
 			// Zenrin Datacom E-Map API, PATCH-115
 			if (!Event.prototype.__lookupGetter__('layerX')&&!Event.prototype.__lookupGetter__('layerY')) {
 				Event.prototype.__defineGetter__('layerX',function(){ return this.offsetX; });
 				Event.prototype.__defineGetter__('layerY',function(){ return this.offsetY; });
 			}
 			ev.element.src += '&force=1';
-		}else if((name.indexOf('expapi/authentication')!=-1)||(name.indexOf('rosen/authentication')!=-1)){
+		}else if((name.indexOf('expapi/authentication')!=-1)||(name.indexOf('expapi/expmapinclude')!=-1)||(name.indexOf('rosen/authentication')!=-1)){
 			// Rosenzu ASP Map Service map, PATCH-122
 			opera.defineMagicFunction('_ch',function(){return true;});
 		}else if((name.indexOf('expapi/suggest')!=-1)||(name.indexOf('rosen/suggest')!=-1)){
@@ -778,6 +778,10 @@ function stopKeypressIfDownCancelled(stopKey){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid IFRAME resize causing lots of empty space on auctions (the IFRAME part)). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay). See browser.js for details');
+	} else if(hostname.indexOf('.geoaccess.com')>-1){			// PATCH-314, PacifiCare doctor finder blocks Opera
+		navigator.appName='Netscape';
+		opera.defineMagicVariable('is_nav6up', function(){return true},null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (PacifiCare doctor finder blocks Opera). See browser.js for details');
 	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/reader/view')>-1){			// PATCH-32, Google Reader wraps long feed titles
 		addCssToDocument(".scroll-tree .name { display: block;}");
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader wraps long feed titles). See browser.js for details');
@@ -949,10 +953,6 @@ function stopKeypressIfDownCancelled(stopKey){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Keyboard navigation of autocomplete menu fails). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo!). See browser.js for details');
-	} else if(hostname.indexOf('ajaxian.com')==0){			// PATCH-246, Work around layout freeze
-		addCssToDocument('.commentbar span{float:none!important}');
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around layout freeze). See browser.js for details');
 	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
 		navigator.product='Gecko';
 		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
@@ -1255,6 +1255,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.addEventListener('BeforeEventListener.keypress', function( e ){ preventDefault.call=call; if( e.event.keyCode in ignoreKeypressCodes) preventDefault.call(e); }, false)
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( fixing navigation menu on isbank.com.tr\nfixing keypress handler on isbank.com.tr). See browser.js for details');
+	} else if(hostname.indexOf('kartor.eniro.se')>-1){			// PATCH-310, JIT bug breaks apply with empty array, use call instead
+		addPreprocessHandler(/\.apply\(this,\[\]\)/g, '.call(this)');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (JIT bug breaks apply with empty array, use call instead). See browser.js for details');
 	} else if(hostname.indexOf('kasyouen.com')>-1){			// PATCH-238, Override minmax IE helper script
 		opera.defineMagicFunction('minmax_scan', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Override minmax IE helper script). See browser.js for details');
