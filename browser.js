@@ -1,4 +1,4 @@
-// a2SHKkDZlKYDZN5I7f7emZ5zhe3ebm6tJEn5dZ0HQzvZspaQlcUtKY3rTmi61M4oQKPnVeldllMjRYEy+SnoZPd/EjCESz+nNri8nDta8JWnRZsi9kcsKq8LAlgzrXrRWGkL8LIbc1Jnynym0LFkd0EcjOXgfaS/0XGQWOH1x5Th+/2Jex5zSKQy9sGMIZGYrn6/2wf/YGfQnONxiDPgfn8iVa++YdBWAzuO5hRxS8v7Y0Cgu7S8mj34b8MQQ8zLghXbnXX8Cqc/PxA0YtVpjukBx49jEzbSUZYOneVo9HesmytRnG/qex5iMttGn9ipwmfZGP8WwR/sQ9EiQXtaxQ==
+// HLGqcX6iiAfKwcA+qRR4PJ625rGbT7NRuXr3vzmn+BSciy9HLxyWZAebpxHJ0G0P/jJXRCcO1fWfqKr/qKndUdKzpl97WL3zF1FFORzcXhk2hOj1OkUqLtmN0q+8st5nHdW+657gImugBsHnTKbtYRTFyfnMTtonjWzQa5zWJMi50OcJ8TRmSOd22dtFCTRFMiBPAd0opIUpNaoSWjz7quNOai2hQ8Wdo/wlsdp1cz37BM706fd7qKwtMmTsKoJnhsUi6AksLLNdgKLkRc9oS4sMSR9bErF/JRzKVXXA82dXaQ+00dbhDs3Xw9X14YpSIdA3TS7XUQ+C44xvmsgSxA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, October 6, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, October 19, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -636,14 +636,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	opera.addEventListener('BeforeExternalScript',function(ev){
 		var name=ev.element.src; 
 		if(!name){return;}
-		if(name.indexOf('http://api.e-map.ne.jp/jsapi.cgi?')!=-1){
+		if(name.indexOf('api.e-map.ne.jp/jsapi.cgi?')!=-1){
 			// Zenrin Datacom E-Map API, PATCH-115
 			if (!Event.prototype.__lookupGetter__('layerX')&&!Event.prototype.__lookupGetter__('layerY')) {
 				Event.prototype.__defineGetter__('layerX',function(){ return this.offsetX; });
 				Event.prototype.__defineGetter__('layerY',function(){ return this.offsetY; });
 			}
 			ev.element.src += '&force=1';
-		}else if((name.indexOf('expapi/authentication')!=-1)||(name.indexOf('rosen/authentication')!=-1)){
+		}else if((name.indexOf('expapi/authentication')!=-1)||(name.indexOf('expapi/expmapinclude')!=-1)||(name.indexOf('rosen/authentication')!=-1)){
 			// Rosenzu ASP Map Service map, PATCH-122
 			opera.defineMagicFunction('_ch',function(){return true;});
 		}else if((name.indexOf('expapi/suggest')!=-1)||(name.indexOf('rosen/suggest')!=-1)){
@@ -784,6 +784,10 @@ function stopKeypressIfDownCancelled(stopKey){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid IFRAME resize causing lots of empty space on auctions (the IFRAME part)). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (eBay). See browser.js for details');
+	} else if(hostname.indexOf('.geoaccess.com')>-1){			// PATCH-314, PacifiCare doctor finder blocks Opera
+		navigator.appName='Netscape';
+		opera.defineMagicVariable('is_nav6up', function(){return true},null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (PacifiCare doctor finder blocks Opera). See browser.js for details');
 	} else if(hostname.indexOf('.google.')>-1&&href.indexOf('/reader/view')>-1){			// PATCH-32, Google Reader wraps long feed titles
 		addCssToDocument(".scroll-tree .name { display: block;}");
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader wraps long feed titles). See browser.js for details');
@@ -973,10 +977,6 @@ function stopKeypressIfDownCancelled(stopKey){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Keyboard navigation of autocomplete menu fails). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo!). See browser.js for details');
-	} else if(hostname.indexOf('ajaxian.com')==0){			// PATCH-246, Work around layout freeze
-		addCssToDocument('.commentbar span{float:none!important}');
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around layout freeze). See browser.js for details');
 	} else if(hostname.indexOf('ameba.jp')!=-1){			// 331093, Enable blog post editor on ameba.jp
 		navigator.product='Gecko';
 		navigator.userAgent=navigator.userAgent.replace('Opera', '0pera (spoofing as Firefox)');
@@ -1273,6 +1273,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.addEventListener('BeforeEventListener.keypress', function( e ){ preventDefault.call=call; if( e.event.keyCode in ignoreKeypressCodes) preventDefault.call(e); }, false)
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( fixing navigation menu on isbank.com.tr\nfixing keypress handler on isbank.com.tr). See browser.js for details');
+	} else if(hostname.indexOf('kartor.eniro.se')>-1){			// PATCH-310, JIT bug breaks apply with empty array, use call instead
+		addPreprocessHandler(/\.apply\(this,\[\]\)/g, '.call(this)');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (JIT bug breaks apply with empty array, use call instead). See browser.js for details');
 	} else if(hostname.indexOf('kasyouen.com')>-1){			// PATCH-238, Override minmax IE helper script
 		opera.defineMagicFunction('minmax_scan', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Override minmax IE helper script). See browser.js for details');
@@ -1674,7 +1677,12 @@ function stopKeypressIfDownCancelled(stopKey){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
 	} else if(hostname.indexOf('www.weather.com')>-1){			// PATCH-294, Hide extra button text on weather.com
 		document.addEventListener('DOMContentLoaded',
-		 function(){document.getElementById('twc-weather-search-submit-id').value=''},
+		 function(){
+		  elm = document.getElementsByClassName('twc-weather-search-submit')[0];
+		  if(elm && elm.type=='submit'){
+		   elm.value='';
+		  }
+		 },
 		 false
 		);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide extra button text on weather.com). See browser.js for details');
