@@ -1,4 +1,4 @@
-// q7US1yDS3dRMdGMX3HqrRCnEZYdwASzNGRCx3yJyqs7w+vUwOna6VXwLmIVT1HKVGSG2nZJL2pXofzWSq+1Dzd3FcEna0FCGeGsal8o6a7KTuRkz0do0C1U19keWjIDNdm8g27PlblNEK8t7gMQ9kjaqPDVWyO1iG/GcYLwbB3upksQwz9Z4uyBZJAPtZcBQAmNIMdq3rfTi3Ak1eLlNfF6YUM7Zau/FarTnwOmugdZlye3d8mdoX+ZD7Rzqc6f2Z8e3KDuWPhbu6cNNDInOVKk7LrMh2c+K4CPhwNIO+8oey4kXZzU7upBJJOSYrpYfpJ0fevm9W5PwzfUFrqrLPQ==
+// xMbJMTZzLEZGw2nsaZgmbsqMAv1j9Xr6YcZ77epNwEF0XIfIdEOshB+gc0NG56TrXFnj/UCfKY3riId39kUIy3Mc2/3cSMK2ddPhiWQAXq6dcNn4fvTxlEhYs4nG/HnvH2hE9StaF5jBOYuYouTyUdt8MbcD1wS2HrHqHuPpHjcMNiHG4TKshNHB6tgaZefar6NrDAjgs+93LfPggTEeFd+EgCdHbC9p0jGRA2i1Un5z7GNs4q1iQWeiNiEh4o4WCxbNO09yawneEOMTSbtT+YKV1qDL4ft8a5Qf8KyfzDN4trkb2IKhlsdgyig9+/9DbhAGI9J1p6JkVBlcYb8M6w==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.70 core 2.6.37, October 19, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.6.37, October 19, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
