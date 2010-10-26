@@ -1,4 +1,4 @@
-// q7US1yDS3dRMdGMX3HqrRCnEZYdwASzNGRCx3yJyqs7w+vUwOna6VXwLmIVT1HKVGSG2nZJL2pXofzWSq+1Dzd3FcEna0FCGeGsal8o6a7KTuRkz0do0C1U19keWjIDNdm8g27PlblNEK8t7gMQ9kjaqPDVWyO1iG/GcYLwbB3upksQwz9Z4uyBZJAPtZcBQAmNIMdq3rfTi3Ak1eLlNfF6YUM7Zau/FarTnwOmugdZlye3d8mdoX+ZD7Rzqc6f2Z8e3KDuWPhbu6cNNDInOVKk7LrMh2c+K4CPhwNIO+8oey4kXZzU7upBJJOSYrpYfpJ0fevm9W5PwzfUFrqrLPQ==
+// ZzA5RCfm1sH2BvWDRtQe+LfDsWGcnLdiLkqucrLnJreiAHqMBpZ/DdcM5LMNMKLeIVwTLU17+H4UBui8Wh9cS2GKLlUgG1CATVupClYPiWNoDuHYJ5Mfgvnfyw1qolNrJBsgnoFOZshmmygs/c+PYWywiIO4jJQ45JZOCeYIgKvSz9t938906fCkB0tIUHvAPeTyixknHvNSUxe+bLl0KUlqBiEVJaVDWBjTefvzj+s1z7yv1W1TG50L5of6aQex+HnehZm5dFVHWyn/N/awOq40MvXjNjaPNx1MJIy2MTqWBxbwBlolkkUkw0yajfJjpVlq4L5iH2sAjjSLrXwCQQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.70 core 2.6.37, October 19, 2010 ';
+	var bjsversion=' Opera Desktop 10.70 core 2.6.37, October 26, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1086,6 +1086,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
+	} else if(hostname.indexOf('code.google.com')>-1 && pathname.indexOf('diff')>-1){			// PATCH-321, Work around pre inheritance into tables on Google Code
+		addCssToDocument('div.diff > pre > table{white-space: normal;}div.diff > pre > table th{white-space: nowrap;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around pre inheritance into tables on Google Code). See browser.js for details');
 	} else if(hostname.indexOf('computerra.ru')>-1){			// PATCH-267, Make BBCode editor buttons work by disabling Opera sniffing
 		document.addEventListener('DOMContentLoaded', function(){
 			if(window.jsUtils&&window.jsUtils.bOpera)jsUtils.bOpera=false;
@@ -1201,6 +1204,21 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( BlueCross browser sniffing prevents insurance search). See browser.js for details');
+	} else if(hostname.indexOf('hk.centamap.com')>-1){			// PATCH-318, Fix missing menu and misplaced highlights on hk.centamap.com
+		document.addEventListener('DOMContentLoaded',function(evt){	// CORE-7324
+			parent.document.body.__defineGetter__('offsetHeight',function(){ return parent.window.innerHeight; });
+			parent.document.body.__defineGetter__('offsetWidth',function(){ return parent.window.innerWidth; });
+		},false);
+		if (pathname.indexOf('/i.aspx')>-1) {
+			document.addEventListener('DOMContentLoaded',function(evt){	// CORE-25431
+				var els=document.getElementsByTagName('a');
+				for (var i=0,len=els.length;i<len;i++) {
+					if (!els[i].childNodes.length) { els[i].setAttribute('style','display:block;'); }
+				}
+			},false);
+		}
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix missing menu and misplaced highlights on hk.centamap.com). See browser.js for details');
 	} else if(hostname.indexOf('ibank.isb.ru')!=-1){			// 0, browser sniffing breaks ibank.isb.ru
 		navigator.__defineGetter__('family', function(){return 'gecko';})
 		navigator.__defineSetter__('family', function(){})
@@ -1307,6 +1325,27 @@ function stopKeypressIfDownCancelled(stopKey){
 			return result;
 		}
 		
+				// PATCH-311, Hidden 'next page' links due to markup errors
+		document.addEventListener('DOMContentLoaded', function(){
+			var el=document.getElementById('firstPageLink');
+			if(el && el.parentNode.tagName=='LI'){
+				el=el.parentNode; /* this LI contains some children it shouldn't contain due to </div</li> markup */
+				for(var children=el.parentNode.getElementsByTagName('li'),child; child=children[children.length-1];){
+					el.parentNode.parentNode.appendChild(child);
+				}
+				var tmp=document.createElement('div');
+				var internalSetter=tmp.__lookupSetter__('innerHTML');
+				Element.prototype.__defineSetter__('innerHTML', function(html){
+					html=html.replace(/<\/div<\/li>/ig, '</div></li>');
+					return internalSetter.call(this, html);
+				});
+				var internalGetter=tmp.__lookupGetter__('innerHTML');
+				Element.prototype.__defineGetter__('innerHTML', function(){
+					return internalGetter.call(this);
+				});
+			}
+		}, false);
+		
 				// DSK-235885, Hotmail uses lookupGetter on prototypes, not instances
 		var styleSetterLookupMethod = document.createElement('span').style.__lookupSetter__;
 		 CSSStyleDeclaration.prototype.__lookupSetter__ = function(prop){
@@ -1327,6 +1366,13 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
 		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
+	} else if(hostname.indexOf('myspace.com')>-1){			// PATCH-266, Opera disallows using reserved word top as variable name
+		(function(){
+			var the_top;
+			opera.defineMagicVariable('top', function(){return the_top;}, function(o){the_top=o;});
+		})();
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera disallows using reserved word top as variable name). See browser.js for details');
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
@@ -1356,6 +1402,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('nyteknik.se')>-1){			// PATCH-265, nyteknik.se uses parent as variable name
 		enableRedefiningParent();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (nyteknik.se uses parent as variable name). See browser.js for details');
+	} else if(hostname.indexOf('orbitdownloader.com')>-1){			// PATCH-322, Force height to avoid overlapping on orbitdownloader
+		addCssToDocument('div.flag{height:1.1em;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Force height to avoid overlapping on orbitdownloader). See browser.js for details');
 	} else if(hostname.indexOf('orkut.com')>-1){			// PATCH-21, can't change orkut avatar picture
 		var tmp=document.createElement('img');
 		var w_getter=tmp.__lookupGetter__('width');
