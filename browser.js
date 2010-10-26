@@ -1,4 +1,4 @@
-// HLGqcX6iiAfKwcA+qRR4PJ625rGbT7NRuXr3vzmn+BSciy9HLxyWZAebpxHJ0G0P/jJXRCcO1fWfqKr/qKndUdKzpl97WL3zF1FFORzcXhk2hOj1OkUqLtmN0q+8st5nHdW+657gImugBsHnTKbtYRTFyfnMTtonjWzQa5zWJMi50OcJ8TRmSOd22dtFCTRFMiBPAd0opIUpNaoSWjz7quNOai2hQ8Wdo/wlsdp1cz37BM706fd7qKwtMmTsKoJnhsUi6AksLLNdgKLkRc9oS4sMSR9bErF/JRzKVXXA82dXaQ+00dbhDs3Xw9X14YpSIdA3TS7XUQ+C44xvmsgSxA==
+// fi2vCaaQjzb1bJd94lCFHwcJRa9772YrGB9Fuc0PW8aOOHN5T9Y2zi88PYTr/rXvlckemyk/oxIWNxryU1wXJ57iOhkfYt1lgKaD7gILJ7wmkJbpU4LJTDj0Dbl2cZqCs+JwhDKkEbGckv/ReVMec0NL6wzOSy5a4bpISuEGw/Ky557uWUAP8xhVC/SAgIj6KbRF6NzIUQmXWMIzjbTZQdbMneYOAtbf70MI3NFVg1vJDqf9XK5+ur/2bN3KM6Xtz0A9jOdt0AN3f+/SUIw0dKXNtVk+DR3bDUB5YLdP8H76PZ2WvsJ0NyCpr9y8BU+EhA4inluunWYi7icxsP655w==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, October 19, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, October 26, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1125,6 +1125,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
+	} else if(hostname.indexOf('code.google.com')>-1 && pathname.indexOf('diff')>-1){			// PATCH-321, Work around pre inheritance into tables on Google Code
+		addCssToDocument('div.diff > pre > table{white-space: normal;}div.diff > pre > table th{white-space: nowrap;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around pre inheritance into tables on Google Code). See browser.js for details');
 	} else if(hostname.indexOf('computerra.ru')>-1){			// PATCH-267, Make BBCode editor buttons work by disabling Opera sniffing
 		document.addEventListener('DOMContentLoaded', function(){
 			if(window.jsUtils&&window.jsUtils.bOpera)jsUtils.bOpera=false;
@@ -1254,6 +1257,21 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('google')>-1&&pathname.indexOf('/calendar')==0){			// PATCH-262, Layout regression squishes event detail edit screen on Google Calendar
 		addCssToDocument('#mothertable{table-layout:auto!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Layout regression squishes event detail edit screen on Google Calendar). See browser.js for details');
+	} else if(hostname.indexOf('hk.centamap.com')>-1){			// PATCH-318, Fix missing menu and misplaced highlights on hk.centamap.com
+		document.addEventListener('DOMContentLoaded',function(evt){	// CORE-7324
+			parent.document.body.__defineGetter__('offsetHeight',function(){ return parent.window.innerHeight; });
+			parent.document.body.__defineGetter__('offsetWidth',function(){ return parent.window.innerWidth; });
+		},false);
+		if (pathname.indexOf('/i.aspx')>-1) {
+			document.addEventListener('DOMContentLoaded',function(evt){	// CORE-25431
+				var els=document.getElementsByTagName('a');
+				for (var i=0,len=els.length;i<len;i++) {
+					if (!els[i].childNodes.length) { els[i].setAttribute('style','display:block;'); }
+				}
+			},false);
+		}
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix missing menu and misplaced highlights on hk.centamap.com). See browser.js for details');
 	} else if(hostname.indexOf('ibank.isb.ru')!=-1){			// 0, browser sniffing breaks ibank.isb.ru
 		navigator.__defineGetter__('family', function(){return 'gecko';})
 		navigator.__defineSetter__('family', function(){})
@@ -1363,6 +1381,27 @@ function stopKeypressIfDownCancelled(stopKey){
 			return result;
 		}
 		
+				// PATCH-311, Hidden 'next page' links due to markup errors
+		document.addEventListener('DOMContentLoaded', function(){
+			var el=document.getElementById('firstPageLink');
+			if(el && el.parentNode.tagName=='LI'){
+				el=el.parentNode; /* this LI contains some children it shouldn't contain due to </div</li> markup */
+				for(var children=el.parentNode.getElementsByTagName('li'),child; child=children[children.length-1];){
+					el.parentNode.parentNode.appendChild(child);
+				}
+				var tmp=document.createElement('div');
+				var internalSetter=tmp.__lookupSetter__('innerHTML');
+				Element.prototype.__defineSetter__('innerHTML', function(html){
+					html=html.replace(/<\/div<\/li>/ig, '</div></li>');
+					return internalSetter.call(this, html);
+				});
+				var internalGetter=tmp.__lookupGetter__('innerHTML');
+				Element.prototype.__defineGetter__('innerHTML', function(){
+					return internalGetter.call(this);
+				});
+			}
+		}, false);
+		
 				// DSK-235885, Hotmail uses lookupGetter on prototypes, not instances
 		var styleSetterLookupMethod = document.createElement('span').style.__lookupSetter__;
 		 CSSStyleDeclaration.prototype.__lookupSetter__ = function(prop){
@@ -1383,6 +1422,13 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('msdn.microsoft.com')!=-1){			// DSK-224171, MSDN menus are invisible, should appear
 		HTMLBodyElement.prototype.__defineGetter__('scrollWidth', function(){ return this.document.documentElement.scrollWidth;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (MSDN menus are invisible, should appear). See browser.js for details');
+	} else if(hostname.indexOf('myspace.com')>-1){			// PATCH-266, Opera disallows using reserved word top as variable name
+		(function(){
+			var the_top;
+			opera.defineMagicVariable('top', function(){return the_top;}, function(o){the_top=o;});
+		})();
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera disallows using reserved word top as variable name). See browser.js for details');
 	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
 		document.attachEvent=undefined;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
@@ -1412,6 +1458,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('nyteknik.se')>-1){			// PATCH-265, nyteknik.se uses parent as variable name
 		enableRedefiningParent();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (nyteknik.se uses parent as variable name). See browser.js for details');
+	} else if(hostname.indexOf('orbitdownloader.com')>-1){			// PATCH-322, Force height to avoid overlapping on orbitdownloader
+		addCssToDocument('div.flag{height:1.1em;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Force height to avoid overlapping on orbitdownloader). See browser.js for details');
 	} else if(hostname.indexOf('orkut.com')>-1){			// PATCH-21, can't change orkut avatar picture
 		var tmp=document.createElement('img');
 		var w_getter=tmp.__lookupGetter__('width');
