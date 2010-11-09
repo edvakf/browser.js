@@ -1,4 +1,4 @@
-// oYXEJbOlo/I9oE/JmuRDYzhR39NVJjJM52e9WJFvTpMhD/HCr//h/K1puvdfgJAP3bJuYmx0VTsyTutozf6+lvzPw/Fh8IoZWmMNC5WwyXJKzLaTAMQZFJIrB/uKVM0zmjeBluCbCXKDYiqpRCJPSkCRFkAjtDSXIbBO5P2j4i5pjWkaFboc8MY0eOU1OfpR28ZdHAbbRzUyf7JqGklBDodf+mdNUZfjBsQZHbPZ+mTuQYGgfgQ3K2xziiIhwE3yqbgnsLVzx0e35F6Smpa5HvW/rtSxCCavXM/f08alNzd1fdGa+o6sKiEolW9/fLOa5HP0vWbpWFe/1opBqpfXfA==
+// c4MLOjJrzQN9c+pCV8le2j7T1z3tC3DA5DLQSd1TvMwjgloryzXDD6VFMvn5Ag/tX+JO9Z4XWh/gguOcIvTxA+zM/l4Qs14e6TfF2tOhKp2hsDLDLwziirtOmM5651Bt73RS9wbOTJzt0qCoCazi+1mrb3bBfwXdtZTaKrWua/8oOylJtLfpzvaJZBNeVsIR8X/NJiX5BDVK1el33L0SQOw+XtUjikAAx0sBLBaLeX0wIapTH+fkv//ZrJC/+LH2SxP+PWAN6+afT/pblicVty3iYxLvd5Tt6gXGoX9hcmRAQuLm+HYG4z5QoWycPOcdCAMetpARmlDSQjxtRSPTuA==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.6.37, October 26, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 9, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -105,16 +105,16 @@
 
 	function addPreprocessHandler( search, replacement, onceonly, conditional ){
 		// adding event handler for script pre-processing if required
-		opera.addEventListener('BeforeScript', 
-			function(e){ 
-				indexOf.call=replace.call=removeEventListener.call=call; /* also needs anything used inside conditional! */
-				if( conditional && ! conditional(e.element) ){return;}
-				e.element.text=replace.call( e.element.text, search, replacement );
-				if(onceonly){
-					removeEventListener.call(opera, 'BeforeScript', arguments.callee, false);
-				}
+		var handler=function(e){
+			indexOf.call=replace.call=removeEventListener.call=call; /* also needs anything used inside conditional! */
+			if( conditional && ! conditional(e.element) ){return;}
+			e.element.text=replace.call( e.element.text, search, replacement );
+			if(onceonly){
+				removeEventListener.call(opera, 'BeforeScript', arguments.callee, false);
 			}
-		, false);
+		}
+		opera.addEventListener('BeforeScript', handler , false);
+		return handler;
 	}
 
 function avoidDocumentWriteAbuse(contentRegexp){
@@ -1086,7 +1086,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
-	} else if(hostname.indexOf('code.google.com')>-1 && pathname.indexOf('diff')>-1){			// PATCH-321, Work around pre inheritance into tables on Google Code
+	} else if(hostname.indexOf('code.google.com')>-1 && (pathname.indexOf('diff')>-1 || pathname.indexOf('detail')>-1 )){			// PATCH-321, Work around pre inheritance into tables on Google Code
 		addCssToDocument('div.diff > pre > table{white-space: normal;}div.diff > pre > table th{white-space: nowrap;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around pre inheritance into tables on Google Code). See browser.js for details');
 	} else if(hostname.indexOf('computerra.ru')>-1){			// PATCH-267, Make BBCode editor buttons work by disabling Opera sniffing
@@ -1146,7 +1146,11 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('facebook.com')!=-1){			// PATCH-264, @mentions feature requires correct cancellation of enter keys
 		stopKeypressIfDownCancelled();
 				// PATCH-264, Enable @mentions
-		addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||', true, function(el){return indexOf.call(el.text, 'this.suppressMentions=(ua.opera()')>-1; } );
+		var mentionsPatcher=addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||', true, function(el){return indexOf.call(el.text, 'this.suppressMentions=(ua.opera()')>-1; } );
+		opera.addEventListener('BeforeEvent.DOMContentLoaded', function(){
+			if(document.getElementsByName('status').length==0)opera.removeEventListener('BeforeScript', mentionsPatcher, false);
+		}, false);
+		
 				// PATCH-299, Make deleting @mentions work
 		(function(){
 		var storedRngInfo={};
@@ -1313,18 +1317,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			},false);
 		}
 		
-				// PATCH-37, To-button does not bring up contacts list
-		window.getComputedStyle=function(){
-			var result=getComputedStyle.apply(this, arguments);
-			if( /ContactPicker/.test(arguments[0].id )){
-				result.getPropertyValue=function(name){
-					if(name=='height')return '400px';
-					return CSSStyleDeclaration.prototype.getPropertyValue.call(this, name);
-				}
-			}
-			return result;
-		}
-		
 				// PATCH-311, Hidden 'next page' links due to markup errors
 		document.addEventListener('DOMContentLoaded', function(){
 			var el=document.getElementById('firstPageLink');
@@ -1437,6 +1429,23 @@ function stopKeypressIfDownCancelled(stopKey){
 				// PATCH-229, Hidden form causes non-clickable button, prevents profile image selection
 		addCssToDocument('form{opacity:1!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
+	} else if(hostname.indexOf('ostgotatrafiken.se')>-1){			// PATCH-324, Fix autocomplete forms being prematurely submitted on OstgotaTrafiken
+		document.addEventListener('DOMContentLoaded',function (e) {		
+			var els = document.getElementsByTagName('input');
+			for (var i=0,len=els.length;i<len;i++){
+				var elclass = els[i].getAttribute('class')
+				if (elclass && elclass.indexOf('ui-autocomplete-input')>-1) {
+					els[i].addEventListener('keypress',function(ev){ if (ev.keyCode==13) {
+						ev.preventDefault();
+						var evObj = document.createEvent('UIEvents');
+						evObj.initUIEvent('keydown',true,true,window,1);
+						evObj.keyCode = 13;
+						this.dispatchEvent(evObj);
+					} },false);
+				}
+			}
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix autocomplete forms being prematurely submitted on OstgotaTrafiken). See browser.js for details');
 	} else if(hostname.indexOf('pb.yamada-denki.jp')>-1){			// OTW-5165, Show digital pamphlet from Yamada Denki
 		Element.prototype.attachEvent = null;
 		window.opera = null;
