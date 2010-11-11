@@ -1,4 +1,4 @@
-// jTKjfpEwAGx/MsqpZnkkHSlhfwGzO1+atPsopj0eZGPKnsvMB3JaScFHQKxdZO+LC9Ksrw7NDa+LgtuWNzm0+UJCqJism4Ly7hr0u7iMRb3ez2lzBTJ5KDFtJt56AZ0B1ucj5uPEK3Ueuw319wz1OD0ta7ftlzwuUCOB5vdvNuANEhbYdMmwXQV7Py7RhEVNcod2/h+z3K10k9ocR0ZH29zlO7wNvJqtcN0k5xsb/YKcP8tSv1ge3NNWj3cX8qn9Am0kt6MMYUmncFGD8yQ6Xz6janUno/al+BRpcwUTvdC20YY4I0CdUDqJtAammxwBMeFQtTPmGwebJwYlHBSJqw==
+// YzoN5LAbpwm/lBW2E4SCV9GS3KbjaK1DFkcX19TGdxbUBNdPRrTaEb9S1zLAZM04ckjamQhBVDD9baknQjEq8bL+cDpat+cRvt+SaZexaamG9XolOv+pGcMUi4XMJyVR4p7T1OoZk0jIlOnMNOMQIreWC39p16jmKnolK3VXRHoPrMxpQ/XJShIAUKZezVlB5/tGN2v1ptk1zAYMBmGfygx4FQ9JKYHEYEUy1kYcaEuZ1iiCsNN6NtASE0pdKb7V/zc48m9MfOtViMJ3JVjfewE7vlvFyJjmosHrnAQVvfyRlIJSbB0/Mh+t720DRLTjJT+9qumpmLgx3UnSC67pPQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 10, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 11, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -402,7 +402,7 @@ function stopKeypressIfDownCancelled(stopKey){
 // Asia-region Generic Patches
 // Experimentally disable IE event model to watch compatibility impact
 // Disable HTMLElement.all support, compat experiment
-// Disable element.document support, compat experiment
+// Disable HTMLElement.removeNode support, compat experiment
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
 	opera.addEventListener( 'BeforeEventListener.readystatechange', function(e){
 		var element=e.event.target;
@@ -647,10 +647,8 @@ function stopKeypressIfDownCancelled(stopKey){
 	delete Node.prototype.detachEvent;
 			// PATCH-328, Disable HTMLElement.all support, compat experiment
 	HTMLElement.prototype.__defineGetter__('all', function(){});
-			// PATCH-329, Disable element.document support, compat experiment
-	Node.prototype.__defineGetter__('document', function(){});
-	
-	
+			// PATCH-331, Disable HTMLElement.removeNode support, compat experiment
+	delete HTMLElement.prototype.removeNode;
 
 
 	if((hostname.indexOf('tokyo.jp')>-1)||(hostname.indexOf('lg.jp')>-1)){			// PATCH-186, tokyo.jp, lg.jp enable maps
@@ -1528,6 +1526,11 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
 		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (SEB bank prevents typing certain keys). See browser.js for details');
+	} else if(hostname.indexOf('shimano.com')>-1){			// PATCH-329, Disable element.document support, breaks shimano.com menu
+		Node.prototype.__defineGetter__('document', function(){});
+		
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable element.document support, breaks shimano.com menu). See browser.js for details');
 	} else if(hostname.indexOf('shoptime.com.br')>-1){			// PATCH-81, Fix for not possible to type since Opera does not support charCode
 		defineMagicFunction.call(opera, 'soNums',
 					function(real, e, args){
