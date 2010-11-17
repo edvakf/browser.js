@@ -1,4 +1,4 @@
-// YzoN5LAbpwm/lBW2E4SCV9GS3KbjaK1DFkcX19TGdxbUBNdPRrTaEb9S1zLAZM04ckjamQhBVDD9baknQjEq8bL+cDpat+cRvt+SaZexaamG9XolOv+pGcMUi4XMJyVR4p7T1OoZk0jIlOnMNOMQIreWC39p16jmKnolK3VXRHoPrMxpQ/XJShIAUKZezVlB5/tGN2v1ptk1zAYMBmGfygx4FQ9JKYHEYEUy1kYcaEuZ1iiCsNN6NtASE0pdKb7V/zc48m9MfOtViMJ3JVjfewE7vlvFyJjmosHrnAQVvfyRlIJSbB0/Mh+t720DRLTjJT+9qumpmLgx3UnSC67pPQ==
+// S4o4hZ7z6nrVdYJtxm0PkWsyHTP8yNq0heQbBKGpN9PkbmbTmbOQLg1PK1K3XDCcFJT5AKiWSQXYYkfYdOl1h+Qb9wPmoI0f98RSiAVqeNpW6J8+e0zqVWRqxkE5wSYna625EPALdQOwqIl6eVDfJ6QbZ2JMFi7MCxnHZ/qYFqcBiB9n/ZG3TAVbqIr/kLKXbdkJSS8QZoxWqTqHAbYoopdxx00JQLCpeAzrj0zRAPSxb4ocJcvvFBHhzis8+Av0M+ONUWlIkwCn+AIL5+W2nmUiGnWSx3eu0zP7qTl8IRZqz6hIlVY1N5f22yri5c/w8+WGO24SAHknw2H1xekblg==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 11, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 16, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -401,7 +401,6 @@ function stopKeypressIfDownCancelled(stopKey){
 // Disable sniffing in old HTMLArea editors
 // Asia-region Generic Patches
 // Experimentally disable IE event model to watch compatibility impact
-// Disable HTMLElement.all support, compat experiment
 // Disable HTMLElement.removeNode support, compat experiment
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
 	opera.addEventListener( 'BeforeEventListener.readystatechange', function(e){
@@ -645,8 +644,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	delete Node.prototype.attachEvent;
 	delete window.detachEvent;
 	delete Node.prototype.detachEvent;
-			// PATCH-328, Disable HTMLElement.all support, compat experiment
-	HTMLElement.prototype.__defineGetter__('all', function(){});
 			// PATCH-331, Disable HTMLElement.removeNode support, compat experiment
 	delete HTMLElement.prototype.removeNode;
 
