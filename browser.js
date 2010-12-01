@@ -1,4 +1,4 @@
-// S4o4hZ7z6nrVdYJtxm0PkWsyHTP8yNq0heQbBKGpN9PkbmbTmbOQLg1PK1K3XDCcFJT5AKiWSQXYYkfYdOl1h+Qb9wPmoI0f98RSiAVqeNpW6J8+e0zqVWRqxkE5wSYna625EPALdQOwqIl6eVDfJ6QbZ2JMFi7MCxnHZ/qYFqcBiB9n/ZG3TAVbqIr/kLKXbdkJSS8QZoxWqTqHAbYoopdxx00JQLCpeAzrj0zRAPSxb4ocJcvvFBHhzis8+Av0M+ONUWlIkwCn+AIL5+W2nmUiGnWSx3eu0zP7qTl8IRZqz6hIlVY1N5f22yri5c/w8+WGO24SAHknw2H1xekblg==
+// E8TYjtCfL46LkaMPMnKGgt61Ya5Xz9qqeyNv1sSlK2yOJr6e+dpQOmTZxPRuatzBdLYAO7D/QtCcGQl9M75kWRUP8rCCS/muhIg+82gu/uBYBIwX99TCK4DU1aJNg/2BV4LqRxHql5D3vtB7ZXiyP4yihHG19SNquYuirBSmcRsch3+k8xh5oxMV/IFBKJKaV+btctNn2cxMjNYd94phf1wco5Jltc6BSLVZteqZ49VGHYiDDIvpgGVMXPHZIla3YNcuvSNaVyK+EMIlnfmPjUk3MnPUAq4yfVFf+pnZ625oZxXXsOvj//+ruzF+DgBc6zs7r+E+xC46LQtzUiNF/w==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 16, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.39, November 30, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -811,6 +811,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		})(Element.prototype.getAttribute);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around sniffing in old BackBase library on ing.nl\nEnsure submit button is visible\nMake sure g...). See browser.js for details');
+	} else if(hostname.indexOf('.jcrew.com')>-1){			// PATCH-338, If XHR doesn't support EventTarget interface, setting onload should throw
+		XMLHttpRequest.prototype.__defineSetter__('onload', function(){ throw 'unsupported'; });
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (If XHR doesn\'t support EventTarget interface, setting onload should throw). See browser.js for details');
 	} else if(hostname.indexOf('.nhl.com')>-1){			// PATCH-215, Broken expanding sections on nhl.com
 		addCssToDocument('.sssAccordionItem{overflow: hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Broken expanding sections on nhl.com). See browser.js for details');
@@ -1090,7 +1093,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
 	} else if(hostname.indexOf('code.google.com')>-1 && (pathname.indexOf('diff')>-1 || pathname.indexOf('detail')>-1 )){			// PATCH-321, Work around pre inheritance into tables on Google Code
-		addCssToDocument('div.diff > pre > table{white-space: normal;}div.diff > pre > table th{white-space: nowrap;}');
+		addCssToDocument('div.diff>pre>table{white-space: normal;}div.diff>pre>table th, div.diff>pre>table td{white-space: pre-wrap;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around pre inheritance into tables on Google Code). See browser.js for details');
 	} else if(hostname.indexOf('computerra.ru')>-1){			// PATCH-267, Make BBCode editor buttons work by disabling Opera sniffing
 		document.addEventListener('DOMContentLoaded', function(){
