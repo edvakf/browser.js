@@ -1,4 +1,4 @@
-// OF156bcraVoXicKR90o7yEGHsgy0XRd6Y1lqfa7xMCk8lCe5fYo28LGqSoM8udVCjjT6GOF1cf5TpsLybAxY8RXktrb2Gg+9KGBUtxGgA99Ku7nCU3EcoIKe/sTOD8z0gDIm79ceTEZDX2KBdCwwdTGW9KcDKN0r8mKciu1JV5SHIfqvqnjJklDaEdkDcdRKo0ze7i0EpdbLPQDIoOu5vNCyd+FNwGIMvsq8xyzscvpPcvWFzec4ydcgopdviMrlcbPNl/XuczD2mz/xinVXtgcun7jl9lSrQw1O1UaugaZypRWWmOugpChmkxPSwDWNZlAUwDmqVnM9NbHMZiTWyw==
+// UiXkb2Ds3SLqbAihUgX6I7cwk0CVDj2sOguw43nEf54UKJFrSJdKz9IkWAAvWgKPrDVcSLf6LfOYhWB+N1gWXUEOTljtAqsT0bdAPpw5WPiYR/lXIgXVYhtPzdKBK01fdK2TDWeLK416ipscJb1X/Cut6mh+guoq3EhjLMABUY9hBpkUm7HYhNmXqN/R8wIyDpSND72CdvpYvFl/E+vp13OmtFF8tmUjlN6vGIZBJ4wUhiD2I11MzOjJXdQEsexFHHDkgmBUpqu/sAFwHpW1m5VjYAkQKNqTMetPmG4mpnnuoE3UJrNaOJyfD4oD4iaBIifBNTNqJZOr48CuE1G9Tw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, November 9, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, November 30, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -819,9 +819,17 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		})(Element.prototype.getAttribute);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around sniffing in old BackBase library on ing.nl\nEnsure submit button is visible\nMake sure g...). See browser.js for details');
+	} else if(hostname.indexOf('.jcrew.com')>-1){			// PATCH-338, If XHR doesn't support EventTarget interface, setting onload should throw
+		XMLHttpRequest.prototype.__defineSetter__('onload', function(){ throw 'unsupported'; });
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (If XHR doesn\'t support EventTarget interface, setting onload should throw). See browser.js for details');
 	} else if(hostname.indexOf('.nhl.com')>-1){			// PATCH-215, Broken expanding sections on nhl.com
 		addCssToDocument('.sssAccordionItem{overflow: hidden!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Broken expanding sections on nhl.com). See browser.js for details');
+	} else if(hostname.indexOf('.sj.se')>-1){			// PATCH-336, Block a change event that makes Opera reset select element to default value on sj.se
+		opera.addEventListener('BeforeEventListener.change', function(e){
+		  if(e.event.target.tagName ==='SELECT' && e.event.target.className.indexOf('gwt')>-1)e.preventDefault();
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Block a change event that makes Opera reset select element to default value on sj.se). See browser.js for details');
 	} else if(hostname.indexOf('.t-online.de')>-1){			// 225374,  video problems on T-online.de
 		if(hostname.indexOf('unterhaltung')>-1){
 					//Fix browser detection
@@ -1126,7 +1134,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (chase.com field refocus from onkeypress-problem). See browser.js for details');
 	} else if(hostname.indexOf('code.google.com')>-1 && (pathname.indexOf('diff')>-1 || pathname.indexOf('detail')>-1 )){			// PATCH-321, Work around pre inheritance into tables on Google Code
-		addCssToDocument('div.diff > pre > table{white-space: normal;}div.diff > pre > table th{white-space: nowrap;}');
+		addCssToDocument('div.diff>pre>table{white-space: normal;}div.diff>pre>table th, div.diff>pre>table td{white-space: pre-wrap;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around pre inheritance into tables on Google Code). See browser.js for details');
 	} else if(hostname.indexOf('computerra.ru')>-1){			// PATCH-267, Make BBCode editor buttons work by disabling Opera sniffing
 		document.addEventListener('DOMContentLoaded', function(){
@@ -1230,6 +1238,16 @@ function stopKeypressIfDownCancelled(stopKey){
 				}
 			}, false);
 		})();
+				// PATCH-339, prevent FB chat from loosing focus to the plugin playing new message sound
+		opera.defineMagicVariable('Sound', null, function(realObj){
+		  var realPlayFunction = realObj.play;
+		  realObj.play = function(){
+		    var elm=document.activeElement;
+		    realPlayFunction.apply(this, arguments);
+		    if(elm.focus)setTimeout( function(){elm.focus();}, 10 )
+		  }
+		  return realObj;
+		} );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nAvoid TinyMCE-trigg...). See browser.js for details');
 	} else if(hostname.indexOf('fantasy.nfl.com')>-1){			// PATCH-303, Reporting different clientHeight and scrollHeight for TEXTAREA breaks commenting on nfl.com
 		HTMLTextAreaElement.prototype.__defineGetter__('clientHeight', function(){
@@ -1417,6 +1435,10 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('maps.google.')>-1){			// PATCH-243, Avoid CPU spike when enabling Drag 'n' Zoom on maps.google.com
 		document.__defineGetter__('constructor',function(){return HTMLDocument;});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid CPU spike when enabling Drag \'n\' Zoom on maps.google.com). See browser.js for details');
+	} else if(hostname.indexOf('meebo.com')>-1){			// OTW-6247, Meebo tries to use detachEvent to remove listeners added with addEventListener due to inversed feature detection in their ui.detachEvent method
+		delete window.detachEvent;
+		delete Node.prototype.detachEvent;
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Meebo tries to use detachEvent to remove listeners added with addEventListener due to inversed featu...). See browser.js for details');
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
@@ -1590,6 +1612,11 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('seb-bank.de')>-1){			// PATCH-84, SEB bank prevents typing certain keys
 		ignoreCancellationOfCertainKeyEvents('keypress', {114:'', 116:'', 117:'', 122:''});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (SEB bank prevents typing certain keys). See browser.js for details');
+	} else if(hostname.indexOf('shimano.com')>-1){			// PATCH-329, Disable element.document support, breaks shimano.com menu
+		Node.prototype.__defineGetter__('document', function(){});
+		
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable element.document support, breaks shimano.com menu). See browser.js for details');
 	} else if(hostname.indexOf('shoptime.com.br')>-1){			// PATCH-81, Fix for not possible to type since Opera does not support charCode
 		defineMagicFunction.call(opera, 'soNums',
 					function(real, e, args){
