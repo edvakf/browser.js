@@ -1,4 +1,4 @@
-// YG5w+9vrcBIZ/yfTpSHGrF08nGKlSpLKA5DJcogBvlv9qGjN8oXGYVeFIIDlHFPz6BJqLC0GaMW0RjiSYwWcxP4EPYPbGzpVO3EC0sN+FTNduykxJvu/1BovYEyA9MvWa38tBniTWAx9r5dbAIUomQ0mXfKXP2ZJ4EZsgmHwNIIB1/yQ4EugScfQatAbpoCogKc9ApZsblXMokDXU/A9Vyzd5qS3DW6YbmIdaxzveJiyn2TTEUmxmohJU0FjfczKvZi2tlKabPUMtuc/3qtRZIwtIFf3ASu8hBHhKE/RXMq2KcE2kwwkh0vSD8ebM0RjamBRj5I+aa3DNVlYwHifpA==
+// vsIOTSTUsH+xs9vUsvQtnPOC2zYLyG0PSwGMNTWF/JT4/piwsoiSYd53EfZKkhGuBXAqrWnXgO4rArzwXNNU0V41RxeIOMKSHbtBvwR8cy2TlqWsjtjR3NNP6TRXR5s/1E3OuQS7I0JQG4f7Nnn9zllDbT7chCZk1mOGUArUw5PCVDSgY1styXBajv0uIH8aCvA+jdESeqRf/Cdx7CC806DOr8G8w0Wyz9L9aIdLvlJGAlt5o8Hlp/R3kvJ6TUGyQAeq6nvXtX4f8jJhWbIyswKYFYFNRcBbW9BQh8RJ4bx2cEq1rAA8NBZOvJV75O9wtNIk4po+GWvjqXa4qE9cww==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 8, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 15, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -664,17 +664,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			},false);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tokyo.jp, lg.jp enable maps). See browser.js for details');
-	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
-		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
-			if(document.getElementById('browserjs_active')){
-				document.getElementById('browserjs_active').style.display='';
-				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
-				document.getElementById('browserjs_status_message').style.display='none';
-			}else if(document.getElementById('browserjs_status_message')){
-				document.getElementById('browserjs_status_message').firstChild.data='Browser.js is enabled! '+bjsversion;
-			}
-		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Browser.js status and version reported on browser.js documentation page). See browser.js for details');
 	} else if(hostname.indexOf( 'fileplanet.com' ) >-1 && href.indexOf('/sp_downloadmanager.aspx')>-1){			// DSK-176321, Fileplanet.com sniffing blocks Opera
 		opera.defineMagicVariable('agt',function(){return "win";},null);
 		addPreprocessHandler( /(\b)window\s*.\s*opera(\b)/g,'$1undefined$2');
@@ -704,9 +693,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		}
 		if(hostname.indexOf('aol.com') >-1){			// 188197, Making sure AOL pages are not overwritten by ad script
 			avoidDocumentWriteAbuse();
-					// 262693, AOL browser sniffing causes missing styling
-			document.addEventListener('DOMContentLoaded', function(){document.documentElement.className='SAF';}, false);
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script\nAOL browser sniffing causes missing styling). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script). See browser.js for details');
 		}
 		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17733, Send button does not appear
 			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
@@ -1104,9 +1091,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('bild.de')>-1){			// PATCH-205, Fix image gallery navigation
 		addCssToDocument('.bdeFotoGalNavForw a:hover, .bdeFotoGalNavBack a:hover{background:inherit !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix image gallery navigation). See browser.js for details');
-	} else if(hostname.indexOf('bioware.com')>-1){			// 239590, bioware.com uses outdated HierMenus
-		fixHierMenus();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bioware.com uses outdated HierMenus). See browser.js for details');
 	} else if(hostname.indexOf('blogger.com')>-1){			// DSK-152851, Blogger: browser detection prevents WYSIWYG editing
 		navigator.product = 'Gecko';
 		navigator.userAgent = navigator.userAgent.replace(/Opera/, 'Firefox')+' ( rv:1.9.0.3)';
@@ -1451,9 +1435,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		})();
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera disallows using reserved word top as variable name). See browser.js for details');
-	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
-		document.attachEvent=undefined;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
 	} else if(hostname.indexOf('news.naver.com')>-1){			// PATCH-241, Make menus visible on news.naver.com
 		addCssToDocument('div.snb li div {overflow: visible !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make menus visible on news.naver.com). See browser.js for details');
@@ -1477,6 +1458,17 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('nyteknik.se')>-1){			// PATCH-265, nyteknik.se uses parent as variable name
 		enableRedefiningParent();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (nyteknik.se uses parent as variable name). See browser.js for details');
+	} else if(hostname.indexOf('opera.com')>-1&& pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
+		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
+			if(document.getElementById('browserjs_active')){
+				document.getElementById('browserjs_active').style.display='';
+				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
+				document.getElementById('browserjs_status_message').style.display='none';
+			}else if(document.getElementById('browserjs_status_message')){
+				document.getElementById('browserjs_status_message').firstChild.data='Browser.js is enabled! '+bjsversion;
+			}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Browser.js status and version reported on browser.js documentation page). See browser.js for details');
 	} else if(hostname.indexOf('orbitdownloader.com')>-1){			// PATCH-322, Force height to avoid overlapping on orbitdownloader
 		addCssToDocument('div.flag{height:1.1em;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Force height to avoid overlapping on orbitdownloader). See browser.js for details');
