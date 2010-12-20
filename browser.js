@@ -1,4 +1,4 @@
-// vF4zp7n9l3ESB+LMfiYpU0/3ukvCUSOfCH7w1FjS5CxqmAhjnTxOnRGz/clbhQkRIUWEmyy2v4p9zUfSN06dUzHvM5vxCRVgRp+ApMGxsTn6nzUW5XivCvzldHGqcwS1ncgQ8/eEjOs27O7cgL65yIOcBqE4ShVML7Nwdu8SNMr8IrLlIR4FVKcTi9cU0mo4ldyKQxKowZBGis5xWtX1R1fwnFf2fcFUllsf63RP0mCgK8rWKSMo0Zv233EebAbOlhp827ns4X4wiQhNKWOL9EkmNPHq/4aqk/tvpOVchz96bTEqImLzB7RFQ0bRxh9RbuJ+1d99HfiOrzIf45YfGw==
+// x/4nnN0dWZeCYPTwp7IL9RpCVu8EA/3fyvpaV8Z+97lHS7n+gKY2fTSHQ2SVQIBADIFJrh8WLsuYpjpr+/mq1flxFDkpm90gFB8PzW7HNOGxLW+IiGg3aW1fJpjhRGaWxvamLyKqSFxH12d8nG5jdKhs25HnvT46jFZU3mDOemZ0FPN8Nlq2Zjd4roBw6UTpZ9tOFzDSp2ydpxcedd8Rs43DKBlsezm78SMOlrwVQZ8yOwlLGe9P3W5oB/j2mKBSjUX7Y16zO21n4b4gXU9jUMtuHaQaH5iSqSslkDpBjdI9KHiaVFh4AK5g5HCpspqa/dKu3tQLUbTx+mVPWFCkSg==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.50 core 2.5.22, December 8, 2010 ';
+	var bjsversion=' Opera Desktop 10.50 core 2.5.22, December 20, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -654,17 +654,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			},false);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (tokyo.jp, lg.jp enable maps). See browser.js for details');
-	} else if((hostname=='www.opera.com' || hostname=='jp.opera.com') && pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
-		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
-			if(document.getElementById('browserjs_active')){
-				document.getElementById('browserjs_active').style.display='';
-				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
-				document.getElementById('browserjs_status_message').style.display='none';
-			}else if(document.getElementById('browserjs_status_message')){
-				document.getElementById('browserjs_status_message').firstChild.data='Browser.js is enabled! '+bjsversion;
-			}
-		}, false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Browser.js status and version reported on browser.js documentation page). See browser.js for details');
 	} else if(hostname.indexOf( 'fileplanet.com' ) >-1 && href.indexOf('/sp_downloadmanager.aspx')>-1){			// DSK-176321, Fileplanet.com sniffing blocks Opera
 		opera.defineMagicVariable('agt',function(){return "win";},null);
 		addPreprocessHandler( /(\b)window\s*.\s*opera(\b)/g,'$1undefined$2');
@@ -698,9 +687,7 @@ function stopKeypressIfDownCancelled(stopKey){
 		}
 		if(hostname.indexOf('aol.com') >-1){			// 188197, Making sure AOL pages are not overwritten by ad script
 			avoidDocumentWriteAbuse();
-					// 262693, AOL browser sniffing causes missing styling
-			document.addEventListener('DOMContentLoaded', function(){document.documentElement.className='SAF';}, false);
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script\nAOL browser sniffing causes missing styling). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script). See browser.js for details');
 		}
 		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17733, Send button does not appear
 			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
@@ -1071,9 +1058,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('bild.de')>-1){			// PATCH-205, Fix image gallery navigation
 		addCssToDocument('.bdeFotoGalNavForw a:hover, .bdeFotoGalNavBack a:hover{background:inherit !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix image gallery navigation). See browser.js for details');
-	} else if(hostname.indexOf('bioware.com')>-1){			// 239590, bioware.com uses outdated HierMenus
-		fixHierMenus();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (bioware.com uses outdated HierMenus). See browser.js for details');
 	} else if(hostname.indexOf('blogger.com')>-1){			// DSK-152851, Blogger: browser detection prevents WYSIWYG editing
 		navigator.product = 'Gecko';
 		navigator.userAgent = navigator.userAgent.replace(/Opera/, 'Firefox')+' ( rv:1.9.0.3)';
@@ -1442,9 +1426,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		})();
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera disallows using reserved word top as variable name). See browser.js for details');
-	} else if(hostname.indexOf('namooya.com')>-1){			// 241286, Namooya.com main flash does not appear
-		document.attachEvent=undefined;
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Namooya.com main flash does not appear). See browser.js for details');
 	} else if(hostname.indexOf('nationalgeographic.com')>-1){			// PATCH-223, Work around layout bug that breaks navigation menu on nationalgeographic.com
 		addCssToDocument('ul#navigation_tophat_primary > li > h3 > a, ul#navigation_tophat_primary > li > ul > li > a {display: inline !important; }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around layout bug that breaks navigation menu on nationalgeographic.com). See browser.js for details');
@@ -1491,6 +1472,17 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('oper.ru')>-1){			// PATCH-216, No scrollbars on some oper.ru pages with many comments
 		addCssToDocument('body,html{height:auto!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (No scrollbars on some oper.ru pages with many comments). See browser.js for details');
+	} else if(hostname.indexOf('opera.com')>-1&& pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
+		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
+			if(document.getElementById('browserjs_active')){
+				document.getElementById('browserjs_active').style.display='';
+				document.getElementById('browserjs_active').getElementsByTagName('span')[0].appendChild(document.createTextNode(bjsversion));
+				document.getElementById('browserjs_status_message').style.display='none';
+			}else if(document.getElementById('browserjs_status_message')){
+				document.getElementById('browserjs_status_message').firstChild.data='Browser.js is enabled! '+bjsversion;
+			}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Browser.js status and version reported on browser.js documentation page). See browser.js for details');
 	} else if(hostname.indexOf('orbitdownloader.com')>-1){			// PATCH-322, Force height to avoid overlapping on orbitdownloader
 		addCssToDocument('div.flag{height:1.1em;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Force height to avoid overlapping on orbitdownloader). See browser.js for details');
@@ -1824,6 +1816,16 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
+	} else if(location.hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
+		document.addEventListener('DOMContentLoaded',function(){
+			var els=document.getElementsByTagName('input');
+			for (var i=0,len=els.length;i<len;i++) {
+				if ((els[i].name=='pass')&&(els[i].onfocus)) {
+					els[i].onfocus = "this.value=''"
+				}
+			}
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(location.hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
 		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
 		CSSStyleSheet.prototype.insertRule = function (rule,index){
