@@ -1,4 +1,4 @@
-// fDD3Ev0itvh5ILTDkkSOdaH9TMSJzo5hzwK+nIWP/IFCTOKMpI25jtsWG4/dnTIP7jT3c99ZlD5VFPKmC6XhOCptGaVN8sYhJncGIxscsrNM27//QBvdEKjFEh1pY9Gu2gYPjFt25Rv+yA2BVwfQA80leB9Qu418OTM08pfgAuF/xCZYsT81nA7M+lIdK+v5g7LSLPni1YQdLdsepT5rxBgYuyGZCzT9BGZnpfc0koIPOxRsQwAu2JUgXO0syBdQBhhoDGNAw6w3wRuipEASjBep/7o+c55OY+O5bylnQvm/8hpgEZ/0SCARC2DnZTHyZq54lNdRDvQT8Q//SdkK1Q==
+// fn5JSb1zs48ftlQQJ6SvLU2spJfcEPNkCzC1vhqFIz6giArLkUKUco6tvERmhYxq2bj/lAt3GdtkQFijvsG89AIMgpp/2WIqPlAT4wIYf+CYhagyDNYD/RQNj8vanbB4oZHf2cBqtsRdlMTkUClFIeFy2EAJ+BNK4wnvmDhygs+88CNvfOA7QlK+5GhNGX0hbsfOCaqflb8WhaYmVQD6N2YfmC8rbwuh0rBtFfkcLSNKqZZlUkJxfeYM0GFlU++M3rqSXT98crA1c5yK6HiBvSTR2gVxjR/mLd2EMLdJim2ChrSvRJskOkHpocc9dPeSpBPIyfgrXzgHoADQQupAMw==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, December 15, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, December 20, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1215,6 +1215,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.addEventListener('BeforeEventListener.keypress', function( e ){ preventDefault.call=call; if( e.event.keyCode in ignoreKeypressCodes) preventDefault.call(e); }, false)
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( fixing navigation menu on isbank.com.tr\nfixing keypress handler on isbank.com.tr). See browser.js for details');
+	} else if(hostname.indexOf('kort.arealinfo.dk')>-1){			// PATCH-348, Disable Opera detection that causes hidden content
+		opera.defineMagicVariable('op', function(){return false}, null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable Opera detection that causes hidden content). See browser.js for details');
 	} else if(hostname.indexOf('login.live.com')!=-1){			// PATCH-242, Prevent readystatechange events on SCRIPT, causes double banners
 		opera.addEventListener('BeforeEvent.readystatechange', function(e){
 			preventDefault.call=call;
@@ -1679,6 +1682,16 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
+	} else if(location.hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
+		document.addEventListener('DOMContentLoaded',function(){
+			var els=document.getElementsByTagName('input');
+			for (var i=0,len=els.length;i<len;i++) {
+				if ((els[i].name=='pass')&&(els[i].onfocus)) {
+					els[i].onfocus = "this.value=''"
+				}
+			}
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(location.hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
 		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
 		CSSStyleSheet.prototype.insertRule = function (rule,index){
