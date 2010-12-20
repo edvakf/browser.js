@@ -1,4 +1,4 @@
-// vsIOTSTUsH+xs9vUsvQtnPOC2zYLyG0PSwGMNTWF/JT4/piwsoiSYd53EfZKkhGuBXAqrWnXgO4rArzwXNNU0V41RxeIOMKSHbtBvwR8cy2TlqWsjtjR3NNP6TRXR5s/1E3OuQS7I0JQG4f7Nnn9zllDbT7chCZk1mOGUArUw5PCVDSgY1styXBajv0uIH8aCvA+jdESeqRf/Cdx7CC806DOr8G8w0Wyz9L9aIdLvlJGAlt5o8Hlp/R3kvJ6TUGyQAeq6nvXtX4f8jJhWbIyswKYFYFNRcBbW9BQh8RJ4bx2cEq1rAA8NBZOvJV75O9wtNIk4po+GWvjqXa4qE9cww==
+// aISfmRXlhedjoFbnwAHDXPFRnNcRZQdZdhCmPcyChga997Gihb6VnXoD1uZk3Jzpe1ivIAjofk3AOTaCK9+ohKq6JemMs4hKaC0zadvm0R82VD7VI8EBip8kO68pFlFvXFGS2mCF7pfMAB9/f+RnMGLibcAZGBj887q7HDgmC/PDB/mY4QxjiCPvQom0GEOGbYP4dWOLcr7Z/fkDTx0mhxp3F1ntyTHB3i99DXN3Y/eg3g9PQnmjD0UzA6LO0iey6LJHtFJ42NFCRZLz/o2k+u6XXplVN9hH0u2QIo2l/sjFYxuWQZDepZ1/4Wcwz9MeHWnu7PNzFUph05GP+qXoyQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 15, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 20, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1316,6 +1316,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('kartor.eniro.se')>-1){			// PATCH-310, JIT bug breaks apply with empty array, use call instead
 		addPreprocessHandler(/\.apply\(this,\[\]\)/g, '.call(this)');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (JIT bug breaks apply with empty array, use call instead). See browser.js for details');
+	} else if(hostname.indexOf('kort.arealinfo.dk')>-1){			// PATCH-348, Disable Opera detection that causes hidden content
+		opera.defineMagicVariable('op', function(){return false}, null);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable Opera detection that causes hidden content). See browser.js for details');
 	} else if(hostname.indexOf('login.live.com')!=-1){			// PATCH-242, Prevent readystatechange events on SCRIPT, causes double banners
 		opera.addEventListener('BeforeEvent.readystatechange', function(e){
 			preventDefault.call=call;
@@ -1798,6 +1801,16 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
+	} else if(location.hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
+		document.addEventListener('DOMContentLoaded',function(){
+			var els=document.getElementsByTagName('input');
+			for (var i=0,len=els.length;i<len;i++) {
+				if ((els[i].name=='pass')&&(els[i].onfocus)) {
+					els[i].onfocus = "this.value=''"
+				}
+			}
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(location.hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
 		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
 		CSSStyleSheet.prototype.insertRule = function (rule,index){
