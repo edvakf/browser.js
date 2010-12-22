@@ -1,4 +1,4 @@
-// aISfmRXlhedjoFbnwAHDXPFRnNcRZQdZdhCmPcyChga997Gihb6VnXoD1uZk3Jzpe1ivIAjofk3AOTaCK9+ohKq6JemMs4hKaC0zadvm0R82VD7VI8EBip8kO68pFlFvXFGS2mCF7pfMAB9/f+RnMGLibcAZGBj887q7HDgmC/PDB/mY4QxjiCPvQom0GEOGbYP4dWOLcr7Z/fkDTx0mhxp3F1ntyTHB3i99DXN3Y/eg3g9PQnmjD0UzA6LO0iey6LJHtFJ42NFCRZLz/o2k+u6XXplVN9hH0u2QIo2l/sjFYxuWQZDepZ1/4Wcwz9MeHWnu7PNzFUph05GP+qXoyQ==
+// ByDNvxdqeOz85uHy+pfgk5wXL9sNmhm9l5qusXE1BY0VOhE+cN7esWa5NePtmkI7lY3cJSC5/3u/r9NiuZmLEXw+1Bq1XHjQRJ/vm4UAuVEzTZFbqwr55COvQBP5tf840aO7CQ7tHaPcUM4L/Nb9jWdxvPht11qzEUNqbkqCwcUwYfQCqBUgL8uSaC37yM5a2WVV+aIqLk8UdgWiF/yw3SspHEDQgjSv0ajWbuZpbzQeL2MKAXYWqX+R1IX7ET0E7UNpG1lHja9vOe2kU4OMjsFAGZskW9x/FO0kv+fDDyNf/bGu/faku5FNyPrzVxujiRTgsAEQXMO7gA7WJ+iAUQ==
 /**
 ** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 20, 2010 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, December 22, 2010 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -693,7 +693,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		}
 		if(hostname.indexOf('aol.com') >-1){			// 188197, Making sure AOL pages are not overwritten by ad script
 			avoidDocumentWriteAbuse();
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script). See browser.js for details');
+					// PATCH-361, Avoid too tall content on AOL
+			addCssToDocument('table.markets-table td{vertical-align:middle}');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script\nAvoid too tall content on AOL). See browser.js for details');
 		}
 		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17733, Send button does not appear
 			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
@@ -1013,6 +1015,10 @@ function stopKeypressIfDownCancelled(stopKey){
 			Node.prototype.selectNodes=undefined;
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail chat enter fix\nY!Mail spell check fix\nY!Mail avoid text selection on drag-and-drop\ncreateE...). See browser.js for details');
 		}
+		if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/mc/')==0){			// PATCH-359, Avoid overwriting Y!Mail classic inbox
+			avoidDocumentWriteAbuse();
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid overwriting Y!Mail classic inbox). See browser.js for details');
+		}
 		if(hostname.indexOf('mail')==-1){			// 101146, Yahoo ISP portal blocks Opera users
 			addPreprocessHandler( /d\.location\.href = ".*?\/browser_upgrade\.html";/g, '');
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Yahoo ISP portal blocks Opera users). See browser.js for details');
@@ -1269,6 +1275,18 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
+	} else if(hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
+		HTMLInputElement.prototype.__defineSetter__('type',function(){
+			if (this.getAttribute('type')!=arguments[0]) {
+				var doFocus=false, result;
+				if (this == document.activeElement) doFocus = true;
+				result = this.setAttribute('type',arguments[0]);
+				if (doFocus) this.focus();
+				return result;
+			}
+		});
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(hostname.indexOf('freemail.hu')>-1){			// PATCH-301, Disable browser blocking on freemail.hu
 		opera.defineMagicVariable( 'BrowserDetect', function(o){
 			o.browser='Firefox';
@@ -1623,6 +1641,18 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('skylark.co.jp')>-1){			// PATCH-257, Site navigation menu font-size patch
 		addCssToDocument('#navi3 ul li a {font-size: 12px !important;} ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Site navigation menu font-size patch). See browser.js for details');
+	} else if(hostname.indexOf('smithbarney.com')>-1){			// PATCH-360, Enable the password box on smithbarney.com
+		HTMLInputElement.prototype.__defineSetter__('type',function(){
+			if (this.getAttribute('type')!=arguments[0]) {
+				var doFocus=false, result;
+				if (this == document.activeElement) doFocus = true;
+				result = this.setAttribute('type',arguments[0]);
+				if (doFocus) this.focus();
+				return result;
+			}
+		});
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on smithbarney.com). See browser.js for details');
 	} else if(hostname.indexOf('societegenerale.fr')>-1){			// PATCH-270, Make virtual keyboard appear for pass code entry
 		opera.defineMagicVariable('vk', function(obj){
 			if(obj.show && !arguments.callee.done){
@@ -1801,16 +1831,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
-	} else if(location.hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
-		document.addEventListener('DOMContentLoaded',function(){
-			var els=document.getElementsByTagName('input');
-			for (var i=0,len=els.length;i<len;i++) {
-				if ((els[i].name=='pass')&&(els[i].onfocus)) {
-					els[i].onfocus = "this.value=''"
-				}
-			}
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(location.hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
 		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
 		CSSStyleSheet.prototype.insertRule = function (rule,index){
