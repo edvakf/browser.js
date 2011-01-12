@@ -1,6 +1,6 @@
-// rVVFHHPm0DmnCqit2RNzOokSaRd28iLpv57IKsXXQNM33msWyr+c496UDS6f1uwyjL17wL6AjNLhNasKWG1B1yLWNAo+rxuMVxDPtwFbgNX11KDro6Kk3/1T9sPGhx1eR7LUzGY0Jogz6THRJXNEzNCDrHvFtZilJgjUp/iPEwTlC5VXYqw44Mnjf7WDg0KYuKtotqdLJAtfQKF6fPL1RkVhCsAw83Huj03F8gJvu8fZJJ64AYuuNZ6olHDNaxGtO4HAJc1J6M5Gais2eindTFCjmXzG3FLAwTgAX8R7nRMqg6Kt6IWZQLjgDtvbBAhLGV47DglJDhsk5zQUTIY5iA==
+// dhMUODQmZVjjkR1dKRO9szTSENtURc6ZoDJGPzOV+8lCWSu+EYRekpkIKiLu0v/RBRygLa1Hxi2sJJo1Yzlg5VWShGVQtm9oe/1TF/yuLVhId40piFoyd/ydCZnVEa2oh9ZYoPQ+vEWBz9fnPGGjUmzADlKcr837kB7MlItDBQiq14lngacr9ge9SblPljMKbptRCs69QLMAzokUtTBKvZ5J77B9cc+qUbr/2a3AFa2dMn5zz8ZtfOU7ubDxebxMzAIW/PPy+5qe2IXl1yERZvYg6V549c5dgUhWn7rbj1WVpUCoMZS3ZDokF6P1FCiRyMfuqHSgePAc9dvri1BoQw==
 /**
-** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
+** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
 ** This file is part of the Opera web browser.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, December 22, 2010 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 12, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1161,6 +1161,8 @@ function stopKeypressIfDownCancelled(stopKey){
 				}
 			}, false);
 		})();
+				// PATCH-371, Prevent repaint issues triggered by specific text-overflow style
+		addCssToDocument('*{text-overflow:clip!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nMake deleting @ment...). See browser.js for details');
 	} else if(hostname.indexOf('fantasy.nfl.com')>-1){			// PATCH-303, Reporting different clientHeight and scrollHeight for TEXTAREA breaks commenting on nfl.com
 		HTMLTextAreaElement.prototype.__defineGetter__('clientHeight', function(){
@@ -1329,6 +1331,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('monocubed.com')>-1){			// PATCH-282, Avoid scrolling down when space key is pressed
 		stopKeypressIfDownCancelled();
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid scrolling down when space key is pressed). See browser.js for details');
+	} else if(hostname.indexOf('msdn.microsoft.com')>-1){			// PATCH-368, Enable MSDN search (Opera requires cancelling keypress, not keydown)
+		stopKeypressIfDownCancelled();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable MSDN search (Opera requires cancelling keypress, not keydown)). See browser.js for details');
 	} else if(hostname.indexOf('myspace.com')>-1){			// PATCH-266, Opera disallows using reserved word top as variable name
 		(function(){
 			var the_top;
@@ -1336,6 +1341,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		})();
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Opera disallows using reserved word top as variable name). See browser.js for details');
+	} else if(hostname.indexOf('nbc.com')>-1){			// PATCH-236, Make NBC videos work
+		navigator.userAgent += " Chrome/5.0.375.9 Safari/533.4"
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make NBC videos work). See browser.js for details');
 	} else if(hostname.indexOf('news.naver.com')>-1){			// PATCH-241, Make menus visible on news.naver.com
 		addCssToDocument('div.snb li div {overflow: visible !important;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make menus visible on news.naver.com). See browser.js for details');
@@ -1422,6 +1430,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix autocomplete forms being prematurely submitted on OstgotaTrafiken). See browser.js for details');
+	} else if(hostname.indexOf('paypal.com') >-1){			// PATCH-366, Fix unclickable credit card selection box on PayPal
+		addCssToDocument('div#fieldrowCCType div#selectBox{position:absolute;}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix unclickable credit card selection box on PayPal). See browser.js for details');
 	} else if(hostname.indexOf('pb.yamada-denki.jp')>-1){			// OTW-5165, Show digital pamphlet from Yamada Denki
 		Element.prototype.attachEvent = null;
 		window.opera = null;
@@ -1654,6 +1665,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		stopKeypressIfDownCancelled();
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hack to make script see typed value in TEXTAREA\nDon\'t insert linebreak in chat box when enter sends...). See browser.js for details');
+	} else if(hostname.indexOf('weborama.ru')>-1){			// PATCH-370, Avoid overwriting page content on Weborama
+		avoidDocumentWriteAbuse(' alt="Rambler\'s Top100" title="Rambler\'s Top100" style="border: none;"/>');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid overwriting page content on Weborama). See browser.js for details');
 	} else if(hostname.indexOf('westjet.com')>-1 ){			// PATCH-260,  Westjet browser sniffing warns against Opera
 		opera.defineMagicVariable('browser', function(o){ o.isSupported=true; return o; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Westjet browser sniffing warns against Opera). See browser.js for details');
@@ -1718,6 +1732,14 @@ function stopKeypressIfDownCancelled(stopKey){
 			try { cssInsertRule.call(this,rule,index); } catch(e){}
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid throwing JS errors on Hangame.co.jp from CSS hacks). See browser.js for details');
+	} else if(location.hostname.indexOf('www.in.gr')>-1){			// PATCH-367, Correct placement of marquee on in.gr
+		document.addEventListener('DOMContentLoaded', function(){
+		 elm = document.getElementById('ticker-area');
+		 if(elm){
+		  elm.innerHTML=elm.innerHTML.replace(/&nbsp;/,'');
+		 }
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Correct placement of marquee on in.gr). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
 				if(!(typeof doSubmitEmptyData==='function'))return;
