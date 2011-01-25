@@ -1,4 +1,4 @@
-// dhMUODQmZVjjkR1dKRO9szTSENtURc6ZoDJGPzOV+8lCWSu+EYRekpkIKiLu0v/RBRygLa1Hxi2sJJo1Yzlg5VWShGVQtm9oe/1TF/yuLVhId40piFoyd/ydCZnVEa2oh9ZYoPQ+vEWBz9fnPGGjUmzADlKcr837kB7MlItDBQiq14lngacr9ge9SblPljMKbptRCs69QLMAzokUtTBKvZ5J77B9cc+qUbr/2a3AFa2dMn5zz8ZtfOU7ubDxebxMzAIW/PPy+5qe2IXl1yERZvYg6V549c5dgUhWn7rbj1WVpUCoMZS3ZDokF6P1FCiRyMfuqHSgePAc9dvri1BoQw==
+// hFI4O3mPIFhW1K/JobCyyJ0A0L5xpQ0y5I0qMtNL5TDPM9HaBTS8URMaWaVs+v+6vwcck+rRSfmmhhpyx8Gh27eiii4AbA2wnsNWI9yeihDfLog+cNnTAc7nXHmLaahCL6C9GFuueLs9n4gyI+3LxPA3asAm+EEvTVtk7i3rwQgdvvkQoJzZnhfpnuVYLisHFC5rg+qVvXpvhKai2TazVIUQ7I190GevQR4V8DSWjAtJAebMGhHflG2IDQdBNA8B1yhGvQeB+yXrY1d65jMGOGw5SUtxqgBTbiT0jWY/oQHQAs9opXAQF1PKHY2utd7Pd9In3bIJKeZKB4+ZMLNgbg==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 12, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 25, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -401,6 +401,7 @@ function stopKeypressIfDownCancelled(stopKey){
 // Disable sniffing in old HTMLArea editors
 // Asia-region Generic Patches
 // Disable HTMLElement.removeNode support, compat experiment
+// TinyMCE double IFRAME init problem, some versions
 			// PATCH-177, Sending an extra onreadystatechange causes some ad scripts to eat memory
 	opera.addEventListener( 'BeforeEventListener.readystatechange', function(e){
 		var element=e.event.target;
@@ -553,7 +554,12 @@ function stopKeypressIfDownCancelled(stopKey){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+=' Gecko';
 			shouldRestore=true;
-		}
+		}else if(indexOf.call(name,'connect.facebook.net')>-1 && indexOf.call(name,'all.js')>-1){ //PATCH-372
+		        delete window.attachEvent;
+		        delete Node.prototype.attachEvent;
+		        delete window.detachEvent;
+		        delete Node.prototype.detachEvent;
+	        }
 		if( typeof window._jive_plain_quote_text!='undefined' ){ // Jive forum embeds TinyMCE, possibly outdated versions - PATCH-248
 			opera.addEventListener('BeforeScript', function(e){
 				indexOf.call=removeEventListener=call;
@@ -633,6 +639,18 @@ function stopKeypressIfDownCancelled(stopKey){
 	},false);
 			// PATCH-331, Disable HTMLElement.removeNode support, compat experiment
 	delete HTMLElement.prototype.removeNode;
+			// PATCH-373, TinyMCE double IFRAME init problem, some versions
+	opera.addEventListener('bjsOnTinyMCEScript', function(e){
+	  if( tinyMCEVersionInfo && tinyMCEVersionInfo.majorVersion==3 && tinyMCEVersionInfo.minorVersion>1.0 ){
+	    Element.prototype.appendChild=function(el){ 
+	      if(el.tagName=='IFRAME' && /^\s*javascript:/.test(el.src) && el.src.indexOf('document.domain')>-1){
+	        el.src='about:blank'; 
+	      }
+	      return appendChild.call( this, el );
+	    }
+	  }
+	}, false);
+	
 
 
 	if((hostname.indexOf('tokyo.jp')>-1)||(hostname.indexOf('lg.jp')>-1)){			// PATCH-186, tokyo.jp, lg.jp enable maps
@@ -796,6 +814,14 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		,false)
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid crash when searching on hotels.com). See browser.js for details');
+	} else if(hostname.indexOf('.in.gr')>-1){			// PATCH-367, Correct placement of marquee on in.gr
+		document.addEventListener('DOMContentLoaded', function(){
+		 elm = document.getElementById('ticker-area');
+		 if(elm){
+		  elm.innerHTML=elm.innerHTML.replace(/&nbsp;/,'');
+		 }
+		},false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Correct placement of marquee on in.gr). See browser.js for details');
 	} else if(hostname.indexOf('.ing.nl')>-1){			// PATCH-76, Work around sniffing in old BackBase library on ing.nl
 		opera.defineMagicFunction('$Es', function(){});
 		window.controllers={}; // detecting some-whatever-Gecko-proprietary-object?
@@ -1121,6 +1147,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			return 1;
 		},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Nifmail web mail bypass browser blocking). See browser.js for details');
+	} else if(hostname.indexOf('espn.go.com')>-1){			// PATCH-375, Make sure the ESPN polls work
+		navigator.appName="netscape";
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure the ESPN polls work). See browser.js for details');
 	} else if(hostname.indexOf('etour.co.jp') > -1){			// PATCH-152, etour.co.jp fix non-disappearing overlapping image
 		navigator.appName='Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (etour.co.jp fix non-disappearing overlapping image). See browser.js for details');
@@ -1188,14 +1217,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
-	} else if(hostname.indexOf('freemail.hu')>-1){			// PATCH-301, Disable browser blocking on freemail.hu
-		opera.defineMagicVariable( 'BrowserDetect', function(o){
-			o.browser='Firefox';
-			o.version=3.0;
-			return o;
-		}, null );
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable browser blocking on freemail.hu). See browser.js for details');
 	} else if(hostname.indexOf('fujifilm.ch')>-1){			// PATCH-220, Working around a bug that hides menu entries
 		addCssToDocument('#navigation ul#primary li ul.secondary_drop_down li {display: inline !important }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around a bug that hides menu entries). See browser.js for details');
@@ -1203,6 +1224,12 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( BlueCross browser sniffing prevents insurance search). See browser.js for details');
+	} else if(hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
+		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
+		CSSStyleSheet.prototype.insertRule = function (rule,index){
+			try { cssInsertRule.call(this,rule,index); } catch(e){}
+		}
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid throwing JS errors on Hangame.co.jp from CSS hacks). See browser.js for details');
 	} else if(hostname.indexOf('hk.centamap.com')>-1){			// PATCH-318, Fix missing menu and misplaced highlights on hk.centamap.com
 		document.addEventListener('DOMContentLoaded',function(evt){	// CORE-7324
 			parent.document.body.__defineGetter__('offsetHeight',function(){ return parent.window.innerHeight; });
@@ -1412,6 +1439,8 @@ function stopKeypressIfDownCancelled(stopKey){
 		})(window.setTimeout);
 				// PATCH-229, Hidden form causes non-clickable button, prevents profile image selection
 		addCssToDocument('form{opacity:1!important}');
+				// PATCH-374, Panning an Orkut profile scrolls down to an unwanted loading message, hide it
+		addCssToDocument('#orkutLoading {display: none;visibility: hidden}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
 	} else if(hostname.indexOf('ostgotatrafiken.se')>-1){			// PATCH-324, Fix autocomplete forms being prematurely submitted on OstgotaTrafiken
 		document.addEventListener('DOMContentLoaded',function (e) {		
@@ -1726,20 +1755,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 		}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Include browser.js timestamp in bug reports). See browser.js for details');
-	} else if(location.hostname.indexOf('hangame.co.jp')>-1){			// PATCH-286, Avoid throwing JS errors on Hangame.co.jp from CSS hacks
-		var cssInsertRule = CSSStyleSheet.prototype.insertRule;
-		CSSStyleSheet.prototype.insertRule = function (rule,index){
-			try { cssInsertRule.call(this,rule,index); } catch(e){}
-		}
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid throwing JS errors on Hangame.co.jp from CSS hacks). See browser.js for details');
-	} else if(location.hostname.indexOf('www.in.gr')>-1){			// PATCH-367, Correct placement of marquee on in.gr
-		document.addEventListener('DOMContentLoaded', function(){
-		 elm = document.getElementById('ticker-area');
-		 if(elm){
-		  elm.innerHTML=elm.innerHTML.replace(/&nbsp;/,'');
-		 }
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Correct placement of marquee on in.gr). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
 				if(!(typeof doSubmitEmptyData==='function'))return;
