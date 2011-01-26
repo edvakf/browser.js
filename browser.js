@@ -1,4 +1,4 @@
-// hFI4O3mPIFhW1K/JobCyyJ0A0L5xpQ0y5I0qMtNL5TDPM9HaBTS8URMaWaVs+v+6vwcck+rRSfmmhhpyx8Gh27eiii4AbA2wnsNWI9yeihDfLog+cNnTAc7nXHmLaahCL6C9GFuueLs9n4gyI+3LxPA3asAm+EEvTVtk7i3rwQgdvvkQoJzZnhfpnuVYLisHFC5rg+qVvXpvhKai2TazVIUQ7I190GevQR4V8DSWjAtJAebMGhHflG2IDQdBNA8B1yhGvQeB+yXrY1d65jMGOGw5SUtxqgBTbiT0jWY/oQHQAs9opXAQF1PKHY2utd7Pd9In3bIJKeZKB4+ZMLNgbg==
+// RE0EKYfPVryqe87l2Z7rhmDr7nv0cu9+BSzNFhHUIAmLMh2lTQDTeicb3FenunfKJ/dSTb5wfy668Z857sa1PUDj/RsxcFVz/vYFiGQ36fMTsCn2QU2+78xs2gJ7c8R9tVxO3/imi4jhIqCZUB90WRmIWo3Te8Wev4EEvVOTzWBGgcz7Ho+mlZ0IucTeHCL1wIFZZEKUY7UdoUBUiLBjwVi6mn73h/l14WoYk0SYW5PnxYhIaIYpI0KIMSvuC8geRpsJ6xgfP7LtVSdvIrp0o8zexDaoCWqT+tj0pH8U7tcjbQgnWnMXkfNAqSYVduDQ0uJC0F/RxDV/4p5E+poeSg==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 25, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 26, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -554,12 +554,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+=' Gecko';
 			shouldRestore=true;
-		}else if(indexOf.call(name,'connect.facebook.net')>-1 && indexOf.call(name,'all.js')>-1){ //PATCH-372
-		        delete window.attachEvent;
-		        delete Node.prototype.attachEvent;
-		        delete window.detachEvent;
-		        delete Node.prototype.detachEvent;
-	        }
+		}
 		if( typeof window._jive_plain_quote_text!='undefined' ){ // Jive forum embeds TinyMCE, possibly outdated versions - PATCH-248
 			opera.addEventListener('BeforeScript', function(e){
 				indexOf.call=removeEventListener=call;
