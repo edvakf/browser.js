@@ -1,4 +1,4 @@
-// RE0EKYfPVryqe87l2Z7rhmDr7nv0cu9+BSzNFhHUIAmLMh2lTQDTeicb3FenunfKJ/dSTb5wfy668Z857sa1PUDj/RsxcFVz/vYFiGQ36fMTsCn2QU2+78xs2gJ7c8R9tVxO3/imi4jhIqCZUB90WRmIWo3Te8Wev4EEvVOTzWBGgcz7Ho+mlZ0IucTeHCL1wIFZZEKUY7UdoUBUiLBjwVi6mn73h/l14WoYk0SYW5PnxYhIaIYpI0KIMSvuC8geRpsJ6xgfP7LtVSdvIrp0o8zexDaoCWqT+tj0pH8U7tcjbQgnWnMXkfNAqSYVduDQ0uJC0F/RxDV/4p5E+poeSg==
+// foIQPgOPZeASrqz/sPJQh6EqzZ8AQh4xwbkkc3SpoGREbMz4CGjphBZcl8Kr9OCHyRA59rnu4JOV5VgUTcALoQZ19BbweJLagErrdgU3AoAPJwBKTlLjqwvt9WX9d4G7w839kJTDRwpO94sps0KgnUvNXCNvWfisdWKrmZw8ZYZzNyX8XfjTIu7tRUSukTvBqKjZYc7uYBX8JvVmwqcirQdZ9YlBTe4CM0zw1jTbGK7PXIEWXVoY74rmDVsmpyEy32asYJ4QmbVW3TRGly/7XBCh1hKQ1dgBHnZYZAdhe2oouoXcrMkVoKpn6dSoUaU4GHKuK5+i2We2lWCt2uPUWw==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, January 26, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 3, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1016,6 +1016,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		navigator.appName='Microsoft Internet Explorer';
 		navigator.appVersion='MSIE'+navigator.appVersion;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ATT / Bellsouth browser sniffing). See browser.js for details');
+	} else if(hostname.indexOf('au.kddi.com')>-1){			// PATCH-376, Make sure main content isn't hidden on KDDI page
+		addCssToDocument('.smartphoneBlock{overflow:visible !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure main content isn\'t hidden on KDDI page). See browser.js for details');
 	} else if(hostname.indexOf('barnesandnoble.com')>-1){			// OTW-1909, Barnes&Noble uses "required" attributes on elements that aren't required
 		window.addEventListener('load', function(){var nodes=document.evaluate('//input[@required]', document.body,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null),node=null,i=0; while(node=nodes.snapshotItem(i)){ node.removeAttribute('required'); i++; }},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Barnes&Noble uses "required" attributes on elements that aren\'t required). See browser.js for details');
@@ -1436,6 +1439,8 @@ function stopKeypressIfDownCancelled(stopKey){
 		addCssToDocument('form{opacity:1!important}');
 				// PATCH-374, Panning an Orkut profile scrolls down to an unwanted loading message, hide it
 		addCssToDocument('#orkutLoading {display: none;visibility: hidden}');
+				// PATCH-377, Make it possible to log in to Orkut with 11.01
+		addPreprocessHandler('if_qe()[if_s][if_p]("about:blank");','');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
 	} else if(hostname.indexOf('ostgotatrafiken.se')>-1){			// PATCH-324, Fix autocomplete forms being prematurely submitted on OstgotaTrafiken
 		document.addEventListener('DOMContentLoaded',function (e) {		
