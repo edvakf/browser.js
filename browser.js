@@ -1,6 +1,6 @@
-// keso8MWadKv1y3aFxgF1Q0/vPUDuJo1haIKKT8Qnhpm6uDX5AEOi/iKjJjMGdqyQe5rCp7xVvMr+09JbZyK1R+f6E60Eeph5Em0mj672TbtmowsADEXR+bV6uYfIVLYeeG0DvSc6uu2vQi35T7bIaddokGx2RRjGa7C9jtfWYG1IBenu+TPq2DWwuDm/Yoved2l4fIyPI0eC1GnN7TdBOSP+UpiLHsUCTE03nyxNP0fda1g9ydrFXhgiQqE/jgA3d85fEdQJH8coyX1iaLk6OAtIxW3azL0gayRfSznOisANoRrnzMy7zA0iO/PdUoVAdnl6zfddjQf0/GAAM+ihwQ==
+// fseDk9PNqrYwvQGISWpzPJD1YjJ+W3ZyoOmxGySkUpql+ySYEZLwxnLgAioWCeccnIQkP0DBypbmmNo23FQQaMuItKCRSKrU4hkmgOsjeR0hMDQXCEI1707XujmUfEE18cxReAP7fWmi3o1dXoE+Tm237GnPelBGWn04Wb5McbZMHIx37QvnRrhfMtRcbhXvTDVMoSHTt3q2sYbZ8j+RNucCAYo9Z1Fp4DL2nVBQWP2uh03gf1QQIF0efqKDb0xQhNMSXzZl/fYNW0/PXDDJGeR7o6Li5pHCdzFSTv5IcdN07x0OafjQmY8h7yX3iOD/6BS6q+0qNqtusMavsT7NQQ==
 /**
-** Copyright (C) 2000-2010 Opera Software AS.  All rights reserved.
+** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
 ** This file is part of the Opera web browser.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.00 core , December 20, 2010 ';
+	var bjsversion=' Opera Desktop 10.00 core , February 4, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1362,10 +1362,24 @@ function stopKeypressIfDownCancelled(stopKey){
 				}
 			}, false);
 		})();
+				// PATCH-371, Prevent repaint issues triggered by specific text-overflow style
+		addCssToDocument('*{text-overflow:clip!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nMake deleting @ment...). See browser.js for details');
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
+	} else if(hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
+		HTMLInputElement.prototype.__defineSetter__('type',function(){
+			if (this.getAttribute('type')!=arguments[0]) {
+				var doFocus=false, result;
+				if (this == document.activeElement) doFocus = true;
+				result = this.setAttribute('type',arguments[0]);
+				if (doFocus) this.focus();
+				return result;
+			}
+		});
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(hostname.indexOf('forums.xbox.com')>-1){			// PATCH-193, No scrollbars on XBox forum
 		addCssToDocument('body,html{height:auto!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (No scrollbars on XBox forum). See browser.js for details');
@@ -1604,6 +1618,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('nationalgeographic.com')>-1){			// PATCH-223, Work around layout bug that breaks navigation menu on nationalgeographic.com
 		addCssToDocument('ul#navigation_tophat_primary > li > h3 > a, ul#navigation_tophat_primary > li > ul > li > a {display: inline !important; }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Work around layout bug that breaks navigation menu on nationalgeographic.com). See browser.js for details');
+	} else if(hostname.indexOf('nbc.com')>-1){			// PATCH-236, Make NBC videos work
+		navigator.userAgent += " Chrome/5.0.375.9 Safari/533.4"
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make NBC videos work). See browser.js for details');
 	} else if(hostname.indexOf('ncbi.nlm.nih.gov')>-1){			// PATCH-216, No scrollbars on certain ncbi.nlm.nih.gov query pages
 		addCssToDocument('body,html{height:auto!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (No scrollbars on certain ncbi.nlm.nih.gov query pages). See browser.js for details');
@@ -1837,6 +1854,18 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('skylark.co.jp')>-1){			// PATCH-257, Site navigation menu font-size patch
 		addCssToDocument('#navi3 ul li a {font-size: 12px !important;} ');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Site navigation menu font-size patch). See browser.js for details');
+	} else if(hostname.indexOf('smithbarney.com')>-1){			// PATCH-360, Enable the password box on smithbarney.com
+		HTMLInputElement.prototype.__defineSetter__('type',function(){
+			if (this.getAttribute('type')!=arguments[0]) {
+				var doFocus=false, result;
+				if (this == document.activeElement) doFocus = true;
+				result = this.setAttribute('type',arguments[0]);
+				if (doFocus) this.focus();
+				return result;
+			}
+		});
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on smithbarney.com). See browser.js for details');
 	} else if(hostname.indexOf('social.')>-1&&hostname.indexOf('.microsoft.')>-1){			// PATCH-203, Microsoft forums editor hangs
 		addPreprocessHandler(/(if\(tinymce\.relaxedDomain\)t\.iframeHTML\+='<script\s*type="text\/javascript">document\.domain\s*=\s*"'\+tinymce\.relaxedDomain\+'";<\/script>';|ed\.setupIframe\(\);)/g, '', true, function(el){return(el.src && indexOf.call(el.src, 'tiny_mce.js')>-1) });
 		
@@ -1898,16 +1927,6 @@ function stopKeypressIfDownCancelled(stopKey){
 				// PATCH-134, Videos not shown
 		navigator.userAgent += ' [NOT firefox/3]';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nVideos not shown). See browser.js for details');
-	} else if(hostname.indexOf('us.etrade.com')!=-1 ){			// OTW-3340, Working around E*Trade site's security policy violation
-		opera.defineMagicFunction('GoToETURL', function(oF,oT,urlPath,thirdParty){
-			try{
-				oF.call(oT, urlPath, thirdParty);
-			}catch(e){
-				top.postMessage(etURL.parse(urlPath,thirdParty), 'http://www.etrade.wallst.com');
-			}
-		});
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
@@ -1948,14 +1967,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		
 			
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Faking oncontextmenu support on wikimapia). See browser.js for details');
-	} else if(hostname.indexOf('www.etrade.wallst.com')!=-1){			// OTW-3340, Working around E*Trade site's security policy violation (second part)
-		addEventListener('message', function(e){
-			if(e.domain=='us.etrade.com')top.location.href=e.data;
-		}, false);
-		
-		
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
 	} else if(hostname.indexOf('www.hongen.com') >-1){			// PATCH-187, make links clickable
 		addCssToDocument('#SL_ScrBox_1{display:none !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (make links clickable). See browser.js for details');
@@ -2007,16 +2018,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(location.hostname.indexOf('.legolandholidays.dk')>-1){			// PATCH-73, Fix to show relative positioned table contents
 		document.addEventListener('DOMContentLoaded', function(){document.evaluate('//td[@height=900]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.style.position='absolute';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix to show relative positioned table contents). See browser.js for details');
-	} else if(location.hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
-		document.addEventListener('DOMContentLoaded',function(){
-			var els=document.getElementsByTagName('input');
-			for (var i=0,len=els.length;i<len;i++) {
-				if ((els[i].name=='pass')&&(els[i].onfocus)) {
-					els[i].onfocus = "this.value=''"
-				}
-			}
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(pathname.indexOf("Maconomy/MaconomyPortal") > -1){			// PATCH-6, Fix unload form submit behavior on Maconomy portals
 		opera.addEventListener("BeforeEvent.unload", function(e){
 				if(!(typeof doSubmitEmptyData==='function'))return;
