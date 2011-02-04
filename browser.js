@@ -1,4 +1,4 @@
-// evHVkIZI378Dj1Hmdc97J1qvp1tZUl+o7PS8GUvYgVfNcKKOtio6vbOAmpLgsYqIAhGJbZaewnvbxtCoukskd3Itt0rzXrCrasPDwTX8EPGNyrCXEuNbn8vGDRao0CfHKa5Tos3SxH+AnShDDkVI6QoXzEVZ9Ub0fBqPVghdZcC6YFWE2RybB7w5uHqweGpKoOHPpIE2ks4n1fKV3FIbTu1WDX/cmEj4lmq0epL9XFHA8ri330mFxH7F4JsyxrJPUZ6QC3FoTuaPpdjBu5867GGuVIHe4RHlBe28Q0XpAthRtm7zFZbGnljW3K8lKmlBipLBjY2ZKihhYBhFuVzA9A==
+// aniweN3qiOwMSeUVMmpJfrXk4V3tsA7hFfPNk+Lsq0aFWPHqJyDxyJhWjZHHSXyXPTI3/2H5xqzct1JtZ77h5z8r+SMxp5hOfSVIc9gJJ3LDjBZfquf4FAA8iUO/wfEUzDBVNKqvoKg82LzYIr33P5eQieJwXjHTOdc2H7yHLcSUEzZ1D8ayqRIij2dE9jIw5uH3qyhGoP6Wv2LAhtCFqQv7zTV1fqSQnKnN9RlzLtUGTl8u8dJ6/Pd7NgwjjIg433dxs0ct81gj2KmoNGjUpk/azn7XT6UPsKAupGYNArMJo28Ax4+UAG/36WBLNsaqMsv/Wi43HmPYuAomvnkiig==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, January 26, 2011 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 4, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1056,6 +1056,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		navigator.appName='Microsoft Internet Explorer';
 		navigator.appVersion='MSIE'+navigator.appVersion;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ATT / Bellsouth browser sniffing). See browser.js for details');
+	} else if(hostname.indexOf('au.kddi.com')>-1){			// PATCH-376, Make sure main content isn't hidden on KDDI page
+		addCssToDocument('.smartphoneBlock{overflow:visible !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure main content isn\'t hidden on KDDI page). See browser.js for details');
 	} else if(hostname.indexOf('bancochile.cl')>-1){			// PATCH-258, Opera forgets to send load event to nested FRAMESET, Banco de Chile blank after login
 		if(top==self){
 			window.addEventListener('load', function(e){
@@ -1740,16 +1743,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		};
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box). See browser.js for details');
-	} else if(hostname.indexOf('us.etrade.com')!=-1 ){			// OTW-3340, Working around E*Trade site's security policy violation
-		opera.defineMagicFunction('GoToETURL', function(oF,oT,urlPath,thirdParty){
-			try{
-				oF.call(oT, urlPath, thirdParty);
-			}catch(e){
-				top.postMessage(etURL.parse(urlPath,thirdParty), 'http://www.etrade.wallst.com');
-			}
-		});
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
@@ -1792,14 +1785,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('westjet.com')>-1 ){			// PATCH-260,  Westjet browser sniffing warns against Opera
 		opera.defineMagicVariable('browser', function(o){ o.isSupported=true; return o; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Westjet browser sniffing warns against Opera). See browser.js for details');
-	} else if(hostname.indexOf('www.etrade.wallst.com')!=-1){			// OTW-3340, Working around E*Trade site's security policy violation (second part)
-		addEventListener('message', function(e){
-			if(e.domain=='us.etrade.com')top.location.href=e.data;
-		}, false);
-		
-		
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
