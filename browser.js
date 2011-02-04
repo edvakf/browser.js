@@ -1,4 +1,4 @@
-// foIQPgOPZeASrqz/sPJQh6EqzZ8AQh4xwbkkc3SpoGREbMz4CGjphBZcl8Kr9OCHyRA59rnu4JOV5VgUTcALoQZ19BbweJLagErrdgU3AoAPJwBKTlLjqwvt9WX9d4G7w839kJTDRwpO94sps0KgnUvNXCNvWfisdWKrmZw8ZYZzNyX8XfjTIu7tRUSukTvBqKjZYc7uYBX8JvVmwqcirQdZ9YlBTe4CM0zw1jTbGK7PXIEWXVoY74rmDVsmpyEy32asYJ4QmbVW3TRGly/7XBCh1hKQ1dgBHnZYZAdhe2oouoXcrMkVoKpn6dSoUaU4GHKuK5+i2We2lWCt2uPUWw==
+// AmqeM5qt3jv18wg0Wy+1PRYcPU+DUs1bhp0GOXk1TyM7WmyZ7aZEfY6kFHcbLSzRJ/xR0KXa7QM+HntImXX0MRv/Cxzviv6El4PdoqDtbQr0OpuCArv08UmE1XBIiNCDVG4ppbkWwHV/LTnm3ZTGFH42+vEndCFN2rwokOteagbCiV0IT0h3yFmGnIVVBObhIp15PV/FJcyZg198Ne8FEijGMJllFTV1M7Oz/wjDrLHv+7J4ic2b+kOzCCDYQVTo6dPEUVZzWaiq/beDApqERUkV7EVIWunHtZsCtp4Y0Avtfi7VUUK7m0NRjuDV1b5UZn7q7o1gFOVekdw/OjW0vA==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 3, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 4, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1440,7 +1440,22 @@ function stopKeypressIfDownCancelled(stopKey){
 				// PATCH-374, Panning an Orkut profile scrolls down to an unwanted loading message, hide it
 		addCssToDocument('#orkutLoading {display: none;visibility: hidden}');
 				// PATCH-377, Make it possible to log in to Orkut with 11.01
-		addPreprocessHandler('if_qe()[if_s][if_p]("about:blank");','');
+		window.__defineGetter__('orkutFrame', function(){
+		  if(typeof arguments.callee.patchedWindowObjects=='undefined')arguments.callee.patchedWindowObjects=[];
+		  var win, iframe=document.getElementById('orkutFrame');
+		  if(iframe){
+		    win=iframe.contentWindow;
+		    if( arguments.callee.patchedWindowObjects.indexOf(win)==-1 ){
+		      var realReplace=win.location.replace;
+		      win.location.replace=function(str){
+		        if(str==='about:blank')str='javascript:';
+		        return realReplace.call(this, str);
+		      }
+		    }
+		  }
+		  return win;
+		});
+		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
 	} else if(hostname.indexOf('ostgotatrafiken.se')>-1){			// PATCH-324, Fix autocomplete forms being prematurely submitted on OstgotaTrafiken
 		document.addEventListener('DOMContentLoaded',function (e) {		
@@ -1645,16 +1660,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		};
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box). See browser.js for details');
-	} else if(hostname.indexOf('us.etrade.com')!=-1 ){			// OTW-3340, Working around E*Trade site's security policy violation
-		opera.defineMagicFunction('GoToETURL', function(oF,oT,urlPath,thirdParty){
-			try{
-				oF.call(oT, urlPath, thirdParty);
-			}catch(e){
-				top.postMessage(etURL.parse(urlPath,thirdParty), 'http://www.etrade.wallst.com');
-			}
-		});
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
@@ -1700,14 +1705,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('westjet.com')>-1 ){			// PATCH-260,  Westjet browser sniffing warns against Opera
 		opera.defineMagicVariable('browser', function(o){ o.isSupported=true; return o; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Westjet browser sniffing warns against Opera). See browser.js for details');
-	} else if(hostname.indexOf('www.etrade.wallst.com')!=-1){			// OTW-3340, Working around E*Trade site's security policy violation (second part)
-		addEventListener('message', function(e){
-			if(e.domain=='us.etrade.com')top.location.href=e.data;
-		}, false);
-		
-		
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around E*Trade site\'s security policy violation (second part)). See browser.js for details');
 	} else if(hostname.indexOf('www.kpn.com')>-1){			// PATCH-153, kpn.com hides body by mistake
 		addCssToDocument('body{display:block!important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (kpn.com hides body by mistake). See browser.js for details');
