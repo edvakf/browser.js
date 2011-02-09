@@ -1,4 +1,4 @@
-// AmqeM5qt3jv18wg0Wy+1PRYcPU+DUs1bhp0GOXk1TyM7WmyZ7aZEfY6kFHcbLSzRJ/xR0KXa7QM+HntImXX0MRv/Cxzviv6El4PdoqDtbQr0OpuCArv08UmE1XBIiNCDVG4ppbkWwHV/LTnm3ZTGFH42+vEndCFN2rwokOteagbCiV0IT0h3yFmGnIVVBObhIp15PV/FJcyZg198Ne8FEijGMJllFTV1M7Oz/wjDrLHv+7J4ic2b+kOzCCDYQVTo6dPEUVZzWaiq/beDApqERUkV7EVIWunHtZsCtp4Y0Avtfi7VUUK7m0NRjuDV1b5UZn7q7o1gFOVekdw/OjW0vA==
+// xi2na2x4mA6Th7J+i378cEWuI6w4JKhK3M96MgoXq0n2H81JdVZWS5pNvea8+UboHaDbAe0clRLiya6RjQW8IMHfqQadXDuPvzl9RH2SHKwvFPbbumDioEk3a7nmn1mPbB/9dzNa58WqQwgpa3X8/l3wkksskgfgTvplMpJx3Dm66UzFJ1SpaMPbHy8uGnL0V9VwiRRKsnfbt8eydywLPhxIjh9UgMfAbQT8/qlL2Z7EhFS83b1GL6tCXbTqvKvJqI9FWiOezrz/3YCtvXZssb3bMtC2JnZkCpIywDNT3kxYFTtqoulwPYx5+PHWVbUuC10Agi74gKhif77sx+MzjA==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 4, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 9, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -554,7 +554,23 @@ function stopKeypressIfDownCancelled(stopKey){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+=' Gecko';
 			shouldRestore=true;
-		}
+		}else if(indexOf.call(name,'connect.facebook.net')>-1 && indexOf.call(name,'all.js')>-1){ 
+				var win_attachEvent=window.attachEvent;
+				if( window.fbAsyncInit ){
+					var origFBAsyncInit=window.fbAsyncInit;
+					window.fbAsyncInit=function(){
+						window.attachEvent=undefined;
+						origFBAsyncInit.call(null);
+						window.attachEvent=win_attachEvent;
+					}
+				}else{
+					window.attachEvent=undefined; 
+					addEventListener.call(opera, 'AfterScript', function(e){
+						window.attachEvent=win_attachEvent;
+						removeEventListener.call(opera, 'AfterScript', arguments.callee, false);
+					}, false);
+				}
+			}
 		if( typeof window._jive_plain_quote_text!='undefined' ){ // Jive forum embeds TinyMCE, possibly outdated versions - PATCH-248
 			opera.addEventListener('BeforeScript', function(e){
 				indexOf.call=removeEventListener=call;
@@ -1019,6 +1035,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('au.kddi.com')>-1){			// PATCH-376, Make sure main content isn't hidden on KDDI page
 		addCssToDocument('.smartphoneBlock{overflow:visible !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make sure main content isn\'t hidden on KDDI page). See browser.js for details');
+	} else if(hostname.indexOf('auto.meta.ua')>-1){			// PATCH-380, Avoid blinking search field on meta.ua
+		addCssToDocument('#a_more{display:block !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid blinking search field on meta.ua). See browser.js for details');
 	} else if(hostname.indexOf('barnesandnoble.com')>-1){			// OTW-1909, Barnes&Noble uses "required" attributes on elements that aren't required
 		window.addEventListener('load', function(){var nodes=document.evaluate('//input[@required]', document.body,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null),node=null,i=0; while(node=nodes.snapshotItem(i)){ node.removeAttribute('required'); i++; }},false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Barnes&Noble uses "required" attributes on elements that aren\'t required). See browser.js for details');
@@ -1263,6 +1282,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('kort.arealinfo.dk')>-1){			// PATCH-348, Disable Opera detection that causes hidden content
 		opera.defineMagicVariable('op', function(){return false}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable Opera detection that causes hidden content). See browser.js for details');
+	} else if(hostname.indexOf('listen.grooveshark.com')>-1){			// PATCH-381, Prevent scroll position reset on grooveshark search results
+		HTMLBodyElement.prototype.__defineSetter__('unselectable', function(){});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent scroll position reset on grooveshark search results). See browser.js for details');
 	} else if(hostname.indexOf('login.live.com')!=-1){			// PATCH-242, Prevent readystatechange events on SCRIPT, causes double banners
 		opera.addEventListener('BeforeEvent.readystatechange', function(e){
 			preventDefault.call=call;
