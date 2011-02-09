@@ -1,4 +1,4 @@
-// aniweN3qiOwMSeUVMmpJfrXk4V3tsA7hFfPNk+Lsq0aFWPHqJyDxyJhWjZHHSXyXPTI3/2H5xqzct1JtZ77h5z8r+SMxp5hOfSVIc9gJJ3LDjBZfquf4FAA8iUO/wfEUzDBVNKqvoKg82LzYIr33P5eQieJwXjHTOdc2H7yHLcSUEzZ1D8ayqRIij2dE9jIw5uH3qyhGoP6Wv2LAhtCFqQv7zTV1fqSQnKnN9RlzLtUGTl8u8dJ6/Pd7NgwjjIg433dxs0ct81gj2KmoNGjUpk/azn7XT6UPsKAupGYNArMJo28Ax4+UAG/36WBLNsaqMsv/Wi43HmPYuAomvnkiig==
+// jZaF338cKGPw0OTB354TIpnNEoz2EEfUO9mZ0dIH/YRYQPREeWuJBSN17AIcGFdlrZQuD/8IQU1pBY4xjsfawRIR8G1JMSWBS6HfKWkyAdym48tGq8SlryUfM1ui8/FK9XNzGU1ZNYiACXuPC/9uNnaZDZRtdCUbJKnMbHqsHa1ByPT+BBUy3b+44qtll9w4CZTjgirmJIa9HBcP97rv9gg/eryyFU4XKSCi70Bmlt0TVbnOoRkEU08VLz9rA2i5WhAnayFmyCjZ/1/d2YeJ3KA6BtNMtX2uW+EjCD73pn1WHtsAaiWUcDYHFBBCoCC0VLbmH3FtuiJGlQKSxpbRJA==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 4, 2011 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 9, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -565,7 +565,23 @@ function stopKeypressIfDownCancelled(stopKey){
 			navRestore.userAgent = navigator.userAgent;
 			navigator.userAgent+=' Gecko';
 			shouldRestore=true;
-		}
+		}else if(indexOf.call(name,'connect.facebook.net')>-1 && indexOf.call(name,'all.js')>-1){ 
+				var win_attachEvent=window.attachEvent;
+				if( window.fbAsyncInit ){
+					var origFBAsyncInit=window.fbAsyncInit;
+					window.fbAsyncInit=function(){
+						window.attachEvent=undefined;
+						origFBAsyncInit.call(null);
+						window.attachEvent=win_attachEvent;
+					}
+				}else{
+					window.attachEvent=undefined; 
+					addEventListener.call(opera, 'AfterScript', function(e){
+						window.attachEvent=win_attachEvent;
+						removeEventListener.call(opera, 'AfterScript', arguments.callee, false);
+					}, false);
+				}
+			}
 		if( typeof window._jive_plain_quote_text!='undefined' ){ // Jive forum embeds TinyMCE, possibly outdated versions - PATCH-248
 			opera.addEventListener('BeforeScript', function(e){
 				indexOf.call=removeEventListener=call;
@@ -1349,6 +1365,9 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('kort.arealinfo.dk')>-1){			// PATCH-348, Disable Opera detection that causes hidden content
 		opera.defineMagicVariable('op', function(){return false}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Disable Opera detection that causes hidden content). See browser.js for details');
+	} else if(hostname.indexOf('listen.grooveshark.com')>-1){			// PATCH-381, Prevent scroll position reset on grooveshark search results
+		HTMLBodyElement.prototype.__defineSetter__('unselectable', function(){});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent scroll position reset on grooveshark search results). See browser.js for details');
 	} else if(hostname.indexOf('login.live.com')!=-1){			// PATCH-242, Prevent readystatechange events on SCRIPT, causes double banners
 		opera.addEventListener('BeforeEvent.readystatechange', function(e){
 			preventDefault.call=call;
