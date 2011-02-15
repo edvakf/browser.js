@@ -1,4 +1,4 @@
-// xi2na2x4mA6Th7J+i378cEWuI6w4JKhK3M96MgoXq0n2H81JdVZWS5pNvea8+UboHaDbAe0clRLiya6RjQW8IMHfqQadXDuPvzl9RH2SHKwvFPbbumDioEk3a7nmn1mPbB/9dzNa58WqQwgpa3X8/l3wkksskgfgTvplMpJx3Dm66UzFJ1SpaMPbHy8uGnL0V9VwiRRKsnfbt8eydywLPhxIjh9UgMfAbQT8/qlL2Z7EhFS83b1GL6tCXbTqvKvJqI9FWiOezrz/3YCtvXZssb3bMtC2JnZkCpIywDNT3kxYFTtqoulwPYx5+PHWVbUuC10Agi74gKhif77sx+MzjA==
+// PU/uKBuCbaEThMJvR72puJTqxPfvhIizMwdN7P0EoGws8HefVZyMG49tQYFsDw18RtTLB9EEA7eDX/1Ud3CfBZQjT/PHNZWQERbP+OZrBo47q+XR7BRdKyTQCiApPj8BkA6xx8p2z4IFhIbzGHBwmmkktPuSMDoYcAEgjnbhGMdCA9yezYk/b7zvH/oLcMY59RsW2EBUoc6laXNjL+FYk0oynC7/yTPUysl69HzhE4bkPiWQHQXPnrdX4u5AH9B1vQGif4XjAWmOwbqR40ab+UUov/Zktf6eYoCz6CrS8VbAlr5qU8n/vvBVf4hhekhCmfNf+YcLOdvegBNfG+r3nw==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 9, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 15, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -806,6 +806,14 @@ function stopKeypressIfDownCancelled(stopKey){
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (We should not send keypress events for navigation- and function keys). See browser.js for details');
 		}
+		if(hostname.indexOf('maps')>-1){			// PATCH-383, Avoidd sniffing that prevents itinerary lines on Google Maps
+			navigator.userAgent=navigator.userAgent.replace(/Opera\/9\.80/, 'Opera/' + parseFloat(opera.version()));
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoidd sniffing that prevents itinerary lines on Google Maps). See browser.js for details');
+		}
+		if(hostname.indexOf('spreadsheets')>-1){			// PATCH-382, Google Spreadsheets cell size and column label size mismatch
+			addCssToDocument('.row-header-wrapper {display:inline}');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Spreadsheets cell size and column label size mismatch). See browser.js for details');
+		}
 		if(hostname.indexOf('talkgadget.google.')>-1){			// PATCH-304, avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)
 			stopKeypressIfDownCancelled();
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)). See browser.js for details');
@@ -915,6 +923,11 @@ function stopKeypressIfDownCancelled(stopKey){
 		}
 		if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
 			location.href='/dc/launch?sysreq=ignore';
+			
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail work around browser blocking). See browser.js for details');
+		}
+		if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/neo/launch' )>-1&&location.search=='')){			// PATCH-325, Y!Mail work around browser blocking
+			location.href='/neo/launch?reason=ignore';
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail work around browser blocking). See browser.js for details');
 		}
@@ -1741,6 +1754,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		 false
 		);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide extra button text on weather.com). See browser.js for details');
+	} else if(hostname.indexOf('www.yoka.com')>-1){			// PATCH-238, Override minmax IE helper script
+		opera.defineMagicFunction('minmax_scan', function(){});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Override minmax IE helper script). See browser.js for details');
 	} else if(hostname=='my.tnt.com'){			// PATCH-48, force all images to load before printing TNT delivery sheet
 		opera.defineMagicFunction('printPageDirect',function (func,realThis) {
 			var total = document.images.length, loaded = 0, imgs = [];
