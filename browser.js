@@ -1,4 +1,4 @@
-// jZaF338cKGPw0OTB354TIpnNEoz2EEfUO9mZ0dIH/YRYQPREeWuJBSN17AIcGFdlrZQuD/8IQU1pBY4xjsfawRIR8G1JMSWBS6HfKWkyAdym48tGq8SlryUfM1ui8/FK9XNzGU1ZNYiACXuPC/9uNnaZDZRtdCUbJKnMbHqsHa1ByPT+BBUy3b+44qtll9w4CZTjgirmJIa9HBcP97rv9gg/eryyFU4XKSCi70Bmlt0TVbnOoRkEU08VLz9rA2i5WhAnayFmyCjZ/1/d2YeJ3KA6BtNMtX2uW+EjCD73pn1WHtsAaiWUcDYHFBBCoCC0VLbmH3FtuiJGlQKSxpbRJA==
+// V7vRxn/aO6hQiEVzC9xpDD0N8pAGo5hLZi1jPfE/z0FVqVtlvF/bAE0Mk2aqmK+RUOtv7vh3ebOg2rkfGXXcEd8dztmqmZI9wm6n9Ca6C/xgVCjtq0iJBjmHu54egEjOf8G9NE0TLUEQinqPKWb5Q5zeVIIVrc8FJtNK1N1kZ05Otnz6jnDJriHEI1t9CZE10GHITIose3MN+hKW/ZX30cSEgx7qeTkwvKPK+Hma23afMe3aWV1w52ZKt/PVh37gN6I2d4a+nQS/u1GH7YhEaTITtdUobS0ot7+Cn/3EDKHd2mS7sCoXjvy185Wu7fujXyO7zxrEEsv2/RLKQQ3Lmw==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 9, 2011 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 15, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1818,6 +1818,9 @@ function stopKeypressIfDownCancelled(stopKey){
 		 false
 		);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide extra button text on weather.com). See browser.js for details');
+	} else if(hostname.indexOf('www.yoka.com')>-1){			// PATCH-238, Override minmax IE helper script
+		opera.defineMagicFunction('minmax_scan', function(){});
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Override minmax IE helper script). See browser.js for details');
 	} else if(hostname=='my.tnt.com'){			// PATCH-48, force all images to load before printing TNT delivery sheet
 		opera.defineMagicFunction('printPageDirect',function (func,realThis) {
 			var total = document.images.length, loaded = 0, imgs = [];
