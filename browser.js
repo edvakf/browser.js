@@ -1,4 +1,4 @@
-// PU/uKBuCbaEThMJvR72puJTqxPfvhIizMwdN7P0EoGws8HefVZyMG49tQYFsDw18RtTLB9EEA7eDX/1Ud3CfBZQjT/PHNZWQERbP+OZrBo47q+XR7BRdKyTQCiApPj8BkA6xx8p2z4IFhIbzGHBwmmkktPuSMDoYcAEgjnbhGMdCA9yezYk/b7zvH/oLcMY59RsW2EBUoc6laXNjL+FYk0oynC7/yTPUysl69HzhE4bkPiWQHQXPnrdX4u5AH9B1vQGif4XjAWmOwbqR40ab+UUov/Zktf6eYoCz6CrS8VbAlr5qU8n/vvBVf4hhekhCmfNf+YcLOdvegBNfG+r3nw==
+// j37t4l9+5PfDYFav53XFQ32wCtOsyaAt6EciOCZqkBGE04DskjDSxHa76YkSrVcpHKpYy4YximdV8t3fDq30l5pO4gEGFV7kxo3iDObltMpOR2kD05r7QUzIzvjUQD28oQwll2CgRIneA3Qq5pLMnmjolaKev1GdY6MpRC5QhfSrkzgcm6LDC9mBRooZmCHWGbSExAdAUqTZMJAglDL8xOk3245a7PDDm57mkV+5x6Js13dCg6E4gppBEq4pEcIurHTagFLVjGhqA5h73l5Mt7vyoIC6Ylbda5DtubDeClaZJr0mxbFJyP++c8xI6jEKtp1B2FTHPs+Qgj572Bvheg==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 15, 2011 ';
+	var bjsversion=' Opera Desktop 11.10 core 2.8.99, February 21, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -369,19 +369,6 @@ function setTinyMCEVersion(e){
 	if(tinyInstance&&tinyInstance.majorVersion)tinyMCEVersionInfo={ majorVersion:tinyInstance.majorVersion, minorVersion:tinyInstance.minorVersion };
 }
 
-function stopKeypressIfDownCancelled(stopKey){
-	opera.addEventListener('AfterEventListener.keydown', function(e){
-		if(e.eventCancelled)stopKey=true;
-	}, false);
-
-	opera.addEventListener('BeforeEvent.keypress', function(e){
-		if(stopKey){
-			preventDefault.call=call;
-			preventDefault.call(e.event);
-			stopKey=false;
-		}
-	}, false);
-}
 
 
 
@@ -814,10 +801,6 @@ function stopKeypressIfDownCancelled(stopKey){
 			addCssToDocument('.row-header-wrapper {display:inline}');
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Spreadsheets cell size and column label size mismatch). See browser.js for details');
 		}
-		if(hostname.indexOf('talkgadget.google.')>-1){			// PATCH-304, avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)
-			stopKeypressIfDownCancelled();
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)). See browser.js for details');
-		}
 		if(pathname.indexOf('/reader/view')==0){			// PATCH-32, Google Reader wraps long feed titles
 			addCssToDocument(".scroll-tree .name { display: block;}");
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Reader wraps long feed titles). See browser.js for details');
@@ -1183,46 +1166,13 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('etour.co.jp') > -1){			// PATCH-152, etour.co.jp fix non-disappearing overlapping image
 		navigator.appName='Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (etour.co.jp fix non-disappearing overlapping image). See browser.js for details');
-	} else if(hostname.indexOf('facebook.com')!=-1){			// PATCH-264, @mentions feature requires correct cancellation of enter keys
-		stopKeypressIfDownCancelled();
-				// PATCH-264, Enable @mentions
+	} else if(hostname.indexOf('facebook.com')!=-1){			// PATCH-264, Enable @mentions
 		var mentionsPatcher=addPreprocessHandler(/this\.suppressMentions=\(ua\.opera\(\)\|\|/, 'this.suppressMentions=(false||', true, function(el){return indexOf.call(el.text, 'this.suppressMentions=(ua.opera()')>-1; } );
 		opera.addEventListener('BeforeEvent.DOMContentLoaded', function(){
 			if(document.getElementsByName('status').length==0)opera.removeEventListener('BeforeScript', mentionsPatcher, false);
 		}, false);
 		
-				// PATCH-299, Make deleting @mentions work
-		(function(){
-		var storedRngInfo={};
-			opera.addEventListener('BeforeEvent.keydown', function(e){
-				var kc=e.event.keyCode;
-				if( kc==8 || kc==46 ){
-					var rng=window.getSelection().getRangeAt(0);
-					storedRngInfo.startContainer=rng.startContainer;
-					storedRngInfo.startOffset=rng.startOffset;
-					storedRngInfo.textLength=rng.startContainer.textContent.length;
-				}
-			}, false);
-			opera.addEventListener('AfterEvent.keyup', function(e){
-				var kc=e.event.keyCode;
-				if( kc==8 || kc==46 ){
-					var rng=window.getSelection().getRangeAt(0);
-					if(storedRngInfo.startContainer == rng.startContainer &&
-						storedRngInfo.startOffset==rng.startOffset &&
-						storedRngInfo.textLength == rng.startContainer.textContent.length ){ // user pressed Del or Backspace but it seems nothing happened..
-							if( kc==8 && rng.startOffset == 0 && rng.startContainer.previousSibling && rng.startContainer.previousSibling.contentEditable=='false' ){
-								rng.startContainer.previousSibling.parentNode.removeChild( rng.startContainer.previousSibling );
-							}else if( kc==46 && rng.startOffset == rng.startContainer.textContent.length && rng.startContainer.nextSibling && rng.startContainer.nextSibling.contentEditable == 'false' ){
-								rng.startContainer.nextSibling.parentNode.removeChild( rng.startContainer.nextSibling );
-							}
-		
-					}
-				}
-			}, false);
-		})();
-				// PATCH-371, Prevent repaint issues triggered by specific text-overflow style
-		addCssToDocument('*{text-overflow:clip!important}');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (@mentions feature requires correct cancellation of enter keys\nEnable @mentions\nMake deleting @ment...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable @mentions). See browser.js for details');
 	} else if(hostname.indexOf('fantasy.nfl.com')>-1){			// PATCH-303, Reporting different clientHeight and scrollHeight for TEXTAREA breaks commenting on nfl.com
 		HTMLTextAreaElement.prototype.__defineGetter__('clientHeight', function(){
 			if(this.scrollHeight>this.rows*parseInt(document.defaultView.getComputedStyle(this,null).getPropertyValue('font-size')) ){
@@ -1388,12 +1338,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('moneta.co.kr')!=-1){			// 219041,  moneta.co.kr relies on IE quirks for CSS positioning
 		addCssToDocument('#stocking{position:relative}#stocking>div{position:absolute}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( moneta.co.kr relies on IE quirks for CSS positioning). See browser.js for details');
-	} else if(hostname.indexOf('monocubed.com')>-1){			// PATCH-282, Avoid scrolling down when space key is pressed
-		stopKeypressIfDownCancelled();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid scrolling down when space key is pressed). See browser.js for details');
-	} else if(hostname.indexOf('msdn.microsoft.com')>-1){			// PATCH-368, Enable MSDN search (Opera requires cancelling keypress, not keydown)
-		stopKeypressIfDownCancelled();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable MSDN search (Opera requires cancelling keypress, not keydown)). See browser.js for details');
 	} else if(hostname.indexOf('myspace.com')>-1){			// PATCH-266, Opera disallows using reserved word top as variable name
 		(function(){
 			var the_top;
@@ -1492,23 +1436,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (can\'t change orkut avatar picture\norkut avatar image crop does not happen because of timing issue\n...). See browser.js for details');
-	} else if(hostname.indexOf('ostgotatrafiken.se')>-1){			// PATCH-324, Fix autocomplete forms being prematurely submitted on OstgotaTrafiken
-		document.addEventListener('DOMContentLoaded',function (e) {		
-			var els = document.getElementsByTagName('input');
-			for (var i=0,len=els.length;i<len;i++){
-				var elclass = els[i].getAttribute('class')
-				if (elclass && elclass.indexOf('ui-autocomplete-input')>-1) {
-					els[i].addEventListener('keypress',function(ev){ if (ev.keyCode==13) {
-						ev.preventDefault();
-						var evObj = document.createEvent('UIEvents');
-						evObj.initUIEvent('keydown',true,true,window,1);
-						evObj.keyCode = 13;
-						this.dispatchEvent(evObj);
-					} },false);
-				}
-			}
-		},false);
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix autocomplete forms being prematurely submitted on OstgotaTrafiken). See browser.js for details');
 	} else if(hostname.indexOf('paypal.com') >-1){			// PATCH-366, Fix unclickable credit card selection box on PayPal
 		addCssToDocument('div#fieldrowCCType div#selectBox{position:absolute;}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix unclickable credit card selection box on PayPal). See browser.js for details');
@@ -1520,17 +1447,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		},false);
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Show digital pamphlet from Yamada Denki). See browser.js for details');
-	} else if(hostname.indexOf('play.com')>-1){			// PATCH-250, Allow play.com searching with Enter
-		window.addEventListener('keypress',
-			function(evt){
-				if(evt.target.id=='searchstring' && evt.keyCode==13){
-					evt.preventDefault();
-				}
-			},
-		false
-		);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Allow play.com searching with Enter). See browser.js for details');
 	} else if(hostname.indexOf('pluginfree.com') > -1){			// PATCH-105, DNP Pluginfree Viewer fallback to Netscape version for Opera
 		opera.defineMagicFunction('sort',function(rf,rt){
 			var res;
@@ -1606,9 +1522,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('siren24.com')!=-1){			// SEOUL-609, ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script
 		navigator.appName = 'Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (ActiveX installation page redirect on siren24.com due to sniffing limitation on redirect script). See browser.js for details');
-	} else if(hostname.indexOf('skylark.co.jp')>-1){			// PATCH-257, Site navigation menu font-size patch
-		addCssToDocument('#navi3 ul li a {font-size: 12px !important;} ');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Site navigation menu font-size patch). See browser.js for details');
 	} else if(hostname.indexOf('smithbarney.com')>-1){			// PATCH-360, Enable the password box on smithbarney.com
 		HTMLInputElement.prototype.__defineSetter__('type',function(){
 			if (this.getAttribute('type')!=arguments[0]) {
@@ -1621,26 +1534,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on smithbarney.com). See browser.js for details');
-	} else if(hostname.indexOf('societegenerale.fr')>-1){			// PATCH-270, Make virtual keyboard appear for pass code entry
-		opera.defineMagicVariable('vk', function(obj){
-			if(obj.show && !arguments.callee.done){
-				var showIt=obj.show;
-				obj.show=function(){
-					showIt.apply(this, arguments);
-					if(document.getElementById('img_clavier')){
-						var img_clavier;
-						(img_clavier=document.getElementById('img_clavier')).addEventListener('load', function(){
-							img_clavier.style.position='static';
-							setTimeout(function(){ img_clavier.style.position='absolute'; }, 100);
-						}, false);
-					}
-				}
-				arguments.callee.done=true;
-			}
-			return obj;
-		}, null);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make virtual keyboard appear for pass code entry). See browser.js for details');
 	} else if(hostname.indexOf('sogou.com')>-1){			// PATCH-72, Sogou.com uses window.MouseEvent
 		window.MouseEvent=Event;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sogou.com uses window.MouseEvent). See browser.js for details');
@@ -1651,6 +1544,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			return rangeInsertNode.call(this,n);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Range.prototype.insertNode automatically import nodes from other documents). See browser.js for details');
+	} else if(hostname.indexOf('support.asus.com')>-1){			// PATCH-362, Prevent Asus browser sniffing from breaking support site software download
+		navigator.appName='Netscape';
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent Asus browser sniffing from breaking support site software download). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
@@ -1679,22 +1575,12 @@ function stopKeypressIfDownCancelled(stopKey){
 		opera.addEventListener('BeforeEventListener.load', function(e){preventDefault.call=call;
 			if( e.event.target.contentWindow && e.event.target.contentWindow.location.href =='about:blank' )preventDefault.call(e);
 		}, false);
-				// PATCH-245, Enter key in chat box should send message without inserting linebreak
-		opera.addEventListener('BeforeEvent.keypress',function(e){ if(e.event.keyCode===13&&/dock_item_text_area/.test(e.event.target.id))e.event.preventDefault(); }, false);
 				// PATCH-134, Videos not shown
 		navigator.userAgent += ' [NOT firefox/3]';
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nEnter key in chat box should send message w...). See browser.js for details');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Problems submitting messages and comments on tuenti.com\nVideos not shown). See browser.js for details');
 	} else if(hostname.indexOf('tvguide.com')>-1){			// PATCH-274, TVGuide doesn't show program descriptions, due to browser sniffing
 		opera.defineMagicVariable('isSafari', function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (TVGuide doesn\'t show program descriptions, due to browser sniffing). See browser.js for details');
-	} else if(hostname.indexOf('twitter.com')>-1){			// PATCH-263, Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box
-		var theFocusMethod=HTMLTextAreaElement.prototype.focus;
-		HTMLTextAreaElement.prototype.focus=function(){
-			/* display:none textarea has 0 offsetWidth */
-			if(this.offsetWidth) theFocusMethod.call(this);
-		};
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
@@ -1723,17 +1609,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('voddler.com')>-1){			// PATCH-337, Remove browser warning message and allow movie playback
 		addPreprocessHandler( 'if (browserMessage)', 'if (browserMessage && !(isWindows || (isOSX && isValidOSX)))');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Remove browser warning message and allow movie playback). See browser.js for details');
-	} else if(hostname.indexOf('web.ebuddy.com')>-1){			// PATCH-287, Hack to make script see typed value in TEXTAREA
-		opera.addEventListener('BeforeEventListener.keydown', function(e){
-			if(e.event.target instanceof HTMLTextAreaElement && e.event.target.value==''){
-				e.event.target.contentEditable='false';
-			}
-		}, false);
-		
-				// PATCH-287, Don't insert linebreak in chat box when enter sends message
-		stopKeypressIfDownCancelled();
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hack to make script see typed value in TEXTAREA\nDon\'t insert linebreak in chat box when enter sends...). See browser.js for details');
 	} else if(hostname.indexOf('weborama.ru')>-1){			// PATCH-370, Avoid overwriting page content on Weborama
 		avoidDocumentWriteAbuse(' alt="Rambler\'s Top100" title="Rambler\'s Top100" style="border: none;"/>');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid overwriting page content on Weborama). See browser.js for details');
