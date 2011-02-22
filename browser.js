@@ -1,4 +1,4 @@
-// PU/uKBuCbaEThMJvR72puJTqxPfvhIizMwdN7P0EoGws8HefVZyMG49tQYFsDw18RtTLB9EEA7eDX/1Ud3CfBZQjT/PHNZWQERbP+OZrBo47q+XR7BRdKyTQCiApPj8BkA6xx8p2z4IFhIbzGHBwmmkktPuSMDoYcAEgjnbhGMdCA9yezYk/b7zvH/oLcMY59RsW2EBUoc6laXNjL+FYk0oynC7/yTPUysl69HzhE4bkPiWQHQXPnrdX4u5AH9B1vQGif4XjAWmOwbqR40ab+UUov/Zktf6eYoCz6CrS8VbAlr5qU8n/vvBVf4hhekhCmfNf+YcLOdvegBNfG+r3nw==
+// sOKqqi0E/NpdQAntFO8ZcCqJUlSkbuhaf3G09o1T1fxZ5NFVPjv4tYcGqJXQ/6VOf29qDlISBL0gLpjISa42WJ3ucePTmp04qS3AR3W90UNT/4geP/LsCosZSsBfxi/0kIvKE06SPzmr4id6SjX8RNvzhF5crwszQyTK/cEVqLMG9qkt0NZ6YXv7j9/TotREgrAbZb7OYK1VZzGYZ4IvkuzZc918hsteq+U1mOGTt5Z8eHYBbJD+nDB8iwSJOirqFFTMsLHftbKzJKkq1t0j3VY6V70AKlVGlx8NYfJ833B+1JjkYcTyQchsit6/k8e+0WFajUnSayOE7IDI0dmS1Q==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 15, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, February 21, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -1621,26 +1621,6 @@ function stopKeypressIfDownCancelled(stopKey){
 		});
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on smithbarney.com). See browser.js for details');
-	} else if(hostname.indexOf('societegenerale.fr')>-1){			// PATCH-270, Make virtual keyboard appear for pass code entry
-		opera.defineMagicVariable('vk', function(obj){
-			if(obj.show && !arguments.callee.done){
-				var showIt=obj.show;
-				obj.show=function(){
-					showIt.apply(this, arguments);
-					if(document.getElementById('img_clavier')){
-						var img_clavier;
-						(img_clavier=document.getElementById('img_clavier')).addEventListener('load', function(){
-							img_clavier.style.position='static';
-							setTimeout(function(){ img_clavier.style.position='absolute'; }, 100);
-						}, false);
-					}
-				}
-				arguments.callee.done=true;
-			}
-			return obj;
-		}, null);
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make virtual keyboard appear for pass code entry). See browser.js for details');
 	} else if(hostname.indexOf('sogou.com')>-1){			// PATCH-72, Sogou.com uses window.MouseEvent
 		window.MouseEvent=Event;
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sogou.com uses window.MouseEvent). See browser.js for details');
@@ -1651,6 +1631,9 @@ function stopKeypressIfDownCancelled(stopKey){
 			return rangeInsertNode.call(this,n);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Range.prototype.insertNode automatically import nodes from other documents). See browser.js for details');
+	} else if(hostname.indexOf('support.asus.com')>-1){			// PATCH-362, Prevent Asus browser sniffing from breaking support site software download
+		navigator.appName='Netscape';
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent Asus browser sniffing from breaking support site software download). See browser.js for details');
 	} else if(hostname.indexOf('sytadin.fr')!=-1){			// 365351, Sytadin.fr IFRAME resize script detects Opera
 		fixIFrameSSIscriptII('resizeIframeOnContent');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Sytadin.fr IFRAME resize script detects Opera). See browser.js for details');
@@ -1687,14 +1670,6 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('tvguide.com')>-1){			// PATCH-274, TVGuide doesn't show program descriptions, due to browser sniffing
 		opera.defineMagicVariable('isSafari', function(){return true;}, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (TVGuide doesn\'t show program descriptions, due to browser sniffing). See browser.js for details');
-	} else if(hostname.indexOf('twitter.com')>-1){			// PATCH-263, Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box
-		var theFocusMethod=HTMLTextAreaElement.prototype.focus;
-		HTMLTextAreaElement.prototype.focus=function(){
-			/* display:none textarea has 0 offsetWidth */
-			if(this.offsetWidth) theFocusMethod.call(this);
-		};
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Twitter tries to focus a display:none TEXTAREA, removing focus from main status update box). See browser.js for details');
 	} else if(hostname.indexOf('usairways.com')>-1){			// 0,  USAirways is not compatible with WF2 spec required attribute
 		opera.addEventListener('BeforeEvent.invalid', function(e){
 			/* they specify required="True" attributes on hidden form elements. This tries to check if they are hidden
