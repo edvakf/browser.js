@@ -1,4 +1,4 @@
-// V7vRxn/aO6hQiEVzC9xpDD0N8pAGo5hLZi1jPfE/z0FVqVtlvF/bAE0Mk2aqmK+RUOtv7vh3ebOg2rkfGXXcEd8dztmqmZI9wm6n9Ca6C/xgVCjtq0iJBjmHu54egEjOf8G9NE0TLUEQinqPKWb5Q5zeVIIVrc8FJtNK1N1kZ05Otnz6jnDJriHEI1t9CZE10GHITIose3MN+hKW/ZX30cSEgx7qeTkwvKPK+Hma23afMe3aWV1w52ZKt/PVh37gN6I2d4a+nQS/u1GH7YhEaTITtdUobS0ot7+Cn/3EDKHd2mS7sCoXjvy185Wu7fujXyO7zxrEEsv2/RLKQQ3Lmw==
+// s/w/su185XajU3BevXUHeRmex70HyFyvZfpuSh0OTP+90U5Vc7V5fwsLf2qDF2WxBx6w4rfj2WHG1BRp3XaIw48Io+h4Hf+mfoiuTeM2549WPYs1h4y7Uq8IbW06e4DelJtEolpMTjLYnT3I2zk6BvXyFk9blGw/nl0DvLUQu9CXOHImSTrZXn1myFkLNEIRc9GnJmMllVH3Nw/1QbFTyEeY5ioA9Qf7fGXBE6a5q581r9us+bxGdTph3zbh8aLaYFtQHwfa3h1zTYtOMbEWTJiP4J4Zd2KaMGAIFHX6+Mu1B2Vyhs47WG3ORigZnozBHJzudRf2m6Wox0eL5yqr5w==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 15, 2011 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, February 21, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -832,6 +832,10 @@ function stopKeypressIfDownCancelled(stopKey){
 			}
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid Flash content on mail.google.com due to crasher). See browser.js for details');
+		}
+		if(hostname.indexOf('maps')>-1){			// PATCH-383, Avoidd sniffing that prevents itinerary lines on Google Maps
+			navigator.userAgent=navigator.userAgent.replace(/Opera\/9\.80/, 'Opera/' + parseFloat(opera.version()));
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoidd sniffing that prevents itinerary lines on Google Maps). See browser.js for details');
 		}
 		if(hostname.indexOf('maps.google.')>-1){			// PATCH-243, Avoid CPU spike when enabling Drag 'n' Zoom on maps.google.com
 			document.__defineGetter__('constructor',function(){return HTMLDocument;});
