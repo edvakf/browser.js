@@ -1,4 +1,4 @@
-// j37t4l9+5PfDYFav53XFQ32wCtOsyaAt6EciOCZqkBGE04DskjDSxHa76YkSrVcpHKpYy4YximdV8t3fDq30l5pO4gEGFV7kxo3iDObltMpOR2kD05r7QUzIzvjUQD28oQwll2CgRIneA3Qq5pLMnmjolaKev1GdY6MpRC5QhfSrkzgcm6LDC9mBRooZmCHWGbSExAdAUqTZMJAglDL8xOk3245a7PDDm57mkV+5x6Js13dCg6E4gppBEq4pEcIurHTagFLVjGhqA5h73l5Mt7vyoIC6Ylbda5DtubDeClaZJr0mxbFJyP++c8xI6jEKtp1B2FTHPs+Qgj572Bvheg==
+// utCzAWEj2aDbEjz4ngrKXNu9ZFRCqyAqurObPIjDnWKkWKhLqUcvwrm51ojT+MJyJw7zOi2/IF6+tGy0iI0SMnLNalZFL3BLsCKlBdfwryNkzNzILwJ7TGUY9ZZ6FZwim9x/m5es14J9mymqvhID4sMBVfykeIAYekijsV18X+kM0/Zx6Kr8DOdivVAzEpkzruaUTWc2WD3/VjZiRhcvLm4rMxqlZ5IvFANsf2U+q30d1e9tZeXjsb1s/PuxDQ2wJyVgzKhgMAaQ9CUzQfta/597LdKXaKmjks2gw8Yo0MySTlDeZ1tNGDOfpE9s409NOugE/pQga6dqhAbTqsvcqA==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.10 core 2.8.99, February 21, 2011 ';
+	var bjsversion=' Opera Desktop 11.10 core 2.8.99, March 10, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -691,9 +691,7 @@ function setTinyMCEVersion(e){
 			addCssToDocument('table.markets-table td{vertical-align:middle}');
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Making sure AOL pages are not overwritten by ad script\nAvoid too tall content on AOL). See browser.js for details');
 		}
-		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-17733, Send button does not appear
-			addCssToDocument('.containerNode .wsButton.rightBorder:first-child, .containerNode .wsButton.rightBorder:first-child .content { min-height: 100px; min-width: 5em }');
-					// CORE-18580, Converting RGB to Hex confuses "high contrast mode" detection
+		if(hostname.indexOf('webmail.aol.com') >-1){			// CORE-18580, Converting RGB to Hex confuses "high contrast mode" detection
 			if(CSSStyleDeclaration&&CSSStyleDeclaration.prototype&&CSSStyleDeclaration.prototype.__defineGetter__){	
 				var CSSStyleDeclaration_color=getComputedStyle(document.documentElement, '').__lookupGetter__('color');
 				CSSStyleDeclaration.prototype.__defineGetter__('color', function(){
@@ -701,7 +699,7 @@ function setTinyMCEVersion(e){
 					return (color=='#1f293b') ? 'rgb(31,41,59)'  : color;
 				});
 			}
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Send button does not appear\nConverting RGB to Hex confuses "high contrast mode" detection). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Converting RGB to Hex confuses "high contrast mode" detection). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
@@ -792,10 +790,6 @@ function setTinyMCEVersion(e){
 			}, true);
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (We should not send keypress events for navigation- and function keys). See browser.js for details');
-		}
-		if(hostname.indexOf('maps')>-1){			// PATCH-383, Avoidd sniffing that prevents itinerary lines on Google Maps
-			navigator.userAgent=navigator.userAgent.replace(/Opera\/9\.80/, 'Opera/' + parseFloat(opera.version()));
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoidd sniffing that prevents itinerary lines on Google Maps). See browser.js for details');
 		}
 		if(hostname.indexOf('spreadsheets')>-1){			// PATCH-382, Google Spreadsheets cell size and column label size mismatch
 			addCssToDocument('.row-header-wrapper {display:inline}');
@@ -899,11 +893,6 @@ function setTinyMCEVersion(e){
 		/* Yahoo! */
 	
 	
-		if(hostname.indexOf("rec.feeds.yahoo.")==0){			// 194334, Make "add feeds" dialog work in Y!Mail beta
-			navigator.product='Gecko';
-			addCssToDocument('#FeedTabs div.panel{overflow:auto!important}body{overflow:hidden!important}');
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make "add feeds" dialog work in Y!Mail beta). See browser.js for details');
-		}
 		if(hostname.indexOf('.mail.yahoo.')>-1&&(href.indexOf( '/dc/system_requirements?browser=blocked' )>-1||href.indexOf( '/dc/system_requirements?browser=unsupported' )>-1)){			// 194334, Y!Mail work around browser blocking
 			location.href='/dc/launch?sysreq=ignore';
 			
@@ -914,25 +903,7 @@ function setTinyMCEVersion(e){
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail work around browser blocking). See browser.js for details');
 		}
-		if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/dc/')==0){			// PATCH-198, Y!Mail chat enter fix
-			opera.addEventListener('BeforeEventListener.load', function(e){
-				if(e.event.target.tagName==='IFRAME' && /imcBody/.test(e.event.target.className)){
-					e.event.target.contentWindow.focus=function(){}// why this works I don't know either..
-					var execCom=e.event.target.contentDocument.execCommand;
-					e.event.target.contentDocument.execCommand=function(command){
-						if(command=='ForeColor')return;
-						execCom.apply(this,arguments);
-					};
-			
-					e.event.target.contentDocument.__defineGetter__('designMode', function(){
-						return this.body.contentEditable=='true' ? 'on' : 'off';
-					});
-					e.event.target.contentDocument.__defineSetter__('designMode', function(v){
-						this.body.contentEditable = (v == 'on');
-					});
-				}
-			},false);
-					// CORE-17539, Y!Mail spell check fix
+		if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/dc/')==0){			// CORE-17539, Y!Mail spell check fix
 			document.__defineGetter__('designMode', function() {
 				return this.documentElement.contentEditable=='true' ? 'on' : 'off';
 			});
@@ -993,11 +964,15 @@ function setTinyMCEVersion(e){
 			/* because Yahoo mail is better at emulating proprietary IE functions than we are.. */
 			Node.prototype.selectSingleNode=undefined;
 			Node.prototype.selectNodes=undefined;
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail chat enter fix\nY!Mail spell check fix\nY!Mail avoid text selection on drag-and-drop\ncreateE...). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Y!Mail spell check fix\nY!Mail avoid text selection on drag-and-drop\ncreateElement in XML document ...). See browser.js for details');
 		}
 		if(hostname.indexOf('.mail.yahoo.')>=0 && pathname.indexOf('/mc/')==0){			// PATCH-359, Avoid overwriting Y!Mail classic inbox
 			avoidDocumentWriteAbuse();
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid overwriting Y!Mail classic inbox). See browser.js for details');
+		}
+		if(hostname.indexOf('finance.yahoo.')>-1){			// PATCH-297, Fool browser sniffing that prevents stock ticker on Yahoo Finance
+			navigator.userAgent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.6) Gecko/20100625 Firefox/3.6.6'; 
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fool browser sniffing that prevents stock ticker on Yahoo Finance). See browser.js for details');
 		}
 		if(hostname.indexOf('mail')==-1){			// 101146, Yahoo ISP portal blocks Opera users
 			addPreprocessHandler( /d\.location\.href = ".*?\/browser_upgrade\.html";/g, '');
@@ -1609,9 +1584,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('voddler.com')>-1){			// PATCH-337, Remove browser warning message and allow movie playback
 		addPreprocessHandler( 'if (browserMessage)', 'if (browserMessage && !(isWindows || (isOSX && isValidOSX)))');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Remove browser warning message and allow movie playback). See browser.js for details');
-	} else if(hostname.indexOf('weborama.ru')>-1){			// PATCH-370, Avoid overwriting page content on Weborama
-		avoidDocumentWriteAbuse(' alt="Rambler\'s Top100" title="Rambler\'s Top100" style="border: none;"/>');
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid overwriting page content on Weborama). See browser.js for details');
 	} else if(hostname.indexOf('westjet.com')>-1 ){			// PATCH-260,  Westjet browser sniffing warns against Opera
 		opera.defineMagicVariable('browser', function(o){ o.isSupported=true; return o; }, null);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( Westjet browser sniffing warns against Opera). See browser.js for details');
