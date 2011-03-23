@@ -1,4 +1,4 @@
-// RtafKiioaVbz/kGMsdT5IiUxkWOVcWEfoRf18Q31n9+4ry6mvtMPK69TlF6PhGRTscjc1g+j/CF7LZs7rLnmGusYzWRIABL/juPNTu6l8K4Ol/KMrj5D5/Q4ziQDkYwkjN0k8SaEqc6J/PUtuHvEUXWA8IV258Y9CcquR2T4SMi75zxK/i5ln5WDMzIGWgzMoWGHJVmQLBU6avGMzUj2oY0UikTTQ8QF7gURN4CIhVIhBpDK4wbxfOjddBb3/hhPk+k61+uUF1hxhSfKLDyAtLFSzhrjCqCqYJwV/LuYyZrrxA3+1YXiahTh/Yaz3dLiHU3rLRfTu0hjR85nzmmF1A==
+// dSLCOOvGEHbWlUfbaBYWQkMuSBIw6GdVg8aOjnDqKGibZXXE85qJIaXQzLkyTcbyoXzL4Vef/W4GfzSjPA09gTlTd4wPN78ia8aonma5A9G6JWD65gdqJd2/sz5eV3dntYwFTH7hhhRQa4WDSVYsTXbOZ+jgSYQoaa4klJvAgDIlf4zYWfY7QBAt8vPM0EinJGxkdEEaCtwpljcSbAA4np5YqJ+OsXtf4Be20EnGn5wvkTZw6ouiW7VeRniriGJ3I/d4Db7OPkk+v20HwGQc/vA9ZubDcOrdtaMbj+s+FgpFzi4eXDtm8ncEi+N4DV4UH3BFdLjxSjrolvMQRCRd/w==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, March 10, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, March 22, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -566,6 +566,15 @@ function stopKeypressIfDownCancelled(stopKey){
 				}else{
 					window.attachEvent=undefined; 
 					addEventListener.call(opera, 'AfterScript', function(e){
+						if( window.FB && FB.init ){
+							(function(init){
+								FB.init=function(){
+									window.attachEvent=undefined;
+									init.apply(this,arguments);
+									window.attachEvent=win_attachEvent;
+								}
+							})(FB.init);
+						}
 						window.attachEvent=win_attachEvent;
 						removeEventListener.call(opera, 'AfterScript', arguments.callee, false);
 					}, false);
@@ -715,6 +724,15 @@ function stopKeypressIfDownCancelled(stopKey){
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Converting RGB to Hex confuses "high contrast mode" detection). See browser.js for details');
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
+	} else if(hostname.indexOf('.apple.com')>-1){			// PATCH-385, Apple.com thinks Opera's CSS property vendor prefix is o instead of O on JS properties
+		(function (){
+		for(var ar=['TransitionProperty', 'TransitionDuration', 'TransitionTimingFunction' ],i=0;i<ar.length; i++){
+			CSSStyleDeclaration.prototype.__defineSetter__('o'+ar[i], (function(prop){return function(val){ 
+				this['O'+prop]=val; 
+			}})(ar[i]));
+		}
+		})();
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Apple.com thinks Opera\'s CSS property vendor prefix is o instead of O on JS properties). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -1094,6 +1112,19 @@ function stopKeypressIfDownCancelled(stopKey){
 		}, false );
 		
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Caja Madrid hides login form by CSS mistake). See browser.js for details');
+	} else if(hostname.indexOf('calendar.live.com')>-1){			// PATCH-389, Events are shown in squished box because table cells are containers for positioned descendants
+		addCssToDocument('.monthGrid td.eventContainerRow{position: static ! important;}');
+				// PATCH-389, Calendar does not respond to mouse due to event.button being W3C-compatible
+		function fixButton(e) {
+			if (e.button == 1) {
+				e.__defineGetter__('button', function() { return 0 });
+			}
+		};
+		window.addEventListener('mousedown', fixButton, true);
+		window.addEventListener('mousemove', fixButton, true);
+		window.addEventListener('mouseup', fixButton, true);
+		
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Events are shown in squished box because table cells are containers for positioned descendants\nCale...). See browser.js for details');
 	} else if(hostname.indexOf('cambrian.mb.ca')>-1){			// PATCH-285, Enable log-in button on Cambrian bank
 		Element.prototype.__defineGetter__('all', function(){});
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable log-in button on Cambrian bank). See browser.js for details');
@@ -1225,6 +1256,14 @@ function stopKeypressIfDownCancelled(stopKey){
 	} else if(hostname.indexOf('fujifilm.ch')>-1){			// PATCH-220, Working around a bug that hides menu entries
 		addCssToDocument('#navigation ul#primary li ul.secondary_drop_down li {display: inline !important }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around a bug that hides menu entries). See browser.js for details');
+	} else if(hostname.indexOf('g4tv.com')>-1){			// PATCH-281, messed up layout in lower part of page due to wrong percentage rounding
+		window.addEventListener('DOMContentLoaded', function(e){
+			var el;
+			if(el=document.getElementsByClassName('content-list editorial variation-2')[0]){
+				el.style.width='634px';
+			}
+		}, false);
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (messed up layout in lower part of page due to wrong percentage rounding). See browser.js for details');
 	} else if(hostname.indexOf('geoaccess.com')!=-1){			// 318050,  BlueCross browser sniffing prevents insurance search
 		opera.defineMagicVariable('is_nav', function(){return true;}, null);
 		
