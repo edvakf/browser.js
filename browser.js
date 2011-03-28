@@ -1,4 +1,4 @@
-// I+rrvfmHb10OY7Z2KcA7x0+LRhz+ikJKtqvS0JcRZ66RKzSWj64J/T7Ou+ZdelFAGgrf8fooTKr0OXJ5K6eOQ6mXnvOXz26b9IdJ8ZwavK4YcF8kWbpbF7vQmhKx7Br1l7zLOiiYeYX0MOommIQN5eYMDAT+X8dWrxu8vEtyhmX5uSFWOqxK/Sq5hlsOBpQUST8wEXCxJo4MCg1ONVxrbctZ8nlWAORANdDVu0H5j/7p9sBedScSmyupR6bk9qu3NqTLkNGNUKkyZ+cYLGElZbmRyv9CLtwT+mRwSsnC0ziTUqC39kKjwdeUrl3v3c1q1RcNhPreVDHQXyTmNIiUFQ==
+// J14RbrPxJazV8tsqBzxDL/LwS9dv83GWFLrfzk+1IQEs4eJOLRLRXg7KLMJ27Vxqa9n6lblN6D6EZ8wF4D3nYRfuKPzHKhaC/SqU+Xfn41ocJ6TrHToLEWqoqzCmsLHhAOs9RCHMziQ1ISCJiznI9+QNFhoEVOmhj8ZH6cVIW4arRHHBZnmpVwiRnQj79o2sW7aH/5bIifY5CPUJt8Gp3PKMCzsyUoEGzsxVRL3tOXRa6OLOqiDPG4Z3n1IcFB93f8N3uHrm5dUDSpG9meBcXeVsjTSw/n9/xxVN817niNMaiLX4giqYBBiiOUGLt48yAlGmBBC5a5FcmtOhUJrrWg==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 10.60 core 2.6.30, March 10, 2011 ';
+	var bjsversion=' Opera Desktop 10.60 core 2.6.30, March 28, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -577,6 +577,15 @@ function stopKeypressIfDownCancelled(stopKey){
 				}else{
 					window.attachEvent=undefined; 
 					addEventListener.call(opera, 'AfterScript', function(e){
+						if( window.FB && FB.init ){
+							(function(init){
+								FB.init=function(){
+									window.attachEvent=undefined;
+									init.apply(this,arguments);
+									window.attachEvent=win_attachEvent;
+								}
+							})(FB.init);
+						}
 						window.attachEvent=win_attachEvent;
 						removeEventListener.call(opera, 'AfterScript', arguments.callee, false);
 					}, false);
@@ -831,9 +840,11 @@ function stopKeypressIfDownCancelled(stopKey){
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid Flash content on mail.google.com due to crasher). See browser.js for details');
 		}
-		if(hostname.indexOf('maps.google.')>-1){			// PATCH-243, Avoid CPU spike when enabling Drag 'n' Zoom on maps.google.com
+		if(hostname.indexOf('maps.google.')>-1){			// PATCH-393, Google Maps found ugly += operator bug, let's hack around it
+			addPreprocessHandler( /a=this\.J\.y\+=a\.height;/, 'this.J.y+=a.height;a=this.J.y;', true, function(el){return el.src.indexOf('main.js')>-1;} );
+					// PATCH-243, Avoid CPU spike when enabling Drag 'n' Zoom on maps.google.com
 			document.__defineGetter__('constructor',function(){return HTMLDocument;});
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid CPU spike when enabling Drag \'n\' Zoom on maps.google.com). See browser.js for details');
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Maps found ugly += operator bug, let\'s hack around it\nAvoid CPU spike when enabling Drag \'n\'...). See browser.js for details');
 		}
 		if(hostname.indexOf('talkgadget.google.')>-1){			// PATCH-304, avoid extra linebreaks in Orkut chat box (Opera requires cancelling keypress, not keydown)
 			stopKeypressIfDownCancelled();
