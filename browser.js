@@ -1,4 +1,4 @@
-// clOxIkZtPUuIQ+QsPI9YDKDRsWLpazl/4No4DejEH6oD7OKw9XhF8xCC6yxq/kDefgx529nmkpoMCsC1YVTmZOlEIrTM751wIcA/xb0mMiC31+4csp861zS61yHiQ6TZtRhuPG5O+RdYXtJv7VJVUxALSriwUglS2wdvGSl9oHDwKOiJLxBJi/lEwPovZ6SGId4I/1Rp/8D2XJQDRjMeJ+Klgf9HnBt9gUOEr0LHD6Kh8vK5xcnjesoei96G7a2qomW3yLNUpONukD/nmomG0ZOtaXpEhkZGwH+9WuhdbAkHu/o8bvNiSDqceTW2Zrim/QoCILsksB5Z+r2USdIb+Q==
+// q+2+SSVVKDFeBCNVgehvAJp1Q2z3eQAhj6nri+OcCUK9tAonrW38LBCM6gH1wpffRRPSiyyS2V5IcaQgI+wm2gQJDJEXvg94OSQp+9qFAzYl13YZiYwB01Y3hJywjARSWHA349QjKtBW1pkVS6ss1lmmfsvGqVQQZAANT3vDc3XDIHH/9fai4q/Xuerz0wihZt68lcRIjDiOO8HlnI6xFe3Ecfx/lwBtRpS/nfHEK40kjW0CZhVYFSUblwR8gs+Bxz71o4LE8nXDE9iL4AZZFDBe7JOrNgY++wy7YGTn1vVi2VpW3+7NDViHgAiZHNES3n9mILd6ieMoMPJi33a0KQ==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.10 core 2.8.119, March 22, 2011 ';
+	var bjsversion=' Opera Desktop 11.10 core 2.8.119, March 28, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -713,15 +713,20 @@ function setTinyMCEVersion(e){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
 	} else if(hostname.indexOf('.apple.com')>-1){			// PATCH-385, Apple.com thinks Opera's CSS property vendor prefix is o instead of O on JS properties
 		(function (){
-		for(var ar=['TransitionProperty', 'TransitionDuration', 'TransitionTimingFunction' ],i=0;i<ar.length; i++){
+		for(var ar=['Transition', 'TransitionProperty', 'TransitionDuration', 'TransitionTimingFunction' ],i=0;i<ar.length; i++){
 			CSSStyleDeclaration.prototype.__defineSetter__('o'+ar[i], (function(prop){return function(val){ 
 				this['O'+prop]=val; 
 			}})(ar[i]));
 		}
 		})();
 				// PATCH-387, Make Apple menu visible
-		addCssToDocument('#globalnav li { width: auto !important}');
+		addCssToDocument('#globalnav li { width: auto !important}#apple-header.enhanced .links li{width: auto !important}');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Apple.com thinks Opera\'s CSS property vendor prefix is o instead of O on JS properties\nMake Apple m...). See browser.js for details');
+	} else if(hostname.indexOf('.bestbuy.com')>-1){			// PATCH-391, Fix bestbuy menus
+		document.addEventListener('DOMContentLoaded',function(){
+					addCssToDocument('#nav li ul, #nav li.nav-pro ul ul, #nav li.sfhover ul ul { left: -999px}');	
+				},false)
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Fix bestbuy menus). See browser.js for details');
 	} else if(hostname.indexOf('.dell.')!=-1&&hostname.indexOf('support.')!=-1){			// 286618,  browser sniffing on support.dell.com
 		opera.defineMagicVariable( 'ig_shared', null, function(o){ o.IsNetscape6=true; return o; } );
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( browser sniffing on support.dell.com). See browser.js for details');
@@ -810,6 +815,10 @@ function setTinyMCEVersion(e){
 			}, true);
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (We should not send keypress events for navigation- and function keys). See browser.js for details');
+		}
+		if(hostname.indexOf('maps.google.')>-1){			// PATCH-393, Google Maps found ugly += operator bug, let's hack around it
+			addPreprocessHandler( /a=this\.J\.y\+=a\.height;/, 'this.J.y+=a.height;a=this.J.y;', true, function(el){return el.src.indexOf('main.js')>-1;} );
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Maps found ugly += operator bug, let\'s hack around it). See browser.js for details');
 		}
 		if(hostname.indexOf('spreadsheets')>-1){			// PATCH-382, Google Spreadsheets cell size and column label size mismatch
 			addCssToDocument('.row-header-wrapper {display:inline}');
