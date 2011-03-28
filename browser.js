@@ -1,4 +1,4 @@
-// dSLCOOvGEHbWlUfbaBYWQkMuSBIw6GdVg8aOjnDqKGibZXXE85qJIaXQzLkyTcbyoXzL4Vef/W4GfzSjPA09gTlTd4wPN78ia8aonma5A9G6JWD65gdqJd2/sz5eV3dntYwFTH7hhhRQa4WDSVYsTXbOZ+jgSYQoaa4klJvAgDIlf4zYWfY7QBAt8vPM0EinJGxkdEEaCtwpljcSbAA4np5YqJ+OsXtf4Be20EnGn5wvkTZw6ouiW7VeRniriGJ3I/d4Db7OPkk+v20HwGQc/vA9ZubDcOrdtaMbj+s+FgpFzi4eXDtm8ncEi+N4DV4UH3BFdLjxSjrolvMQRCRd/w==
+// cQz6Q95NrCACp+yq4nvrGjmJF5XYPfQ6syLXqOSlssAkZvjTdiYw/JsdbuO6VGp3ETM98YfYbZb8/JYlFJXmH14O/V0O2thy1vo896XKoXbBEs8N182/LhswicjnRrYWzBr9GOVpasRmtJ22k8gdc4ogQo28LMIwMrZm4iR2VY/bbupQ++0Ihi2xuPkZeMu08XlT3mzPl5oRa2UyCYQegRugnBuPAgN1der6eK/c51TJErOZF8S8WZe2U3owYHnfzA4iEGhyhVtzAI5+MpxgokokUDKy5RXWX7Lw5llY5gyc3Cn/2LWBTItn9mS8zAj/4uEsCaUjKzqh2jjpHI9c7g==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.00 core 2.7.62, March 22, 2011 ';
+	var bjsversion=' Opera Desktop 11.00 core 2.7.62, March 28, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -726,7 +726,7 @@ function stopKeypressIfDownCancelled(stopKey){
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (AOL). See browser.js for details');
 	} else if(hostname.indexOf('.apple.com')>-1){			// PATCH-385, Apple.com thinks Opera's CSS property vendor prefix is o instead of O on JS properties
 		(function (){
-		for(var ar=['TransitionProperty', 'TransitionDuration', 'TransitionTimingFunction' ],i=0;i<ar.length; i++){
+		for(var ar=['Transition', 'TransitionProperty', 'TransitionDuration', 'TransitionTimingFunction' ],i=0;i<ar.length; i++){
 			CSSStyleDeclaration.prototype.__defineSetter__('o'+ar[i], (function(prop){return function(val){ 
 				this['O'+prop]=val; 
 			}})(ar[i]));
@@ -821,6 +821,10 @@ function stopKeypressIfDownCancelled(stopKey){
 			}, true);
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (We should not send keypress events for navigation- and function keys). See browser.js for details');
+		}
+		if(hostname.indexOf('maps.google.')>-1){			// PATCH-393, Google Maps found ugly += operator bug, let's hack around it
+			addPreprocessHandler( /a=this\.J\.y\+=a\.height;/, 'this.J.y+=a.height;a=this.J.y;', true, function(el){return el.src.indexOf('main.js')>-1;} );
+				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Maps found ugly += operator bug, let\'s hack around it). See browser.js for details');
 		}
 		if(hostname.indexOf('spreadsheets')>-1){			// PATCH-382, Google Spreadsheets cell size and column label size mismatch
 			addCssToDocument('.row-header-wrapper {display:inline}');
