@@ -1,4 +1,4 @@
-// q+2+SSVVKDFeBCNVgehvAJp1Q2z3eQAhj6nri+OcCUK9tAonrW38LBCM6gH1wpffRRPSiyyS2V5IcaQgI+wm2gQJDJEXvg94OSQp+9qFAzYl13YZiYwB01Y3hJywjARSWHA349QjKtBW1pkVS6ss1lmmfsvGqVQQZAANT3vDc3XDIHH/9fai4q/Xuerz0wihZt68lcRIjDiOO8HlnI6xFe3Ecfx/lwBtRpS/nfHEK40kjW0CZhVYFSUblwR8gs+Bxz71o4LE8nXDE9iL4AZZFDBe7JOrNgY++wy7YGTn1vVi2VpW3+7NDViHgAiZHNES3n9mILd6ieMoMPJi33a0KQ==
+// LYvB/mIaZp7zx2k/A8NTylfU2cp+lj6PoTsNyTRaVupEue0NvGDCK/yy+ukgbj7dXEzFdCF3wOr66NWn4u/NrdgN9QSJg3EpK70bfG4JlC30+6zHS9fI6z0CXEVI3u653otDvjUytm4NV8vk8LOMP5WxZYJJJgzC1QifzsH2F9LNPxgfYhiNV4HHU149GM8LUzUy2VA9n1qo5iOnbI6yMQgpfzCsN9j2sZihSvj1LYTAO45snnKwHx5CRfaGtATScY0fEZJnKxOGINOg/3JemNXGkdxQlNn2Rti3oMazhFVxcesU2LHn6/3xPbUrS8qGj3Meq9Z6az04f2so0kBYew==
 /**
 ** Copyright (C) 2000-2011 Opera Software AS.  All rights reserved.
 **
@@ -18,7 +18,7 @@
 (function(opera){
 	if(!opera || (opera&&opera._browserjsran))return;
 	opera._browserjsran=true;
-	var bjsversion=' Opera Desktop 11.10 core 2.8.119, March 28, 2011 ';
+	var bjsversion=' Opera Desktop 11.10 core 2.8.130, March 31, 2011 ';
 	// variables and utility functions
 	var navRestore = {}; // keep original navigator.* values
 	var shouldRestore = false;
@@ -128,12 +128,6 @@ function avoidDocumentWriteAbuse(contentRegexp){
 		}
 	};
 }
-function enableRedefiningParent(){
-	var parentVar;
-	opera.defineMagicVariable('parent',
-		function (){ return parentVar },
-		function(value){ parentVar = value });
-}
 	function fakeCSSFilters(){ // faking support for some of the common filters so that using them won't stop the script
 		var filterObj={apply:function(){}, play:function(){}, Apply:function(){}, Play:function(){}}; // some of the common functions
 		HTMLElement.prototype.filters=[ filterObj, filterObj, filterObj ]; // fake three applied filters with play and apply functions
@@ -240,9 +234,9 @@ function fixLiknoAllWebMenus(ev){
 		// Menu does not work on Mac if it detects platform
 		defineMagicVariable.call(opera, 'mac', function(){ return false }, function(){ });
 		// bug 330958
-		if(!window.scrollX){
-			opera.defineMagicVariable('scrollY', function(){ return document.body.scrollTop;}, null);
-			opera.defineMagicVariable('scrollX', function(){ return document.body.scrollLeft;}, null);
+		if(typeof window.scrollX=='undefined'){
+			defineMagicVariable.call(opera, 'scrollY', function(){ return document.body.scrollTop;}, null);
+			defineMagicVariable.call(opera, 'scrollX', function(){ return document.body.scrollLeft;}, null);
 		}
 	}
 
@@ -605,9 +599,8 @@ function setTinyMCEVersion(e){
 			// 246299, PDF security patch
 	opera.addEventListener('BeforeJavaScriptURL', function( e ){
 		unescape.call=toLowerCase.call=indexOf.call=preventDefault.call=call;
-		var pathname=unescape.call(self, toLowerCase.call(self.location.pathname));
 		var hash=unescape.call(self, toLowerCase.call(self.location.hash));
-		if( /*indexOf.call(pathname, '.pdf')>-1 &&*/ hash  &&  indexOf.call(hash, 'javascript:')>-1   ) preventDefault.call(e);
+		if( hash  &&  indexOf.call(hash, 'javascript:')>-1   ) preventDefault.call(e);
 	}, false);
 			// PATCH-298, Disable sniffing in old HTMLArea editors
 	opera.defineMagicVariable('HTMLArea', null, function(obj){
@@ -816,10 +809,6 @@ function setTinyMCEVersion(e){
 			
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (We should not send keypress events for navigation- and function keys). See browser.js for details');
 		}
-		if(hostname.indexOf('maps.google.')>-1){			// PATCH-393, Google Maps found ugly += operator bug, let's hack around it
-			addPreprocessHandler( /a=this\.J\.y\+=a\.height;/, 'this.J.y+=a.height;a=this.J.y;', true, function(el){return el.src.indexOf('main.js')>-1;} );
-				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Maps found ugly += operator bug, let\'s hack around it). See browser.js for details');
-		}
 		if(hostname.indexOf('spreadsheets')>-1){			// PATCH-382, Google Spreadsheets cell size and column label size mismatch
 			addCssToDocument('.row-header-wrapper {display:inline}');
 				if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Google Spreadsheets cell size and column label size mismatch). See browser.js for details');
@@ -839,6 +828,9 @@ function setTinyMCEVersion(e){
 			}
 		,false)
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Avoid crash when searching on hotels.com). See browser.js for details');
+	} else if(hostname.indexOf('.hotwire.com')>-1){			// PATCH-390, Hide browser warning on hotwire
+		addCssToDocument('div.OldBrowserPopupComp, div.mask{display:none !important}');
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide browser warning on hotwire). See browser.js for details');
 	} else if(hostname.indexOf('.in.gr')>-1){			// PATCH-367, Correct placement of marquee on in.gr
 		document.addEventListener('DOMContentLoaded', function(){
 		 elm = document.getElementById('ticker-area');
@@ -1202,18 +1194,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('fedex.com')!=-1){			// 363564, FedEx.com mangles tables by turning TDs into block elements
 		document.addEventListener('DOMContentLoaded', function(){ for(var els=document.getElementsByTagName('td'),el,i=0;el=els[i];i++)if(el.style.display=='block')el.style.display='';}, false);
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (FedEx.com mangles tables by turning TDs into block elements). See browser.js for details');
-	} else if(hostname.indexOf('footballteam.pl')>-1){			// PATCH-358, Enable the password box on footballteam.pl
-		HTMLInputElement.prototype.__defineSetter__('type',function(){
-			if (this.getAttribute('type')!=arguments[0]) {
-				var doFocus=false, result;
-				if (this == document.activeElement) doFocus = true;
-				result = this.setAttribute('type',arguments[0]);
-				if (doFocus) this.focus();
-				return result;
-			}
-		});
-		
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Enable the password box on footballteam.pl). See browser.js for details');
 	} else if(hostname.indexOf('fujifilm.ch')>-1){			// PATCH-220, Working around a bug that hides menu entries
 		addCssToDocument('#navigation ul#primary li ul.secondary_drop_down li {display: inline !important }');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Working around a bug that hides menu entries). See browser.js for details');
@@ -1393,9 +1373,6 @@ function setTinyMCEVersion(e){
 	} else if(hostname.indexOf('nrg.co.il')>-1){			// 244416,  NRG.co.il saving articles does not work
 		addPreprocessHandler('document.getElementById("launcher").innerHTML="";', '');
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' ( NRG.co.il saving articles does not work). See browser.js for details');
-	} else if(hostname.indexOf('nyteknik.se')>-1){			// PATCH-265, nyteknik.se uses parent as variable name
-		enableRedefiningParent();
-			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (nyteknik.se uses parent as variable name). See browser.js for details');
 	} else if(hostname.indexOf('opera.com')>-1&& pathname.indexOf('/docs/browserjs/')==0){			// 0, Browser.js status and version reported on browser.js documentation page
 		document.addEventListener((parseFloat(opera.version())>9?'DOMContentLoaded':'load'),function(){
 			if(document.getElementById('browserjs_active')){
@@ -1569,6 +1546,9 @@ function setTinyMCEVersion(e){
 			return rangeInsertNode.call(this,n);
 		}
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Make Range.prototype.insertNode automatically import nodes from other documents). See browser.js for details');
+	} else if(hostname.indexOf('summitonthesummit.com')>-1){			// PATCH-394, Hide browser warning on summitonthesummit
+		opera.defineMagicFunction('isBrowserValid', function(){return true} );
+			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Hide browser warning on summitonthesummit). See browser.js for details');
 	} else if(hostname.indexOf('support.asus.com')>-1){			// PATCH-362, Prevent Asus browser sniffing from breaking support site software download
 		navigator.appName='Netscape';
 			if(self==top)postError.call(opera, 'Opera has modified the JavaScript on '+hostname+' (Prevent Asus browser sniffing from breaking support site software download). See browser.js for details');
